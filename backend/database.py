@@ -16,6 +16,14 @@ def init_db_pool():
     global _pool
     if _pool is not None and not _pool.closed:
         return
+    is_vercel = bool(os.environ.get("VERCEL"))
+    if not DATABASE_URL or (is_vercel and ("localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL)):
+        err_msg = (
+            "DATABASE_URL is not configured in Vercel Environment Variables. "
+            "Please configure DATABASE_URL in your Vercel Project Settings -> Environment Variables."
+        )
+        logger.error(err_msg)
+        raise psycopg2.OperationalError(err_msg)
     try:
         # Initialize a connection pool (min 1, max 4 connections for serverless resilience)
         _pool = psycopg2.pool.SimpleConnectionPool(

@@ -15,8 +15,9 @@ if __name__ == "__main__" and os.path.exists(venv_python) and sys.executable.low
     result = subprocess.run([venv_python] + sys.argv)
     sys.exit(result.returncode)
 
+import psycopg2
 from fastapi import FastAPI, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -36,13 +37,12 @@ async def lifespan(app: FastAPI):
     # Startup tasks
     logger.info("Starting up backend server...")
     is_vercel = bool(os.environ.get("VERCEL"))
-    try:
-        init_db_pool()
-        if not is_vercel:
+    if not is_vercel:
+        try:
+            init_db_pool()
             initialize_database()
-    except Exception as e:
-        logger.error(f"Startup database initialization failed: {e}")
-        # Note: We don't crash the server immediately, but database requests will fail.
+        except Exception as e:
+            logger.error(f"Startup database initialization failed: {e}")
 
     sync_task = None
     # Serverless runtimes like Vercel freeze background loops, causing timeouts and invocation failures.
@@ -69,7 +69,8 @@ async def lifespan(app: FastAPI):
     if sync_task:
         sync_task.cancel()
     logger.info("Shutting down backend server...")
-    close_db_pool()
+    if not is_vercel:
+        close_db_pool()
 
 app = FastAPI(
     title="Khin Ticket API",
@@ -215,7 +216,51 @@ def generate_ticket_code(cur) -> str:
     cur.execute("SELECT MAX(id) as max_id FROM ticketing_system.tickets;")
     res = cur.fetchone()
     next_id = (res["max_id"] or 0) + 1
+# --- Exception Handlers ---
+
+@app.exception_handler(psycopg2.OperationalError)
+async def db_operational_exception_handler(request, exc):
+    logger.error(f"PostgreSQL OperationalError during request to {request.url.path}: {exc}")
+    return JSONResponse(
+        status_code=503,
+        content={
+            "status": "database_error",
+            "detail": "Database connection unavailable. Please ensure DATABASE_URL is properly configured in your Vercel Environment Variables.",
+            "error": str(exc)
+        }
+    )
+
 # --- System & Health Routes ---
+
+@app.get("/", include_in_schema=False)
+def root_index():
+    for candidate in [
+        os.path.join(ROOT_DIR, "public", "index.html"),
+        os.path.join(ROOT_DIR, "frontend", "index.html"),
+    ]:
+        if os.path.exists(candidate):
+            return FileResponse(candidate)
+    return {"name": "Khin Ticket API", "status": "online", "docs": "/docs"}
+
+@app.get("/portal.html", include_in_schema=False)
+def portal_page():
+    for candidate in [
+        os.path.join(ROOT_DIR, "public", "portal.html"),
+        os.path.join(ROOT_DIR, "frontend", "portal.html"),
+    ]:
+        if os.path.exists(candidate):
+            return FileResponse(candidate)
+    return RedirectResponse(url="/portal", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+@app.get("/dashboard.html", include_in_schema=False)
+def dashboard_page():
+    for candidate in [
+        os.path.join(ROOT_DIR, "public", "dashboard.html"),
+        os.path.join(ROOT_DIR, "frontend", "dashboard.html"),
+    ]:
+        if os.path.exists(candidate):
+            return FileResponse(candidate)
+    return RedirectResponse(url="/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 @app.get("/api")
 def api_root():
@@ -1177,12 +1222,17 @@ def sync_emails(current_user: dict = Depends(get_current_user)):
     return result
 
 # Serving frontend static files
-frontend_dir = os.path.join(os.path.dirname(__file__), "..", "frontend")
-if os.path.exists(frontend_dir):
-    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")
-    logger.info(f"Serving frontend static files from: {frontend_dir}")
-else:
-    logger.warning(f"Frontend static files directory not found at {frontend_dir}. Make sure you create it.")
+for base_folder in ["public", "frontend"]:
+    static_dir = os.path.join(ROOT_DIR, base_folder)
+    if os.path.exists(static_dir):
+        for sub in ["css", "js", "images"]:
+            subpath = os.path.join(static_dir, sub)
+            if os.path.exists(subpath):
+                app.mount(f"/{sub}", StaticFiles(directory=subpath), name=f"{base_folder}_{sub}")
+        if not os.environ.get("VERCEL"):
+            app.mount("/", StaticFiles(directory=static_dir, html=True), name=f"{base_folder}_root")
+        logger.info(f"Mounted static files from: {static_dir}")
+        break
 
 if __name__ == "__main__":
     import uvicorn
