@@ -16,6 +16,7 @@ if __name__ == "__main__" and os.path.exists(venv_python) and sys.executable.low
     sys.exit(result.returncode)
 
 from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.responses import RedirectResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -246,6 +247,14 @@ def health_check():
         "vercel_environment": bool(os.environ.get("VERCEL")),
         "database_configured": bool(os.environ.get("DATABASE_URL"))
     }
+
+@app.get("/portal", include_in_schema=False)
+def portal_redirect():
+    return RedirectResponse(url="/portal.html", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+@app.get("/dashboard", include_in_schema=False)
+def dashboard_redirect():
+    return RedirectResponse(url="/dashboard.html", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 # --- Auth Routes ---
 
