@@ -14,38 +14,59 @@ _pool = None
 
 def init_db_pool():
     global _pool
-    if _pool is not None:
+    if _pool is not None and not _pool.closed:
         return
     try:
-        # Initialize a connection pool (min 1, max 10 connections)
+        # Initialize a connection pool (min 1, max 4 connections for serverless resilience)
         _pool = psycopg2.pool.SimpleConnectionPool(
-            1, 10,
-            dsn=DATABASE_URL
+            1, 4,
+            dsn=DATABASE_URL,
+            connect_timeout=5
         )
         logger.info("PostgreSQL connection pool initialized successfully.")
     except Exception as e:
         logger.error(f"Failed to initialize PostgreSQL connection pool: {e}")
-        logger.error("Please ensure PostgreSQL is running and DATABASE_URL in .env is correct.")
+        logger.error("Please ensure PostgreSQL is accessible and DATABASE_URL is configured.")
         raise e
 
 def close_db_pool():
     global _pool
     if _pool:
-        _pool.closeall()
-        logger.info("PostgreSQL connection pool closed.")
-        _pool = None
+        try:
+            _pool.closeall()
+            logger.info("PostgreSQL connection pool closed.")
+        except Exception as e:
+            logger.warning(f"Warning closing database pool: {e}")
+        finally:
+            _pool = None
 
 @contextmanager
 def get_db_connection():
     global _pool
-    if _pool is None:
+    if _pool is None or _pool.closed:
         init_db_pool()
     
-    conn = _pool.getconn()
+    conn = None
     try:
+        conn = _pool.getconn()
+        # In serverless environments, verify the pooled connection is still alive
+        if conn.closed != 0:
+            _pool.putconn(conn, close=True)
+            conn = _pool.getconn()
         yield conn
+    except psycopg2.OperationalError as e:
+        logger.warning(f"Database operational error encountered: {e}")
+        if conn and _pool:
+            try:
+                _pool.putconn(conn, close=True)
+                conn = None
+            except Exception:
+                pass
+        raise e
     finally:
-        _pool.putconn(conn)
+        if conn and _pool and conn.closed == 0:
+            _pool.putconn(conn)
+
 
 @contextmanager
 def get_db_cursor(commit=True):

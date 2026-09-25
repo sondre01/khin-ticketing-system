@@ -2,7 +2,7 @@
   "version": 2,
   "rewrites": [
     {
-      "source": "/api/(.*)",
+      "source": "/api(.*)",
       "destination": "/api/index.py"
     },
     {
@@ -14,8 +14,20 @@
       "destination": "/api/index.py"
     },
     {
+      "source": "/portal",
+      "destination": "/frontend/portal.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/frontend/dashboard.html"
+    },
+    {
       "source": "/frontend/(.*)",
       "destination": "/frontend/$1"
+    },
+    {
+      "source": "/",
+      "destination": "/frontend/index.html"
     },
     {
       "source": "/(.*)",

@@ -34,15 +34,19 @@ logger = logging.getLogger("ticketing_system.main")
 async def lifespan(app: FastAPI):
     # Startup tasks
     logger.info("Starting up backend server...")
+    is_vercel = bool(os.environ.get("VERCEL"))
     try:
         init_db_pool()
-        initialize_database()
+        if not is_vercel:
+            initialize_database()
     except Exception as e:
         logger.error(f"Startup database initialization failed: {e}")
         # Note: We don't crash the server immediately, but database requests will fail.
 
     sync_task = None
-    if GMAIL_USER and GMAIL_APP_PASSWORD:
+    # Serverless runtimes like Vercel freeze background loops, causing timeouts and invocation failures.
+    # Background polling is therefore enabled only in persistent local/server environments.
+    if GMAIL_USER and GMAIL_APP_PASSWORD and not is_vercel:
         import asyncio
         from backend.email_service import sync_gmail_tickets
 
@@ -210,9 +214,41 @@ def generate_ticket_code(cur) -> str:
     cur.execute("SELECT MAX(id) as max_id FROM ticketing_system.tickets;")
     res = cur.fetchone()
     next_id = (res["max_id"] or 0) + 1
-    return f"KT-{1000 + next_id}"
+# --- System & Health Routes ---
+
+@app.get("/api")
+def api_root():
+    return {
+        "name": "Khin Ticket API",
+        "status": "online",
+        "docs": "/docs"
+    }
+
+@app.get("/api/health")
+def health_check():
+    db_status = "unknown"
+    db_error = None
+    try:
+        with get_db_cursor() as cur:
+            cur.execute("SELECT 1 as ping;")
+            res = cur.fetchone()
+            if res and res.get("ping") == 1:
+                db_status = "connected"
+    except Exception as e:
+        db_status = "disconnected"
+        db_error = str(e)
+        logger.error(f"Health check database ping failed: {e}")
+
+    return {
+        "status": "ok" if db_status == "connected" else "degraded",
+        "database": db_status,
+        "database_error": db_error,
+        "vercel_environment": bool(os.environ.get("VERCEL")),
+        "database_configured": bool(os.environ.get("DATABASE_URL"))
+    }
 
 # --- Auth Routes ---
+
 
 @app.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
 def register(req: RegisterRequest):
