@@ -258,8 +258,9 @@
     <div class="toast-container" id="toast-container"></div>
 
     <script>
-        const API_URL = (window.location.port !== '5000') 
-            ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname || '127.0.0.1'}:5000` 
+        const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000';
+        const API_URL = isLocalDev 
+            ? `${window.location.protocol}//${window.location.hostname}:5000` 
             : window.location.origin;
         let currentUser = null;
         let allTickets = [];
@@ -357,7 +358,7 @@
             } catch (err) {
                 console.error('fetchUserProfile error:', err);
                 if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-                    showToast('Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py).', 'error');
+                    showToast(isLocalDev ? 'Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py).' : 'Cannot connect to backend server. Please verify service status.', 'error');
                 } else {
                     localStorage.removeItem('access_token');
                     window.location.href = 'index.html?expired=true';

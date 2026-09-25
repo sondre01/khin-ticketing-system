@@ -21,7 +21,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
-from backend.config import HOST, PORT, TECH_ACCESS_KEY
+from backend.config import HOST, PORT, TECH_ACCESS_KEY, GMAIL_USER, GMAIL_APP_PASSWORD
 from backend.database import init_db_pool, close_db_pool, initialize_database, get_db_cursor
 from backend.auth import hash_password, verify_password, create_access_token, decode_access_token
 
@@ -40,8 +40,29 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"Startup database initialization failed: {e}")
         # Note: We don't crash the server immediately, but database requests will fail.
+
+    sync_task = None
+    if GMAIL_USER and GMAIL_APP_PASSWORD:
+        import asyncio
+        from backend.email_service import sync_gmail_tickets
+
+        async def background_gmail_worker():
+            logger.info(f"Background Gmail ticket ingestion active (polling {GMAIL_USER} every 30s).")
+            while True:
+                try:
+                    await asyncio.sleep(30)
+                    await asyncio.to_thread(sync_gmail_tickets, limit=15, mark_as_read=True)
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    logger.warning(f"Background email sync iteration warning: {e}")
+
+        sync_task = asyncio.create_task(background_gmail_worker())
+
     yield
     # Shutdown tasks
+    if sync_task:
+        sync_task.cancel()
     logger.info("Shutting down backend server...")
     close_db_pool()
 

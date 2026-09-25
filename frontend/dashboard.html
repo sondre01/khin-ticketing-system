@@ -236,16 +236,17 @@
                         <table class="tickets-table">
                             <thead>
                                 <tr>
-                                    <th style="width: 80px;">ID</th>
-                                    <th style="width: 220px;">Department</th>
+                                    <th style="width: 70px;">ID</th>
+                                    <th style="width: 190px;">Department</th>
+                                    <th>Inbound Ticket Email</th>
                                     <th>Description / Purpose</th>
-                                    <th style="width: 120px;">Total Tickets</th>
-                                    <th style="width: 140px;">Restricted Users</th>
-                                    <th style="width: 100px;">Status</th>
+                                    <th style="width: 110px;">Total Tickets</th>
+                                    <th style="width: 130px;">Restricted Users</th>
+                                    <th style="width: 90px;">Status</th>
                                 </tr>
                             </thead>
                             <tbody id="departments-table-body">
-                                <tr><td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading departments...</td></tr>
+                                <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading departments...</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -428,8 +429,9 @@
     <div class="toast-container" id="toast-container"></div>
 
     <script>
-        const API_URL = (window.location.port !== '5000') 
-            ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname || '127.0.0.1'}:5000` 
+        const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000';
+        const API_URL = isLocalDev 
+            ? `${window.location.protocol}//${window.location.hostname}:5000` 
             : window.location.origin;
         
         let currentUser = null;
@@ -555,7 +557,7 @@
             } catch (err) {
                 console.error('fetchUserProfile error:', err);
                 if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-                    showToast('Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py).', 'error');
+                    showToast(isLocalDev ? 'Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py).' : 'Cannot connect to backend server. Please verify service status.', 'error');
                 } else {
                     localStorage.removeItem('access_token');
                     window.location.href = 'index.html?expired=true';
@@ -616,14 +618,29 @@
 
             if (!tbody) return;
             if (allDepartments.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No departments configured.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No departments configured.</td></tr>`;
                 return;
+            }
+
+            function getDeptEmail(name) {
+                const n = (name || '').toLowerCase();
+                if (n.includes('information technology') || n.includes('it')) return 'gamboa.khinandrei+it@gmail.com';
+                if (n.includes('human resources') || n.includes('hr')) return 'gamboa.khinandrei+hr@gmail.com';
+                if (n.includes('finance') || n.includes('accounting') || n.includes('billing')) return 'gamboa.khinandrei+billing@gmail.com';
+                if (n.includes('operations') || n.includes('facilities')) return 'gamboa.khinandrei+ops@gmail.com';
+                const cleanSlug = n.replace(/[^a-z0-9]/g, '');
+                return cleanSlug ? `gamboa.khinandrei+${cleanSlug}@gmail.com` : 'gamboa.khinandrei@gmail.com';
             }
 
             tbody.innerHTML = allDepartments.map(d => `
                 <tr>
                     <td style="color: var(--text-muted); font-size: 0.8rem;">#${d.id}</td>
                     <td style="font-weight: 600; color: var(--accent-yellow);">${escapeHtml(d.name)}</td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(250,204,21,0.08); border: 1px solid rgba(250,204,21,0.2); padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: var(--accent-yellow);">
+                            <i class="icon-mail" style="font-size: 0.75rem;"></i> ${getDeptEmail(d.name)}
+                        </span>
+                    </td>
                     <td style="color: var(--text-secondary); font-size: 0.85rem;">${escapeHtml(d.description || '—')}</td>
                     <td><span class="badge" style="background: rgba(255,255,255,0.06); font-weight: 600;">${d.ticket_count || 0}</span></td>
                     <td><span class="badge" style="color: var(--error-red); background: rgba(248,113,113,0.1);">${d.restricted_count || 0} restricted</span></td>

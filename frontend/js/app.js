@@ -1,12 +1,15 @@
 // Frontend Authentication Handler for Khin Ticket
 
-const API_URL = (window.location.port !== '5000') 
-    ? `${window.location.protocol === 'https:' ? 'https:' : 'http:'}//${window.location.hostname || '127.0.0.1'}:5000` 
+const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000';
+const API_URL = isLocalDev 
+    ? `${window.location.protocol}//${window.location.hostname}:5000` 
     : window.location.origin;
 
 function formatApiError(error) {
     if (error && (error.message === 'Failed to fetch' || error.name === 'TypeError')) {
-        return 'Cannot connect to backend server. Please make sure the Python server is running on port 5000 (run: python run.py).';
+        return isLocalDev
+            ? 'Cannot connect to backend server. Please make sure the Python server is running on port 5000 (run: python run.py).'
+            : 'Cannot connect to backend server. Please verify your connection or service status.';
     }
     return error.message || 'An unexpected error occurred.';
 }
