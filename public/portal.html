@@ -325,9 +325,9 @@
                 const data = await response.json();
                 currentUser = data.user;
 
-                // If user is Admin, Agent, or Tech Staff, show switch to dashboard
-                const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_agent'];
-                if (staffRoles.includes(currentUser.role)) {
+                // If user is Admin, Dept Lead, Agent, or Tech Staff, show switch to dashboard
+                const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
+                if (staffRoles.includes(currentUser.role) || currentUser.can_manage_departments) {
                     document.getElementById('admin-switch-btn').style.display = 'block';
                 }
 

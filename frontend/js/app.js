@@ -160,8 +160,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Role-based routing
                 setTimeout(() => {
                     const role = data.user ? (data.user.role || 'employee') : 'employee';
-                    const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_agent'];
-                    if (staffRoles.includes(role)) {
+                    const canManage = data.user && Boolean(data.user.can_manage_departments);
+                    const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
+                    if (staffRoles.includes(role) || canManage) {
                         window.location.href = 'dashboard.html';
                     } else {
                         window.location.href = 'portal.html';
@@ -321,8 +322,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     const userRole = data.user ? (data.user.role || 'employee') : 'employee';
                     setTimeout(() => {
-                        const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_agent'];
-                        if (staffRoles.includes(userRole)) {
+                        const canManage = data.user && Boolean(data.user.can_manage_departments);
+                        const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
+                        if (staffRoles.includes(userRole) || canManage) {
                             window.location.href = 'dashboard.html';
                         } else {
                             window.location.href = 'portal.html';

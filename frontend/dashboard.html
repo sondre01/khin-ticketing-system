@@ -389,12 +389,12 @@
             </div>
 
             <div class="form-group" style="margin-bottom: 1.25rem;" id="assignee-control-group">
-                <label class="form-label" for="detail-assignee-select">Assigned Tech Member</label>
+                <label class="form-label" for="detail-assignee-select">Assigned Member</label>
                 <select id="detail-assignee-select" class="form-input" style="background-color: var(--bg-pitch-black);">
                     <option value="0">Unassigned</option>
                 </select>
                 <span id="assignee-permission-note" style="font-size: 0.75rem; color: var(--accent-yellow); display: none; margin-top: 0.35rem;">
-                    🔒 Only the Tech Manager / Super Admin can assign tickets to team members.
+                    🔒 Only the Super Admin or Department Admin Lead can assign tickets to team members.
                 </span>
             </div>
 
@@ -514,29 +514,39 @@
                 
                 const roleBadge = document.getElementById('display-user-role');
                 const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
-                const canManageDepts = isSuperAdmin || currentUser.can_manage_departments;
+                const isDeptLead = currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
+                const isTechMember = currentUser.role === 'tech_member' || currentUser.role === 'agent';
+                const canManageDepts = isSuperAdmin || isDeptLead;
 
                 if (isSuperAdmin) {
-                    roleBadge.textContent = 'Super Admin (Manager)';
+                    roleBadge.textContent = 'Super Admin (Developer Team Lead)';
                     roleBadge.className = 'role-badge admin';
-                    document.getElementById('welcome-subtitle').textContent = 'Tech Manager Control Center: Tickets, Departments & User Hierarchy';
-                } else if (currentUser.role === 'tech_member' || currentUser.role === 'agent') {
-                    roleBadge.textContent = 'Tech Team Member';
+                    document.getElementById('welcome-subtitle').textContent = 'Developer Team Lead Control Center: Global Tickets, Departments & User Hierarchy';
+                } else if (isDeptLead) {
+                    roleBadge.textContent = 'Department Admin Lead';
+                    roleBadge.className = 'role-badge admin';
+                    document.getElementById('welcome-subtitle').textContent = `${dept} Admin Lead Workspace: Department Tickets & Member Assignment`;
+                } else if (isTechMember) {
+                    roleBadge.textContent = 'Developer Team Member';
                     roleBadge.className = 'role-badge user';
+                    document.getElementById('welcome-subtitle').textContent = 'Developer Team Workspace: Technical Tickets & System Tasks';
                 } else {
                     roleBadge.textContent = 'Department Staff';
                     roleBadge.className = 'role-badge user';
+                    document.getElementById('welcome-subtitle').textContent = `${dept} Staff Workspace: Assigned Tickets & Inquiries`;
                 }
 
                 // Show conditional navigation items based on user role & permissions
                 if (canManageDepts) {
                     document.getElementById('nav-item-departments').style.display = 'block';
                 }
-                if (isSuperAdmin) {
+                if (isSuperAdmin || isDeptLead) {
                     document.getElementById('nav-item-users').style.display = 'block';
-                    document.getElementById('card-department-restrictions').style.display = 'block';
-                } else {
-                    document.getElementById('card-department-restrictions').style.display = 'none';
+                    if (isSuperAdmin) {
+                        document.getElementById('card-department-restrictions').style.display = 'block';
+                    } else {
+                        document.getElementById('card-department-restrictions').style.display = 'none';
+                    }
                 }
 
                 // Initials
@@ -650,21 +660,31 @@
         }
 
         // --- Fetch Team Members for Assignment ---
-        async function fetchTeamMembers() {
+        async function fetchTeamMembers(deptId = null) {
             try {
-                const res = await fetch(`${API_URL}/api/team`, { headers: authHeaders() });
+                let url = `${API_URL}/api/team`;
+                if (deptId) {
+                    url += `?dept_id=${deptId}`;
+                }
+                const res = await fetch(url, { headers: authHeaders() });
                 if (!res.ok) return;
                 const data = await res.json();
                 teamMembers = data.members || [];
                 
                 const select = document.getElementById('detail-assignee-select');
+                const currentVal = select.value;
                 select.innerHTML = '<option value="0">Unassigned</option>';
                 teamMembers.forEach(member => {
                     const opt = document.createElement('option');
                     opt.value = member.id;
-                    opt.textContent = `${member.full_name} (${member.role.replace('_', ' ')})`;
+                    const roleLabel = member.role ? member.role.replace('_', ' ') : 'staff';
+                    const deptLabel = member.department ? ` - ${member.department}` : '';
+                    opt.textContent = `${member.full_name} (${roleLabel}${deptLabel})`;
                     select.appendChild(opt);
                 });
+                if (currentVal) {
+                    select.value = currentVal;
+                }
             } catch (err) {
                 console.error('Failed to load team:', err);
             }
@@ -770,18 +790,27 @@
 
                 document.getElementById('detail-status-select').value = activeTicket.status || 'open';
                 document.getElementById('detail-priority-select').value = activeTicket.priority || 'medium';
+                // Fetch relevant team members
+                if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
+                    await fetchTeamMembers(activeTicket.department_id);
+                } else {
+                    await fetchTeamMembers();
+                }
+
                 document.getElementById('detail-assignee-select').value = activeTicket.assigned_to || 0;
 
-                // Enforce Assignee permissions: ONLY Super Admin (Tech Manager) can assign tickets!
+                // Enforce Assignee permissions: ONLY Super Admin or Department Admin Lead can assign tickets!
                 const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+                const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
                 const assigneeSelect = document.getElementById('detail-assignee-select');
                 const noteEl = document.getElementById('assignee-permission-note');
 
-                if (isSuperAdmin) {
+                if (isDeptLead) {
                     assigneeSelect.disabled = false;
                     noteEl.style.display = 'none';
                 } else {
                     assigneeSelect.disabled = true;
+                    noteEl.textContent = '🔒 Only the Super Admin or Department Admin Lead can assign tickets.';
                     noteEl.style.display = 'block';
                 }
 
@@ -823,10 +852,11 @@
             const priority = document.getElementById('detail-priority-select').value;
             
             const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+            const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
             const payload = { status, priority };
 
-            // Only send assigned_to if Super Admin / Manager
-            if (isSuperAdmin) {
+            // Only send assigned_to if Super Admin or Department Admin Lead
+            if (isDeptLead) {
                 payload.assigned_to = parseInt(document.getElementById('detail-assignee-select').value, 10);
             }
 
@@ -1039,8 +1069,32 @@
                 return;
             }
 
+            const callerIsSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+
             tbody.innerHTML = allUsers.map(u => {
                 const isSuperAdmin = u.role === 'super_admin' || u.role === 'admin';
+                const isDeptLead = u.role === 'dept_lead' || u.role === 'admin_lead' || Boolean(u.can_manage_departments);
+                const isTech = u.role === 'tech_member' || u.role === 'agent';
+                const isDeptAgent = u.role === 'dept_agent' || u.role === 'dept_member';
+                const isEmployee = u.role === 'employee' || u.role === 'customer' || u.role === 'user';
+
+                let roleOptions = '';
+                if (callerIsSuperAdmin) {
+                    roleOptions = `
+                        <option value="super_admin" ${isSuperAdmin ? 'selected' : ''}>Super Admin (Developer Team Lead)</option>
+                        <option value="tech_member" ${isTech ? 'selected' : ''}>Developer Team Member</option>
+                        <option value="dept_lead" ${isDeptLead && !isSuperAdmin ? 'selected' : ''}>Department Admin Lead</option>
+                        <option value="dept_agent" ${isDeptAgent ? 'selected' : ''}>Department Staff</option>
+                        <option value="employee" ${isEmployee ? 'selected' : ''}>Regular Employee (Portal Only)</option>
+                    `;
+                } else {
+                    roleOptions = `
+                        ${isDeptLead ? '<option value="dept_lead" selected>Department Admin Lead</option>' : ''}
+                        <option value="dept_agent" ${isDeptAgent ? 'selected' : ''}>Department Staff</option>
+                        <option value="employee" ${isEmployee ? 'selected' : ''}>Regular Employee (Portal Only)</option>
+                    `;
+                }
+
                 return `
                     <tr>
                         <td style="color: var(--text-muted); font-size: 0.8rem;">#${u.id}</td>
@@ -1053,14 +1107,11 @@
                         </td>
                         <td>
                             <select id="user-role-select-${u.id}" class="form-input" style="background-color: var(--bg-pitch-black); font-size: 0.85rem; padding: 0.4rem 0.6rem;">
-                                <option value="super_admin" ${isSuperAdmin ? 'selected' : ''}>Main Admin / Tech Manager</option>
-                                <option value="tech_member" ${(u.role === 'tech_member' || u.role === 'agent') ? 'selected' : ''}>Tech Team Member</option>
-                                <option value="dept_agent" ${u.role === 'dept_agent' ? 'selected' : ''}>Department Agent</option>
-                                <option value="employee" ${(u.role === 'employee' || u.role === 'customer' || u.role === 'user') ? 'selected' : ''}>Regular Employee</option>
+                                ${roleOptions}
                             </select>
                         </td>
                         <td style="text-align: center;">
-                            <input type="checkbox" id="user-dept-perm-${u.id}" ${u.can_manage_departments ? 'checked' : ''} ${isSuperAdmin ? 'disabled title="Super Admin always has department management access"' : ''} style="width: 18px; height: 18px; accent-color: var(--accent-yellow); cursor: pointer;">
+                            <input type="checkbox" id="user-dept-perm-${u.id}" ${u.can_manage_departments ? 'checked' : ''} ${callerIsSuperAdmin ? (isSuperAdmin ? 'disabled title="Super Admin always has department management access"' : '') : 'disabled title="Only Super Admin can grant department management permissions"'} style="width: 18px; height: 18px; accent-color: var(--accent-yellow); cursor: pointer;">
                         </td>
                         <td>
                             <button class="btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.8rem; width: auto;" onclick="saveUserHierarchy(${u.id})">
