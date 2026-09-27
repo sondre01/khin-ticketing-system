@@ -216,6 +216,8 @@ def generate_ticket_code(cur) -> str:
     cur.execute("SELECT MAX(id) as max_id FROM ticketing_system.tickets;")
     res = cur.fetchone()
     next_id = (res["max_id"] or 0) + 1
+    return f"TICK-{next_id:05d}"
+
 # --- Exception Handlers ---
 
 @app.exception_handler(psycopg2.OperationalError)
@@ -229,6 +231,18 @@ async def db_operational_exception_handler(request, exc):
             "error": str(exc)
         }
     )
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request, exc):
+    logger.error(f"Unhandled error on {request.url.path}: {exc}", exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={
+            "status": "error",
+            "detail": f"Internal server error: {str(exc)}"
+        }
+    )
+
 
 # --- System & Health Routes ---
 

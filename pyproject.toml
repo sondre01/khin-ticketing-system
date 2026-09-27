@@ -14,7 +14,8 @@ dependencies = [
 ]
 
 [tool.vercel]
-entrypoint = "backend.main:app"
+entrypoint = "api/index.py"
 
 [tool.vercel.fastapi.static]
 cdn = true
+
