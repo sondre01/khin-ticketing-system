@@ -35,6 +35,11 @@ def get_database_url() -> str:
         separator = "&" if "?" in url else "?"
         url = f"{url}{separator}sslmode=require"
 
+    # Enforce client_encoding=utf8 (prevents psycopg2 "server didn't return client encoding" with Supabase pooler)
+    if not is_local and "client_encoding=" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}client_encoding=utf8"
+
     return url
 
 def init_db_pool():

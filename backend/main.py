@@ -371,7 +371,7 @@ def register(req: RegisterRequest):
         logger.error(f"Registration error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to register user. Database error."
+            detail=f"Failed to register user. Database error: {str(e)}"
         )
 
 @app.post("/api/auth/login")
@@ -386,8 +386,9 @@ def login(req: LoginRequest):
         logger.error(f"Login database error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Database connection failed."
+            detail=f"Database connection failed: {str(e)}"
         )
+
 
     if not user or not verify_password(req.password, user["password_hash"]):
         raise HTTPException(
