@@ -4,7 +4,7 @@ from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import logging
 from contextlib import contextmanager
-from backend.config import DATABASE_URL
+from backend.config import DATABASE_URL as CONFIG_DATABASE_URL
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,24 +12,54 @@ logger = logging.getLogger("ticketing_system.database")
 
 _pool = None
 
+def get_database_url() -> str:
+    """
+    Retrieves and normalizes DATABASE_URL from os.getenv for Supabase / PostgreSQL.
+    - Strips leading/trailing quotes and whitespace.
+    - Normalizes postgres:// to postgresql://.
+    - Ensures sslmode=require is appended for remote cloud hosts (Supabase, Neon, RDS).
+    """
+    raw_url = os.getenv("DATABASE_URL") or CONFIG_DATABASE_URL
+    if not raw_url:
+        return ""
+
+    url = raw_url.strip().strip("'\"")
+
+    # Normalize dialect schema for psycopg2 / SQLAlchemy compatibility
+    if url.startswith("postgres://"):
+        url = "postgresql://" + url[len("postgres://"):]
+
+    # Enforce sslmode=require for cloud-hosted databases (Supabase poolers require SSL)
+    is_local = "localhost" in url or "127.0.0.1" in url
+    if not is_local and "sslmode=" not in url:
+        separator = "&" if "?" in url else "?"
+        url = f"{url}{separator}sslmode=require"
+
+    return url
+
 def init_db_pool():
     global _pool
     if _pool is not None and not _pool.closed:
         return
+    
     is_vercel = bool(os.environ.get("VERCEL"))
-    if not DATABASE_URL or (is_vercel and ("localhost" in DATABASE_URL or "127.0.0.1" in DATABASE_URL)):
+    dsn = get_database_url()
+
+    if not dsn or (is_vercel and ("localhost" in dsn or "127.0.0.1" in dsn)):
         err_msg = (
             "DATABASE_URL is not configured in Vercel Environment Variables. "
-            "Please configure DATABASE_URL in your Vercel Project Settings -> Environment Variables."
+            "Please configure DATABASE_URL in your Vercel Project Settings -> Environment Variables "
+            "using your Supabase Transaction Pooler connection string (port 6543)."
         )
         logger.error(err_msg)
         raise psycopg2.OperationalError(err_msg)
     try:
         # Initialize a connection pool (min 1, max 4 connections for serverless resilience)
+        # 10s connect timeout gives sufficient buffer for cloud cold-start handshakes
         _pool = psycopg2.pool.SimpleConnectionPool(
             1, 4,
-            dsn=DATABASE_URL,
-            connect_timeout=5
+            dsn=dsn,
+            connect_timeout=10
         )
         logger.info("PostgreSQL connection pool initialized successfully.")
     except Exception as e:
@@ -57,10 +87,27 @@ def get_db_connection():
     conn = None
     try:
         conn = _pool.getconn()
-        # In serverless environments, verify the pooled connection is still alive
-        if conn.closed != 0:
-            _pool.putconn(conn, close=True)
+        
+        # Connection recycling: Supabase/serverless poolers terminate idle connections.
+        # Test connection liveness via lightweight query; recycle if connection was dropped.
+        is_alive = False
+        if conn and conn.closed == 0:
+            try:
+                with conn.cursor() as test_cur:
+                    test_cur.execute("SELECT 1;")
+                is_alive = True
+            except Exception:
+                is_alive = False
+
+        if not is_alive:
+            logger.info("Recycling stale pooled connection dropped by database server...")
+            if conn:
+                try:
+                    _pool.putconn(conn, close=True)
+                except Exception:
+                    pass
             conn = _pool.getconn()
+
         yield conn
     except psycopg2.OperationalError as e:
         logger.warning(f"Database operational error encountered: {e}")

@@ -24,3 +24,10 @@ Thumbs.db
 # Local gemini workspace artifacts
 .gemini/
 .system_generated/
+
+# Build and distribution artifacts
+build/
+dist/
+*.egg-info/
+*.whl
+

@@ -13,9 +13,8 @@ dependencies = [
     "python-multipart==0.0.9"
 ]
 
-[tool.vercel]
-entrypoint = "api/index.py"
-
-[tool.vercel.fastapi.static]
-cdn = true
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["api*", "backend*"]
+exclude = ["public*", "frontend*"]
 
