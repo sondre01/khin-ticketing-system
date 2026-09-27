@@ -142,8 +142,29 @@ def get_db_cursor(commit=True):
                 logger.error(f"Database transaction error (rolled back): {e}")
                 raise e
 
+DEFAULT_DEPARTMENTS = [
+    # Technology & Product
+    ("Information Technology (IT)", "Manages networks, hardware, cloud servers, cybersecurity, and internal tech support."),
+    ("Software Development / Engineering", "Writes code, builds software applications, maintains databases, and develops products."),
+    ("Product Management", "Defines the product strategy, roadmaps, and features that developers need to build."),
+    ("Data & Analytics", "Analyzes corporate and user data to guide business decisions and manage data pipelines."),
+    # Revenue & Customer Growth
+    ("Marketing", "Drives brand awareness, manages advertising campaigns, handles social media, and generates leads."),
+    ("Sales", "Converts leads into paying clients, manages customer accounts, and directly drives revenue."),
+    ("Customer Success / Support", "Helps clients use the product successfully and resolves their ongoing issues."),
+    # Business Operations & Infrastructure
+    ("Operations", "Oversees the daily machinery of the business, logistics, supply chain, and facilities."),
+    ("Human Resources (HR)", "Handles recruitment, onboarding, payroll, employee benefits, and workplace culture."),
+    ("Finance & Accounting", "Manages corporate budgets, financial forecasting, bookkeeping, and tax compliance."),
+    ("Legal & Compliance", "Reviews contracts, protects intellectual property, and ensures adherence to industry regulations."),
+    ("Procurement", "Sources and purchases the external goods, software licenses, and services the company needs."),
+    # Strategy & Innovation
+    ("Research & Development (R&D)", "Conducts scientific or technical research to create entirely new products or systems."),
+    ("Corporate Strategy", "Focuses on long-term growth, mergers and acquisitions, and high-level partnerships.")
+]
+
 def initialize_database():
-    """Reads schema.sql and runs it to set up tables if they don't exist."""
+    """Reads schema.sql and runs it to set up tables if they don't exist, and seeds official departments."""
     schema_path = os.path.join(os.path.dirname(__file__), "..", "schema.sql")
     if not os.path.exists(schema_path):
         logger.warning(f"schema.sql not found at {schema_path}, skipping tables initialization.")
@@ -156,7 +177,19 @@ def initialize_database():
             
         with get_db_cursor(commit=True) as cur:
             cur.execute(schema_sql)
-            logger.info("Database schema applied successfully.")
+            
+            # Ensure all 14 official departments are active
+            for name, desc in DEFAULT_DEPARTMENTS:
+                cur.execute(
+                    """
+                    INSERT INTO ticketing_system.departments (name, description, is_active)
+                    VALUES (%s, %s, TRUE)
+                    ON CONFLICT (name) DO UPDATE 
+                    SET description = EXCLUDED.description, is_active = TRUE;
+                    """,
+                    (name, desc)
+                )
+            logger.info("Database schema applied and official departments verified successfully.")
     except Exception as e:
         logger.error(f"Failed to apply database schema: {e}")
         raise e

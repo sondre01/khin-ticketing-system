@@ -22,8 +22,14 @@ ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS department VARCHAR(1
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS position VARCHAR(100) DEFAULT 'Employee';
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS can_manage_departments BOOLEAN DEFAULT FALSE;
 
--- Default first registered user or admin to super_admin
-UPDATE ticketing_system.users SET role = 'super_admin', can_manage_departments = TRUE WHERE id = 1 OR role = 'admin';
+-- Default first registered user or admin to super_admin (Developer Team Lead in Software Development / Engineering)
+UPDATE ticketing_system.users 
+SET role = 'super_admin', 
+    department = 'Software Development / Engineering', 
+    position = 'Developer Team Lead', 
+    can_manage_departments = TRUE 
+WHERE id = 1 OR role = 'admin' OR email = 'gamboa.khinandrei@gmail.com';
+
 UPDATE ticketing_system.users SET role = 'tech_member' WHERE role = 'agent';
 UPDATE ticketing_system.users SET role = 'employee' WHERE role IN ('customer', 'user');
 
@@ -42,12 +48,25 @@ CREATE TABLE IF NOT EXISTS ticketing_system.departments (
 -- Seed default departments if not present
 INSERT INTO ticketing_system.departments (name, description)
 VALUES 
-    ('Information Technology', 'IT infrastructure, hardware, network, software tools, and account provisioning'),
-    ('Human Resources', 'HR inquiries, employee onboarding, benefits, leave, and workplace relations'),
-    ('Finance & Accounting', 'Payroll, expense reimbursement, billing, procurement, and budgets'),
-    ('Operations & Facilities', 'Building access, maintenance, office equipment, and logistics'),
-    ('General / Administrative', 'General administrative assistance, inquiries, and company services')
-ON CONFLICT (name) DO NOTHING;
+    -- Technology & Product
+    ('Information Technology (IT)', 'Manages networks, hardware, cloud servers, cybersecurity, and internal tech support.'),
+    ('Software Development / Engineering', 'Writes code, builds software applications, maintains databases, and develops products.'),
+    ('Product Management', 'Defines the product strategy, roadmaps, and features that developers need to build.'),
+    ('Data & Analytics', 'Analyzes corporate and user data to guide business decisions and manage data pipelines.'),
+    -- Revenue & Customer Growth
+    ('Marketing', 'Drives brand awareness, manages advertising campaigns, handles social media, and generates leads.'),
+    ('Sales', 'Converts leads into paying clients, manages customer accounts, and directly drives revenue.'),
+    ('Customer Success / Support', 'Helps clients use the product successfully and resolves their ongoing issues.'),
+    -- Business Operations & Infrastructure
+    ('Operations', 'Oversees the daily machinery of the business, logistics, supply chain, and facilities.'),
+    ('Human Resources (HR)', 'Handles recruitment, onboarding, payroll, employee benefits, and workplace culture.'),
+    ('Finance & Accounting', 'Manages corporate budgets, financial forecasting, bookkeeping, and tax compliance.'),
+    ('Legal & Compliance', 'Reviews contracts, protects intellectual property, and ensures adherence to industry regulations.'),
+    ('Procurement', 'Sources and purchases the external goods, software licenses, and services the company needs.'),
+    -- Strategy & Innovation
+    ('Research & Development (R&D)', 'Conducts scientific or technical research to create entirely new products or systems.'),
+    ('Corporate Strategy', 'Focuses on long-term growth, mergers and acquisitions, and high-level partnerships.')
+ON CONFLICT (name) DO UPDATE SET description = EXCLUDED.description, is_active = TRUE;
 
 -- Tickets table
 CREATE TABLE IF NOT EXISTS ticketing_system.tickets (

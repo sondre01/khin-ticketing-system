@@ -230,9 +230,9 @@ def user_has_department_access(user: dict, ticket_dept_id: int | None, ticket_de
 
     t_name = (ticket_dept_name or "").strip().lower()
 
-    # Developer team members have access to IT / Tech / DevOps / Development tickets
+    # Developer team members have access to Software Development / Engineering, IT, DevOps tickets
     if user_role == "tech_member":
-        if any(tech_kw in t_name for tech_kw in ("information technology", "tech", "devops", "development", "it")):
+        if any(tech_kw in t_name for tech_kw in ("software development", "software", "development", "engineering", "information technology", "tech", "devops", "it")):
             return True
         user_dept = (user.get("department") or "").strip().lower()
         clean_user_dept = user_dept.split('(')[0].strip()
@@ -906,13 +906,17 @@ def get_team_members(dept_id: int | None = None, current_user: dict = Depends(ge
                        OR lower(department) LIKE %s
                        OR lower(department) LIKE %s
                        OR lower(department) LIKE %s
+                       OR lower(department) LIKE %s
+                       OR lower(department) LIKE %s
                     ORDER BY full_name ASC;
                     """,
                     (
+                        "%software%",
+                        "%engineering%",
+                        "%development%",
                         "%information technology%",
                         "%devops%",
-                        "%tech%",
-                        "%development%"
+                        "%tech%"
                     )
                 )
 
@@ -954,8 +958,8 @@ def list_tickets(
         # Super Admin: Sees ALL tickets across ALL departments
         pass
     elif user_role == "tech_member":
-        # Developer team member: ONLY see IT / DevOps / Tech tickets, or tickets assigned to / raised by them
-        user_dept = (current_user.get("department") or "Information Technology").strip()
+        # Developer team member: ONLY see Software / IT / DevOps / Tech tickets, or tickets assigned to / raised by them
+        user_dept = (current_user.get("department") or "Software Development / Engineering").strip()
         dept_keyword = user_dept.split('(')[0].strip()
         dept_pattern = f"%{dept_keyword}%"
         query += """ AND (
@@ -968,6 +972,8 @@ def list_tickets(
             OR lower(t.department_name) LIKE %s
             OR lower(t.department_name) LIKE %s
             OR lower(t.department_name) LIKE %s
+            OR lower(t.department_name) LIKE %s
+            OR lower(t.department_name) LIKE %s
         )"""
         params.extend([
             current_user["id"],
@@ -975,9 +981,11 @@ def list_tickets(
             current_user["email"],
             dept_pattern,
             dept_pattern,
+            "%software%",
+            "%engineering%",
+            "%development%",
             "%information technology%",
             "%devops%",
-            "%development%",
             "%tech%"
         ])
     elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member"):
@@ -1410,7 +1418,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 cur.execute("SELECT COUNT(*) as dept_count FROM ticketing_system.departments WHERE is_active = TRUE;")
                 dept_count = cur.fetchone()["dept_count"]
             elif user_role == "tech_member":
-                user_dept = (current_user.get("department") or "Information Technology").strip()
+                user_dept = (current_user.get("department") or "Software Development / Engineering").strip()
                 dept_keyword = user_dept.split('(')[0].strip()
                 dept_pattern = f"%{dept_keyword}%"
                 cur.execute(
@@ -1431,6 +1439,8 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                        OR lower(t.department_name) LIKE %s
                        OR lower(t.department_name) LIKE %s
                        OR lower(t.department_name) LIKE %s
+                       OR lower(t.department_name) LIKE %s
+                       OR lower(t.department_name) LIKE %s
                        OR lower(t.department_name) LIKE %s;
                     """,
                     (
@@ -1439,9 +1449,11 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                         current_user["email"],
                         dept_pattern,
                         dept_pattern,
+                        "%software%",
+                        "%engineering%",
+                        "%development%",
                         "%information technology%",
                         "%devops%",
-                        "%development%",
                         "%tech%"
                     )
                 )

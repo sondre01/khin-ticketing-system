@@ -507,8 +507,8 @@
                 document.getElementById('display-user-name').textContent = currentUser.full_name;
                 document.getElementById('display-user-email').textContent = currentUser.email;
 
-                const dept = currentUser.department || 'IT';
-                const pos = currentUser.position || 'Specialist';
+                const dept = currentUser.department || 'Software Development / Engineering';
+                const pos = currentUser.position || (isSuperAdmin ? 'Developer Team Lead' : 'Specialist');
                 const posEl = document.getElementById('display-user-pos');
                 if (posEl) posEl.textContent = `${pos} (${dept})`;
                 
@@ -634,10 +634,20 @@
 
             function getDeptEmail(name) {
                 const n = (name || '').toLowerCase();
-                if (n.includes('information technology') || n.includes('it')) return 'gamboa.khinandrei+it@gmail.com';
+                if (n.includes('software development') || n.includes('engineering') || n.includes('software')) return 'gamboa.khinandrei+dev@gmail.com';
+                if (n.includes('information technology') || n.includes('(it)') || n === 'it') return 'gamboa.khinandrei+it@gmail.com';
+                if (n.includes('product management') || n.includes('product')) return 'gamboa.khinandrei+pm@gmail.com';
+                if (n.includes('data') || n.includes('analytics')) return 'gamboa.khinandrei+data@gmail.com';
+                if (n.includes('marketing')) return 'gamboa.khinandrei+marketing@gmail.com';
+                if (n.includes('sales')) return 'gamboa.khinandrei+sales@gmail.com';
+                if (n.includes('customer success') || n.includes('support')) return 'gamboa.khinandrei+support@gmail.com';
                 if (n.includes('human resources') || n.includes('hr')) return 'gamboa.khinandrei+hr@gmail.com';
-                if (n.includes('finance') || n.includes('accounting') || n.includes('billing')) return 'gamboa.khinandrei+billing@gmail.com';
-                if (n.includes('operations') || n.includes('facilities')) return 'gamboa.khinandrei+ops@gmail.com';
+                if (n.includes('finance') || n.includes('accounting')) return 'gamboa.khinandrei+finance@gmail.com';
+                if (n.includes('legal') || n.includes('compliance')) return 'gamboa.khinandrei+legal@gmail.com';
+                if (n.includes('procurement')) return 'gamboa.khinandrei+procurement@gmail.com';
+                if (n.includes('research') || n.includes('r&d') || n.includes('development (r&d)')) return 'gamboa.khinandrei+rd@gmail.com';
+                if (n.includes('strategy')) return 'gamboa.khinandrei+strategy@gmail.com';
+                if (n.includes('operations')) return 'gamboa.khinandrei+ops@gmail.com';
                 const cleanSlug = n.replace(/[^a-z0-9]/g, '');
                 return cleanSlug ? `gamboa.khinandrei+${cleanSlug}@gmail.com` : 'gamboa.khinandrei@gmail.com';
             }

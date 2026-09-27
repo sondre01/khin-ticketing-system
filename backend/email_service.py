@@ -13,17 +13,80 @@ logger = logging.getLogger("ticketing_system.email_service")
 # --- Department Routing Configuration ---
 # Map email plus-address tags (e.g. username+tag@gmail.com) to Department names
 DEPARTMENT_ROUTING_MAP = {
-    "it": "Information Technology",
-    "tech": "Information Technology",
-    "hr": "Human Resources",
-    "billing": "Finance & Accounting",
+    # Technology & Product
+    "it": "Information Technology (IT)",
+    "tech": "Information Technology (IT)",
+    "infotech": "Information Technology (IT)",
+    "helpdesk": "Information Technology (IT)",
+    
+    "dev": "Software Development / Engineering",
+    "software": "Software Development / Engineering",
+    "engineering": "Software Development / Engineering",
+    "engineer": "Software Development / Engineering",
+    "swe": "Software Development / Engineering",
+    "bug": "Software Development / Engineering",
+    "code": "Software Development / Engineering",
+    
+    "pm": "Product Management",
+    "product": "Product Management",
+    "roadmap": "Product Management",
+    
+    "data": "Data & Analytics",
+    "analytics": "Data & Analytics",
+    "bi": "Data & Analytics",
+    
+    # Revenue & Customer Growth
+    "marketing": "Marketing",
+    "mktg": "Marketing",
+    "ads": "Marketing",
+    "brand": "Marketing",
+    "social": "Marketing",
+    
+    "sales": "Sales",
+    "deals": "Sales",
+    "leads": "Sales",
+    "quote": "Sales",
+    
+    "support": "Customer Success / Support",
+    "cs": "Customer Success / Support",
+    "customer": "Customer Success / Support",
+    "success": "Customer Success / Support",
+    
+    # Business Operations & Infrastructure
+    "ops": "Operations",
+    "operations": "Operations",
+    "facilities": "Operations",
+    "facility": "Operations",
+    
+    "hr": "Human Resources (HR)",
+    "people": "Human Resources (HR)",
+    "talent": "Human Resources (HR)",
+    "recruitment": "Human Resources (HR)",
+    
     "finance": "Finance & Accounting",
     "accounting": "Finance & Accounting",
-    "ops": "Operations & Facilities",
-    "facilities": "Operations & Facilities",
-    "admin": "General / Administrative",
-    "general": "General / Administrative",
-    "support": "General / Administrative",
+    "billing": "Finance & Accounting",
+    "payroll": "Finance & Accounting",
+    "invoice": "Finance & Accounting",
+    
+    "legal": "Legal & Compliance",
+    "compliance": "Legal & Compliance",
+    "contracts": "Legal & Compliance",
+    
+    "procurement": "Procurement",
+    "purchasing": "Procurement",
+    "vendor": "Procurement",
+    
+    # Strategy & Innovation
+    "rd": "Research & Development (R&D)",
+    "research": "Research & Development (R&D)",
+    
+    "strategy": "Corporate Strategy",
+    "corpstrategy": "Corporate Strategy",
+    
+    # General / Admin fallbacks
+    "admin": "Information Technology (IT)",
+    "general": "Operations",
 }
 
 def decode_mime_words(header_value: str | None) -> str:
