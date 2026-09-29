@@ -277,6 +277,50 @@ header {
     transform: none;
 }
 
+/* Compact Accent Button for Card / Table Actions (e.g. Add Department) */
+.btn-add-dept {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.45rem !important;
+    width: auto !important;
+    min-width: auto !important;
+    max-width: fit-content !important;
+    height: 32px !important;
+    padding: 0 0.95rem !important;
+    background-color: var(--accent-yellow) !important;
+    color: #0a0a0a !important;
+    font-family: var(--font-heading) !important;
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    border: none !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(250, 204, 21, 0.25) !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.btn-add-dept:hover {
+    background-color: #fde047 !important;
+    box-shadow: 0 3px 10px rgba(250, 204, 21, 0.4) !important;
+    transform: translateY(-1px) !important;
+}
+
+.btn-add-dept:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 1px 2px rgba(250, 204, 21, 0.2) !important;
+}
+
+.btn-add-dept svg {
+    width: 13px !important;
+    height: 13px !important;
+    stroke-width: 2.5 !important;
+    flex-shrink: 0 !important;
+}
+
 /* Secondary switch link */
 .auth-switch {
     margin-top: 1.5rem;
