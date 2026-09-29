@@ -207,33 +207,21 @@
                         <h1>Departments Management</h1>
                         <p>Configure departments that need ticketing systems and manage access restrictions</p>
                     </div>
-                    <div>
-                        <button type="button" class="btn-primary" id="btn-toggle-add-dept" style="width: auto; padding: 0.55rem 1.25rem; display: inline-flex; align-items: center; gap: 0.5rem; height: auto;">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            <span id="btn-toggle-add-dept-text">Add Department</span>
-                        </button>
-                    </div>
                 </div>
 
                 <!-- Add Department Card (Collapsible, toggled by + Add Department button) -->
                 <div class="tickets-card" id="card-add-dept" style="display: none; margin-bottom: 1.5rem; padding: 1.5rem; border: 1px solid var(--accent-yellow); box-shadow: 0 4px 20px rgba(250, 204, 21, 0.08); animation: fadeIn 0.25s ease-out;">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
-                        <div>
-                            <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 0.35rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 0.5rem;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                                </svg>
-                                Add New Department
-                            </h3>
-                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
-                                Add a department to provide its own dedicated ticketing queue for employee requests.
-                            </p>
-                        </div>
-                        <button type="button" id="btn-cancel-add-dept-x" class="btn-close" title="Close" style="font-size: 1.4rem; line-height: 1; padding: 0.2rem 0.5rem; cursor: pointer; background: transparent; border: none; color: var(--text-muted);">&times;</button>
+                    <div style="margin-bottom: 1rem;">
+                        <h3 style="font-family: var(--font-heading); font-size: 1.1rem; margin-bottom: 0.35rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 0.5rem;">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add New Department
+                        </h3>
+                        <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
+                            Add a department to provide its own dedicated ticketing queue for employee requests.
+                        </p>
                     </div>
                     <form id="form-create-dept" style="display: grid; grid-template-columns: 1fr 2fr auto auto; gap: 1rem; align-items: flex-end;">
                         <div class="form-group" style="margin-bottom: 0;">
@@ -260,7 +248,7 @@
                             <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">Active Departments</h3>
                             <span style="font-size: 0.8rem; color: var(--text-secondary);" id="dept-count-badge">0 departments</span>
                         </div>
-                        <button type="button" class="btn-secondary" id="btn-card-add-dept" style="font-size: 0.82rem; padding: 0.35rem 0.85rem; border-color: var(--border-color); color: var(--text-primary); display: inline-flex; align-items: center; gap: 0.4rem; height: auto;">
+                        <button type="button" class="btn-primary" id="btn-card-add-dept" style="font-size: 0.82rem; padding: 0.4rem 0.9rem; display: inline-flex; align-items: center; gap: 0.4rem; height: auto;">
                             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="12" y1="5" x2="12" y2="19"></line>
                                 <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -967,11 +955,8 @@
 
         // --- Add Department Card Toggle Logic ---
         const cardAddDept = document.getElementById('card-add-dept');
-        const btnToggleAddDept = document.getElementById('btn-toggle-add-dept');
         const btnCardAddDept = document.getElementById('btn-card-add-dept');
         const btnCancelAddDept = document.getElementById('btn-cancel-add-dept');
-        const btnCancelAddDeptX = document.getElementById('btn-cancel-add-dept-x');
-        const toggleAddDeptText = document.getElementById('btn-toggle-add-dept-text');
 
         function toggleAddDeptCard(show) {
             if (!cardAddDept) return;
@@ -980,12 +965,10 @@
             
             if (willShow) {
                 cardAddDept.style.display = 'block';
-                if (toggleAddDeptText) toggleAddDeptText.textContent = 'Close Form';
                 const nameInput = document.getElementById('new-dept-name');
                 if (nameInput) setTimeout(() => nameInput.focus(), 60);
             } else {
                 cardAddDept.style.display = 'none';
-                if (toggleAddDeptText) toggleAddDeptText.textContent = 'Add Department';
                 const nameInput = document.getElementById('new-dept-name');
                 const descInput = document.getElementById('new-dept-desc');
                 if (nameInput) nameInput.value = '';
@@ -993,27 +976,17 @@
             }
         }
 
-        if (btnToggleAddDept) {
-            btnToggleAddDept.addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleAddDeptCard();
-            });
-        }
         if (btnCardAddDept) {
             btnCardAddDept.addEventListener('click', (e) => {
                 e.preventDefault();
-                toggleAddDeptCard(true);
-                cardAddDept.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                toggleAddDeptCard();
+                if (cardAddDept.style.display !== 'none') {
+                    cardAddDept.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
             });
         }
         if (btnCancelAddDept) {
             btnCancelAddDept.addEventListener('click', (e) => {
-                e.preventDefault();
-                toggleAddDeptCard(false);
-            });
-        }
-        if (btnCancelAddDeptX) {
-            btnCancelAddDeptX.addEventListener('click', (e) => {
                 e.preventDefault();
                 toggleAddDeptCard(false);
             });
