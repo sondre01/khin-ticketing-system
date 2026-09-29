@@ -1400,16 +1400,16 @@
 
             if (target === 'overview') {
                 menuOverview.classList.add('active');
-                viewOverview.style.display = 'block';
+                viewOverview.style.display = 'flex';
                 loadTickets();
             } else if (target === 'departments') {
                 menuDepartments.classList.add('active');
-                viewDepartments.style.display = 'block';
+                viewDepartments.style.display = 'flex';
                 fetchDepartments();
                 loadUsersDirectory();
             } else if (target === 'users') {
                 menuUsers.classList.add('active');
-                viewUsers.style.display = 'block';
+                viewUsers.style.display = 'flex';
                 loadUsersDirectory();
             }
         }
