@@ -168,6 +168,12 @@
 
                 <!-- Tickets Table -->
                 <div class="tickets-card">
+                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">Support &amp; Technical Tickets</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="tickets-count-badge">0 tickets</span>
+                        </div>
+                    </div>
                     <div class="tickets-table-container table-scroll-container">
                         <table class="tickets-table">
                             <thead>
@@ -772,6 +778,9 @@
                     (t.requester_name && t.requester_name.toLowerCase().includes(searchVal))
                 );
             });
+
+            const ticketsBadge = document.getElementById('tickets-count-badge');
+            if (ticketsBadge) ticketsBadge.textContent = `${filtered.length} ticket${filtered.length === 1 ? '' : 's'}`;
 
             if (filtered.length === 0) {
                 tbody.innerHTML = `

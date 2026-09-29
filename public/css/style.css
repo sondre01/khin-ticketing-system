@@ -487,13 +487,31 @@ body.dashboard-page {
     flex: 1;
     min-height: 0;
     background-color: var(--bg-near-black);
-    padding: 2rem;
+    padding: 1.5rem 2rem;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Dashboard Section Views */
+.dashboard-section-view {
+    flex: 1;
+    min-height: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#view-departments {
     overflow-y: auto;
+    padding-right: 0.25rem;
 }
 
 /* Table Scroll Containers */
 .table-scroll-container,
-.departments-table-container {
+.departments-table-container,
+.users-table-container,
+.tickets-table-container {
     overflow-y: auto;
     overflow-x: auto;
     position: relative;
@@ -502,29 +520,39 @@ body.dashboard-page {
 }
 
 .table-scroll-container::-webkit-scrollbar,
-.departments-table-container::-webkit-scrollbar {
+.departments-table-container::-webkit-scrollbar,
+.users-table-container::-webkit-scrollbar,
+.tickets-table-container::-webkit-scrollbar {
     width: 6px;
     height: 6px;
 }
 
 .table-scroll-container::-webkit-scrollbar-track,
-.departments-table-container::-webkit-scrollbar-track {
+.departments-table-container::-webkit-scrollbar-track,
+.users-table-container::-webkit-scrollbar-track,
+.tickets-table-container::-webkit-scrollbar-track {
     background: var(--bg-deep-charcoal);
 }
 
 .table-scroll-container::-webkit-scrollbar-thumb,
-.departments-table-container::-webkit-scrollbar-thumb {
+.departments-table-container::-webkit-scrollbar-thumb,
+.users-table-container::-webkit-scrollbar-thumb,
+.tickets-table-container::-webkit-scrollbar-thumb {
     background: #383838;
     border-radius: 4px;
 }
 
 .table-scroll-container::-webkit-scrollbar-thumb:hover,
-.departments-table-container::-webkit-scrollbar-thumb:hover {
+.departments-table-container::-webkit-scrollbar-thumb:hover,
+.users-table-container::-webkit-scrollbar-thumb:hover,
+.tickets-table-container::-webkit-scrollbar-thumb:hover {
     background: var(--accent-yellow);
 }
 
 .table-scroll-container thead th,
-.departments-table-container thead th {
+.departments-table-container thead th,
+.users-table-container thead th,
+.tickets-table-container thead th {
     position: sticky;
     top: 0;
     background-color: #171717;
@@ -532,17 +560,67 @@ body.dashboard-page {
     box-shadow: 0 1px 0 var(--border-color);
 }
 
-/* Specific view scroll container max-heights */
+/* View 1: Tickets layout optimizations */
+#view-tickets .welcome-banner {
+    padding: 1.15rem 1.6rem;
+    margin-bottom: 0.85rem;
+    flex-shrink: 0;
+}
+
+#view-tickets .welcome-banner h2 {
+    font-size: 1.35rem;
+    margin-bottom: 0.25rem;
+}
+
+#view-tickets .stats-grid {
+    margin-bottom: 0.85rem;
+    gap: 0.85rem;
+    flex-shrink: 0;
+}
+
+#view-tickets .stat-card {
+    padding: 0.85rem 1.15rem;
+}
+
+#view-tickets .stat-value {
+    font-size: 1.55rem;
+    margin-top: 0.2rem;
+}
+
+#view-tickets .ticket-toolbar {
+    margin-bottom: 0.75rem;
+    flex-shrink: 0;
+}
+
+/* Card table container heights */
 .tickets-table-container {
-    max-height: 480px;
+    max-height: 440px;
+    overflow-y: auto;
+    overflow-x: auto;
+}
+
+.users-table-container {
+    max-height: 350px;
+    overflow-y: auto;
+    overflow-x: auto;
 }
 
 .departments-table-container {
     max-height: 380px;
+    overflow-y: auto;
+    overflow-x: auto;
 }
 
-.users-table-container {
-    max-height: 520px;
+@media (max-height: 680px), (max-width: 900px) {
+    .dashboard-main {
+        overflow-y: auto;
+    }
+    .tickets-table-container {
+        max-height: 360px;
+    }
+    .users-table-container {
+        max-height: 300px;
+    }
 }
 
 .dashboard-header {
