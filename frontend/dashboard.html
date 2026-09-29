@@ -305,10 +305,55 @@
                     </div>
                 </div>
 
+                <!-- Stats Grid for Users & Roles -->
+                <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Accounts</div>
+                        <div class="stat-value" id="stat-users-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Super Admins</div>
+                        <div class="stat-value" id="stat-users-superadmin" style="color: var(--accent-yellow);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Department Admin Leads</div>
+                        <div class="stat-value" id="stat-users-deptleads" style="color: #60a5fa;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Staff &amp; Support</div>
+                        <div class="stat-value" id="stat-users-staff" style="color: var(--success-green);">0</div>
+                    </div>
+                </section>
+
+                <!-- Users Search & Filter Toolbar -->
+                <div class="user-toolbar">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <select id="user-role-filter-select" class="form-input" style="width: auto; max-width: 220px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                            <option value="">All Hierarchy Roles</option>
+                            <option value="super_admin">Super Admin</option>
+                            <option value="dept_lead">Department Admin Lead</option>
+                            <option value="tech_member">Developer Team</option>
+                            <option value="dept_agent">Department Staff</option>
+                            <option value="employee">Regular Employee</option>
+                        </select>
+                        <select id="user-dept-filter-select" class="form-input" style="width: auto; max-width: 200px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="search-wrapper" style="flex: 1; max-width: 320px; min-width: 220px;">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="user-search-input" class="search-input" placeholder="Search by name, email, department...">
+                    </div>
+                </div>
+
                 <div class="tickets-card">
-                    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-family: var(--font-heading); font-size: 1.05rem;">All Registered Corporate Accounts</h3>
-                        <span style="font-size: 0.8rem; color: var(--text-secondary);" id="users-count-badge">0 users</span>
+                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">All Registered Corporate Accounts</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="users-count-badge">0 users</span>
+                        </div>
                     </div>
                     <div class="users-table-container table-scroll-container">
                         <table class="tickets-table">
@@ -326,6 +371,10 @@
                                 <tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">Loading user directory...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div style="padding: 0.65rem 1.25rem; border-top: 1px solid var(--border-color); background-color: var(--bg-deep-charcoal); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); flex-shrink: 0;">
+                        <span><strong id="users-display-count" style="color: var(--text-secondary);">0</strong> accounts visible</span>
+                        <span>Role updates are applied directly to system session tokens</span>
                     </div>
                 </div>
             </div>
@@ -1154,6 +1203,16 @@
                     ).join('');
                 }
 
+                // Populate user department filter select
+                const userDeptFilter = document.getElementById('user-dept-filter-select');
+                if (userDeptFilter) {
+                    const currentVal = userDeptFilter.value;
+                    const depts = Array.from(new Set(allUsers.map(u => u.department).filter(Boolean))).sort();
+                    userDeptFilter.innerHTML = '<option value="">All Departments</option>' + depts.map(d => 
+                        `<option value="${escapeHtml(d)}" ${currentVal === d ? 'selected' : ''}>${escapeHtml(d)}</option>`
+                    ).join('');
+                }
+
                 // Render Users Table
                 renderUsersTable();
             } catch (err) {
@@ -1164,17 +1223,75 @@
         function renderUsersTable() {
             const tbody = document.getElementById('users-table-body');
             const badge = document.getElementById('users-count-badge');
-            if (badge) badge.textContent = `${allUsers.length} users`;
+            const displayCount = document.getElementById('users-display-count');
+
+            // Update stats cards
+            const totalCount = allUsers.length;
+            const superAdminCount = allUsers.filter(u => u.role === 'super_admin' || u.role === 'admin').length;
+            const deptLeadCount = allUsers.filter(u => u.role === 'dept_lead' || u.role === 'admin_lead' || Boolean(u.can_manage_departments)).length;
+            const staffCount = allUsers.filter(u => u.role === 'tech_member' || u.role === 'agent' || u.role === 'dept_agent' || u.role === 'dept_member' || u.role === 'employee' || u.role === 'customer' || u.role === 'user').length;
+
+            const statTotal = document.getElementById('stat-users-total');
+            const statSuper = document.getElementById('stat-users-superadmin');
+            const statLeads = document.getElementById('stat-users-deptleads');
+            const statStaff = document.getElementById('stat-users-staff');
+
+            if (statTotal) statTotal.textContent = totalCount;
+            if (statSuper) statSuper.textContent = superAdminCount;
+            if (statLeads) statLeads.textContent = deptLeadCount;
+            if (statStaff) statStaff.textContent = staffCount;
+
+            if (badge) badge.textContent = `${totalCount} user${totalCount === 1 ? '' : 's'}`;
 
             if (!tbody) return;
-            if (allUsers.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No users found.</td></tr>`;
+
+            const searchInput = document.getElementById('user-search-input');
+            const roleFilter = document.getElementById('user-role-filter-select');
+            const deptFilter = document.getElementById('user-dept-filter-select');
+
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const selectedRole = roleFilter ? roleFilter.value : '';
+            const selectedDept = deptFilter ? deptFilter.value : '';
+
+            const filteredUsers = allUsers.filter(u => {
+                const matchQuery = !query || 
+                    (u.full_name && u.full_name.toLowerCase().includes(query)) ||
+                    (u.email && u.email.toLowerCase().includes(query)) ||
+                    (u.department && u.department.toLowerCase().includes(query)) ||
+                    (u.position && u.position.toLowerCase().includes(query));
+
+                let matchRole = true;
+                if (selectedRole) {
+                    if (selectedRole === 'super_admin') {
+                        matchRole = u.role === 'super_admin' || u.role === 'admin';
+                    } else if (selectedRole === 'dept_lead') {
+                        matchRole = u.role === 'dept_lead' || u.role === 'admin_lead';
+                    } else if (selectedRole === 'tech_member') {
+                        matchRole = u.role === 'tech_member' || u.role === 'agent';
+                    } else if (selectedRole === 'dept_agent') {
+                        matchRole = u.role === 'dept_agent' || u.role === 'dept_member';
+                    } else if (selectedRole === 'employee') {
+                        matchRole = u.role === 'employee' || u.role === 'customer' || u.role === 'user';
+                    } else {
+                        matchRole = u.role === selectedRole;
+                    }
+                }
+
+                const matchDept = !selectedDept || (u.department && u.department === selectedDept);
+
+                return matchQuery && matchRole && matchDept;
+            });
+
+            if (displayCount) displayCount.textContent = filteredUsers.length;
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 0.9rem;">No matching corporate accounts found.</td></tr>`;
                 return;
             }
 
             const callerIsSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
 
-            tbody.innerHTML = allUsers.map(u => {
+            tbody.innerHTML = filteredUsers.map(u => {
                 const isSuperAdmin = u.role === 'super_admin' || u.role === 'admin';
                 const isDeptLead = u.role === 'dept_lead' || u.role === 'admin_lead' || Boolean(u.can_manage_departments);
                 const isTech = u.role === 'tech_member' || u.role === 'agent';
@@ -1225,6 +1342,14 @@
                 `;
             }).join('');
         }
+
+        const userSearchInput = document.getElementById('user-search-input');
+        const userRoleFilter = document.getElementById('user-role-filter-select');
+        const userDeptFilter = document.getElementById('user-dept-filter-select');
+
+        if (userSearchInput) userSearchInput.addEventListener('input', renderUsersTable);
+        if (userRoleFilter) userRoleFilter.addEventListener('change', renderUsersTable);
+        if (userDeptFilter) userDeptFilter.addEventListener('change', renderUsersTable);
 
         window.saveUserHierarchy = async function(userId) {
             const roleSelect = document.getElementById(`user-role-select-${userId}`);

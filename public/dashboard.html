@@ -305,10 +305,55 @@
                     </div>
                 </div>
 
+                <!-- Stats Grid for Users & Roles -->
+                <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Accounts</div>
+                        <div class="stat-value" id="stat-users-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Super Admins</div>
+                        <div class="stat-value" id="stat-users-superadmin" style="color: var(--accent-yellow);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Department Admin Leads</div>
+                        <div class="stat-value" id="stat-users-deptleads" style="color: #60a5fa;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Staff &amp; Support</div>
+                        <div class="stat-value" id="stat-users-staff" style="color: var(--success-green);">0</div>
+                    </div>
+                </section>
+
+                <!-- Users Search & Filter Toolbar -->
+                <div class="user-toolbar">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <select id="user-role-filter-select" class="form-input" style="width: auto; max-width: 220px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                            <option value="">All Hierarchy Roles</option>
+                            <option value="super_admin">Super Admin</option>
+                            <option value="dept_lead">Department Admin Lead</option>
+                            <option value="tech_member">Developer Team</option>
+                            <option value="dept_agent">Department Staff</option>
+                            <option value="employee">Regular Employee</option>
+                        </select>
+                        <select id="user-dept-filter-select" class="form-input" style="width: auto; max-width: 200px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="search-wrapper" style="flex: 1; max-width: 320px; min-width: 220px;">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="user-search-input" class="search-input" placeholder="Search by name, email, department...">
+                    </div>
+                </div>
+
                 <div class="tickets-card">
-                    <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                        <h3 style="font-family: var(--font-heading); font-size: 1.05rem;">All Registered Corporate Accounts</h3>
-                        <span style="font-size: 0.8rem; color: var(--text-secondary);" id="users-count-badge">0 users</span>
+                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">All Registered Corporate Accounts</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="users-count-badge">0 users</span>
+                        </div>
                     </div>
                     <div class="users-table-container table-scroll-container">
                         <table class="tickets-table">
@@ -326,6 +371,10 @@
                                 <tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">Loading user directory...</td></tr>
                             </tbody>
                         </table>
+                    </div>
+                    <div style="padding: 0.65rem 1.25rem; border-top: 1px solid var(--border-color); background-color: var(--bg-deep-charcoal); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); flex-shrink: 0;">
+                        <span><strong id="users-display-count" style="color: var(--text-secondary);">0</strong> accounts visible</span>
+                        <span>Role updates are applied directly to system session tokens</span>
                     </div>
                 </div>
             </div>
