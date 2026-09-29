@@ -638,12 +638,62 @@ body.dashboard-page {
 
 /* Full-Height Card Layouts (Eliminating Bottom Empty Space & Enabling Card-Only Scroll) */
 #view-overview,
+#view-departments,
 #view-users {
     display: flex;
     flex-direction: column;
     flex: 1;
     min-height: 0;
     height: 100%;
+}
+
+#view-departments .dashboard-header {
+    margin-bottom: 0.85rem;
+    flex-shrink: 0;
+}
+
+.dept-tabs-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.85rem;
+    flex-shrink: 0;
+}
+
+.dept-tab-panel {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+#panel-active-departments .tickets-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    overflow: hidden;
+}
+
+#panel-active-departments .departments-table-container {
+    flex: 1;
+    min-height: 0;
+    max-height: none;
+    overflow-y: scroll !important;
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: #4a4a4a var(--bg-deep-charcoal);
+}
+
+#panel-department-restrictions .tickets-card {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 0;
+    overflow-y: auto;
 }
 
 #view-users .dashboard-header {
@@ -718,12 +768,15 @@ body.dashboard-page {
         overflow-y: auto;
     }
     #view-users,
-    #view-overview {
+    #view-overview,
+    #view-departments {
         height: auto;
         min-height: 100%;
     }
     #view-users .tickets-card,
-    #view-overview .tickets-card {
+    #view-overview .tickets-card,
+    #panel-active-departments .tickets-card,
+    #panel-department-restrictions .tickets-card {
         flex: none;
     }
     #view-users .users-table-container {
@@ -731,6 +784,10 @@ body.dashboard-page {
         overflow-y: scroll !important;
     }
     #view-overview .tickets-table-container {
+        max-height: 380px;
+        overflow-y: scroll !important;
+    }
+    #panel-active-departments .departments-table-container {
         max-height: 380px;
         overflow-y: scroll !important;
     }
@@ -878,6 +935,7 @@ body.dashboard-page {
     margin-bottom: 1.25rem;
 }
 
+.dept-tabs,
 .filter-tabs {
     display: flex;
     gap: 0.5rem;
@@ -887,22 +945,28 @@ body.dashboard-page {
     border: 1px solid var(--border-color);
 }
 
+.dept-tab,
 .filter-tab {
     background: transparent;
     border: none;
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 600;
-    padding: 0.4rem 0.85rem;
+    padding: 0.4rem 0.95rem;
     border-radius: 6px;
     cursor: pointer;
     transition: var(--transition-smooth);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
 }
 
+.dept-tab:hover,
 .filter-tab:hover {
     color: var(--text-primary);
 }
 
+.dept-tab.active,
 .filter-tab.active {
     background-color: var(--accent-yellow);
     color: var(--bg-pitch-black);
