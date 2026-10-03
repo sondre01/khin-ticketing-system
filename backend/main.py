@@ -16,16 +16,19 @@ if __name__ == "__main__" and os.path.exists(venv_python) and sys.executable.low
     sys.exit(result.returncode)
 
 import psycopg2
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
+import secrets
+import json
 from fastapi.responses import RedirectResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 
-from backend.config import HOST, PORT, TECH_ACCESS_KEY, GMAIL_USER, GMAIL_APP_PASSWORD
+from backend.config import HOST, PORT, TECH_ACCESS_KEY, GMAIL_USER, GMAIL_APP_PASSWORD, OTP_EXPIRE_MINUTES
 from backend.database import init_db_pool, close_db_pool, initialize_database, get_db_cursor
 from backend.auth import hash_password, verify_password, create_access_token, decode_access_token
+from backend.email_service import send_otp_email
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -96,6 +99,20 @@ class RegisterRequest(BaseModel):
     department: str | None = Field(default="General", max_length=100)
     position: str | None = Field(default="Employee", max_length=100)
     role: str | None = Field(default="employee")
+
+class SendOtpRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
+    password: str = Field(..., min_length=6, max_length=100)
+    full_name: str = Field(..., min_length=1, max_length=100)
+    department: str | None = Field(default="General", max_length=100)
+    position: str | None = Field(default="Employee", max_length=100)
+
+class VerifyOtpRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
+    otp_code: str = Field(..., min_length=6, max_length=10)
+
+class ResendOtpRequest(BaseModel):
+    email: str = Field(..., min_length=3, max_length=255)
 
 class LoginRequest(BaseModel):
     email: str
@@ -354,49 +371,217 @@ def dashboard_redirect():
 # --- Auth Routes ---
 
 
-@app.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
-def register(req: RegisterRequest):
+@app.post("/api/auth/send-registration-otp")
+def send_registration_otp(req: SendOtpRequest):
     email = req.email.strip().lower()
     full_name = req.full_name.strip()
     department = (req.department or "General").strip()
     position = (req.position or "Employee").strip()
-    # Strategy 1 (Zero-Trust Role Enforcement): 
-    # All public registrations are strictly assigned role = 'employee'.
-    # Privileged roles (tech_member, dept_agent, super_admin) and management flags
-    # can ONLY be granted by the Super Admin / Tech Manager via the Users & Hierarchy panel.
-    final_role = "employee"
-    can_manage_depts = False
-
-    pwd_hash = hash_password(req.password)
+    
+    if not full_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Full name is required.")
+    if len(req.password) < 6:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Password must be at least 6 characters.")
 
     try:
         with get_db_cursor(commit=True) as cur:
-            cur.execute("SELECT id FROM ticketing_system.users WHERE email = %s;", (email,))
-            if cur.fetchone():
+            # Check if user already exists and is verified
+            cur.execute("SELECT id, is_verified FROM ticketing_system.users WHERE email = %s;", (email,))
+            existing = cur.fetchone()
+            if existing and existing.get("is_verified", True):
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="An account with this email address already exists."
+                    detail="An account with this email address already exists. Please sign in."
                 )
+
+            # Throttle requests: 30 seconds cooldown between sending codes
+            cur.execute(
+                """
+                SELECT created_at FROM ticketing_system.email_verifications
+                WHERE email = %s AND purpose = 'registration' AND created_at > (NOW() - INTERVAL '30 seconds')
+                ORDER BY created_at DESC LIMIT 1;
+                """,
+                (email,)
+            )
+            if cur.fetchone():
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Please wait 30 seconds before requesting another verification code."
+                )
+
+            otp_code = f"{secrets.randbelow(900000) + 100000}"
+            pwd_hash = hash_password(req.password)
+
+            payload = {
+                "full_name": full_name,
+                "department": department,
+                "position": position,
+                "password_hash": pwd_hash
+            }
+
+            # Delete any prior registration OTPs for this email address
+            cur.execute(
+                "DELETE FROM ticketing_system.email_verifications WHERE email = %s AND purpose = 'registration';",
+                (email,)
+            )
 
             cur.execute(
                 """
-                INSERT INTO ticketing_system.users 
-                (email, password_hash, full_name, role, department, position, can_manage_departments) 
-                VALUES (%s, %s, %s, %s, %s, %s, %s) 
-                RETURNING id, email, full_name, role, department, position, can_manage_departments, created_at;
+                INSERT INTO ticketing_system.email_verifications 
+                (email, otp_code, purpose, payload, attempts, expires_at)
+                VALUES (%s, %s, 'registration', %s, 0, NOW() + INTERVAL '10 minutes');
                 """,
-                (email, pwd_hash, full_name, final_role, department, position, can_manage_depts)
+                (email, otp_code, json.dumps(payload))
             )
-            new_user = cur.fetchone()
+
+        # Dispatch email via Gmail SMTP
+        email_res = send_otp_email(to_email=email, recipient_name=full_name, otp_code=otp_code)
+        
+        response_payload = {
+            "success": True,
+            "message": f"Verification code sent to {email}. Please check your inbox.",
+            "email": email,
+            "expires_in_minutes": 10
+        }
+        if email_res.get("dev_code"):
+            response_payload["dev_code"] = email_res["dev_code"]
+
+        return response_payload
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Send registration OTP error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to send verification code: {str(e)}"
+        )
+
+
+@app.post("/api/auth/verify-registration-otp", status_code=status.HTTP_201_CREATED)
+def verify_registration_otp(req: VerifyOtpRequest):
+    email = req.email.strip().lower()
+    otp_input = req.otp_code.strip().replace(" ", "")
+
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                SELECT id, otp_code, payload, attempts, expires_at 
+                FROM ticketing_system.email_verifications 
+                WHERE email = %s AND purpose = 'registration' 
+                ORDER BY created_at DESC LIMIT 1;
+                """,
+                (email,)
+            )
+            record = cur.fetchone()
+            if not record:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No pending verification code found for this email. Please request a new code."
+                )
+
+            # Check expiration
+            cur.execute("SELECT NOW() > %s as is_expired;", (record["expires_at"],))
+            exp_check = cur.fetchone()
+            if exp_check and exp_check["is_expired"]:
+                cur.execute("DELETE FROM ticketing_system.email_verifications WHERE id = %s;", (record["id"],))
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Verification code has expired. Please request a new code."
+                )
+
+            # Check attempt limit
+            attempts = record.get("attempts") or 0
+            if attempts >= 5:
+                cur.execute("DELETE FROM ticketing_system.email_verifications WHERE id = %s;", (record["id"],))
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Too many invalid attempts. Please request a new verification code."
+                )
+
+            if record["otp_code"].strip() != otp_input:
+                cur.execute("UPDATE ticketing_system.email_verifications SET attempts = attempts + 1 WHERE id = %s;", (record["id"],))
+                remaining = 4 - attempts
+                if remaining <= 0:
+                    cur.execute("DELETE FROM ticketing_system.email_verifications WHERE id = %s;", (record["id"],))
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Invalid code. Maximum attempts reached. Please request a new code."
+                    )
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Incorrect verification code. {remaining} attempt(s) remaining."
+                )
+
+            # Code verified! Unpack payload and create or activate user account
+            cur.execute("SELECT id, email, full_name, role, department, position, can_manage_departments, is_verified, created_at FROM ticketing_system.users WHERE email = %s;", (email,))
+            existing_user = cur.fetchone()
+
+            raw_payload = record.get("payload")
+            payload = json.loads(raw_payload) if isinstance(raw_payload, str) else (raw_payload or {})
+
+            full_name = payload.get("full_name", "").strip() or (existing_user.get("full_name", "") if existing_user else "")
+            department = payload.get("department", "General").strip() or (existing_user.get("department", "General") if existing_user else "General")
+            position = payload.get("position", "Employee").strip() or (existing_user.get("position", "Employee") if existing_user else "Employee")
+            pwd_hash = payload.get("password_hash")
+
+            if existing_user:
+                if pwd_hash:
+                    cur.execute(
+                        """
+                        UPDATE ticketing_system.users 
+                        SET is_verified = TRUE, password_hash = %s, full_name = %s, department = %s, position = %s
+                        WHERE email = %s
+                        RETURNING id, email, full_name, role, department, position, can_manage_departments, is_verified, created_at;
+                        """,
+                        (pwd_hash, full_name or existing_user["full_name"], department, position, email)
+                    )
+                else:
+                    cur.execute(
+                        """
+                        UPDATE ticketing_system.users 
+                        SET is_verified = TRUE
+                        WHERE email = %s
+                        RETURNING id, email, full_name, role, department, position, can_manage_departments, is_verified, created_at;
+                        """,
+                        (email,)
+                    )
+                new_user = cur.fetchone()
+            else:
+                if not pwd_hash:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Registration session expired or corrupted. Please fill out the registration form again."
+                    )
+                cur.execute(
+                    """
+                    INSERT INTO ticketing_system.users 
+                    (email, password_hash, full_name, role, department, position, can_manage_departments, is_verified) 
+                    VALUES (%s, %s, %s, 'employee', %s, %s, FALSE, TRUE)
+                    ON CONFLICT (email) DO UPDATE 
+                    SET password_hash = EXCLUDED.password_hash,
+                        full_name = EXCLUDED.full_name,
+                        department = EXCLUDED.department,
+                        position = EXCLUDED.position,
+                        is_verified = TRUE
+                    RETURNING id, email, full_name, role, department, position, can_manage_departments, is_verified, created_at;
+                    """,
+                    (email, pwd_hash, full_name, department, position)
+                )
+                new_user = cur.fetchone()
+
             if new_user.get("created_at"):
                 new_user["created_at"] = new_user["created_at"].isoformat()
 
-            # Generate access token immediately for auto-login
-            token_data = {"sub": str(new_user["id"]), "email": new_user["email"], "role": final_role}
+            # Delete used verification records
+            cur.execute("DELETE FROM ticketing_system.email_verifications WHERE email = %s;", (email,))
+
+            # Issue JWT token for immediate seamless login
+            token_data = {"sub": str(new_user["id"]), "email": new_user["email"], "role": new_user["role"]}
             access_token = create_access_token(data=token_data)
 
             return {
-                "message": "User registered successfully",
+                "message": "Account email verified and registered successfully!",
                 "access_token": access_token,
                 "token_type": "bearer",
                 "user": new_user
@@ -404,10 +589,288 @@ def register(req: RegisterRequest):
     except HTTPException:
         raise
     except Exception as e:
+        logger.error(f"Verify registration OTP error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Verification failed: {str(e)}"
+        )
+
+
+@app.post("/api/auth/resend-registration-otp")
+def resend_registration_otp(req: ResendOtpRequest):
+    email = req.email.strip().lower()
+
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                SELECT id, payload, created_at 
+                FROM ticketing_system.email_verifications 
+                WHERE email = %s
+                ORDER BY created_at DESC LIMIT 1;
+                """,
+                (email,)
+            )
+            record = cur.fetchone()
+
+            if not record:
+                # Check if unverified user exists in ticketing_system.users
+                cur.execute("SELECT id, full_name, is_verified FROM ticketing_system.users WHERE email = %s;", (email,))
+                user = cur.fetchone()
+                if not user:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="No pending registration found for this email. Please fill out the registration form."
+                    )
+                if user.get("is_verified", True):
+                    return {"message": "Account is already verified. You can sign in immediately."}
+
+                otp_code = f"{secrets.randbelow(900000) + 100000}"
+                cur.execute(
+                    """
+                    INSERT INTO ticketing_system.email_verifications 
+                    (email, otp_code, purpose, attempts, expires_at)
+                    VALUES (%s, %s, 'registration', 0, NOW() + INTERVAL '10 minutes')
+                    RETURNING id;
+                    """,
+                    (email, otp_code)
+                )
+                full_name = user["full_name"]
+            else:
+                # Check 30s cooldown
+                cur.execute(
+                    """
+                    SELECT created_at FROM ticketing_system.email_verifications
+                    WHERE id = %s AND created_at > (NOW() - INTERVAL '30 seconds');
+                    """,
+                    (record["id"],)
+                )
+                if cur.fetchone():
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail="Please wait 30 seconds before requesting another code."
+                    )
+
+                otp_code = f"{secrets.randbelow(900000) + 100000}"
+                cur.execute(
+                    """
+                    UPDATE ticketing_system.email_verifications 
+                    SET otp_code = %s, attempts = 0, created_at = NOW(), expires_at = NOW() + INTERVAL '10 minutes'
+                    WHERE id = %s;
+                    """,
+                    (otp_code, record["id"])
+                )
+
+                raw_payload = record.get("payload")
+                payload = json.loads(raw_payload) if isinstance(raw_payload, str) else (raw_payload or {})
+                full_name = payload.get("full_name") or "User"
+
+        email_res = send_otp_email(to_email=email, recipient_name=full_name, otp_code=otp_code)
+        
+        response_payload = {
+            "success": True,
+            "message": f"A new verification code has been sent to {email}.",
+            "email": email,
+            "expires_in_minutes": 10
+        }
+        if email_res.get("dev_code"):
+            response_payload["dev_code"] = email_res["dev_code"]
+
+        return response_payload
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Resend registration OTP error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend verification code: {str(e)}"
+        )
+
+
+@app.post("/api/auth/register", status_code=status.HTTP_201_CREATED)
+def register(req: RegisterRequest, request: Request):
+    email = req.email.strip().lower()
+    full_name = req.full_name.strip()
+    department = (req.department or "General").strip()
+    position = (req.position or "Employee").strip()
+    final_role = "employee"
+    can_manage_depts = False
+
+    pwd_hash = hash_password(req.password)
+
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute("SELECT id, is_verified FROM ticketing_system.users WHERE email = %s;", (email,))
+            existing = cur.fetchone()
+            if existing and existing.get("is_verified", True):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="An account with this email address already exists. Please sign in."
+                )
+
+            # Insert or update user account with is_verified = FALSE (must verify via email)
+            cur.execute(
+                """
+                INSERT INTO ticketing_system.users 
+                (email, password_hash, full_name, role, department, position, can_manage_departments, is_verified) 
+                VALUES (%s, %s, %s, %s, %s, %s, %s, FALSE) 
+                ON CONFLICT (email) DO UPDATE 
+                SET password_hash = EXCLUDED.password_hash,
+                    full_name = EXCLUDED.full_name,
+                    department = EXCLUDED.department,
+                    position = EXCLUDED.position,
+                    is_verified = FALSE
+                RETURNING id, email, full_name, role, department, position, can_manage_departments, is_verified, created_at;
+                """,
+                (email, pwd_hash, full_name, final_role, department, position, can_manage_depts)
+            )
+            new_user = cur.fetchone()
+            if new_user.get("created_at"):
+                new_user["created_at"] = new_user["created_at"].isoformat()
+
+            # Generate secure verification token and numeric OTP code
+            token = secrets.token_urlsafe(32)
+            otp_code = f"{secrets.randbelow(900000) + 100000}"
+
+            cur.execute("DELETE FROM ticketing_system.email_verifications WHERE email = %s;", (email,))
+            cur.execute(
+                """
+                INSERT INTO ticketing_system.email_verifications 
+                (email, otp_code, token, purpose, attempts, expires_at)
+                VALUES (%s, %s, %s, 'registration', 0, NOW() + INTERVAL '24 hours');
+                """,
+                (email, otp_code, token)
+            )
+
+        # Build verification URL based on host header
+        client_host = request.headers.get("origin") or f"http://{request.headers.get('host', f'{HOST}:{PORT}')}"
+        verification_url = f"{client_host}/api/auth/verify-email?token={token}"
+
+        # Dispatch verification email via Gmail SMTP
+        email_res = send_otp_email(
+            to_email=email,
+            recipient_name=full_name,
+            otp_code=otp_code,
+            verification_url=verification_url
+        )
+
+        return {
+            "message": f"Account created! We've sent a verification link to {email}. Please verify your account in your email inbox before logging in.",
+            "email": email,
+            "is_verified": False,
+            "user": new_user,
+            "dev_code": email_res.get("dev_code")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
         logger.error(f"Registration error: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to register user. Database error: {str(e)}"
+        )
+
+
+@app.get("/api/auth/verify-email")
+def verify_email_via_link(token: str, request: Request):
+    clean_token = token.strip()
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                SELECT id, email, expires_at FROM ticketing_system.email_verifications 
+                WHERE token = %s AND (purpose = 'registration' OR purpose IS NULL)
+                ORDER BY created_at DESC LIMIT 1;
+                """,
+                (clean_token,)
+            )
+            record = cur.fetchone()
+            if not record:
+                return RedirectResponse(url="/index.html?verify_status=invalid", status_code=status.HTTP_303_SEE_OTHER)
+
+            cur.execute("SELECT NOW() > %s as is_expired;", (record["expires_at"],))
+            exp_check = cur.fetchone()
+            if exp_check and exp_check["is_expired"]:
+                return RedirectResponse(
+                    url=f"/index.html?verify_status=expired&email={record['email']}", 
+                    status_code=status.HTTP_303_SEE_OTHER
+                )
+
+            # Activate user account
+            cur.execute("UPDATE ticketing_system.users SET is_verified = TRUE WHERE email = %s;", (record["email"],))
+            cur.execute("DELETE FROM ticketing_system.email_verifications WHERE email = %s;", (record["email"],))
+
+        return RedirectResponse(
+            url=f"/index.html?verify_status=success&email={record['email']}", 
+            status_code=status.HTTP_303_SEE_OTHER
+        )
+    except Exception as e:
+        logger.error(f"Link verification error: {e}")
+        return RedirectResponse(url="/index.html?verify_status=error", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@app.post("/api/auth/resend-verification")
+def resend_verification_email(req: ResendOtpRequest, request: Request):
+    email = req.email.strip().lower()
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute("SELECT id, full_name, is_verified FROM ticketing_system.users WHERE email = %s;", (email,))
+            user = cur.fetchone()
+            if not user:
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No account found with this email address.")
+            if user.get("is_verified", True):
+                return {"message": "Account is already verified. You can sign in immediately."}
+
+            # Check 30s throttling
+            cur.execute(
+                """
+                SELECT created_at FROM ticketing_system.email_verifications
+                WHERE email = %s AND created_at > (NOW() - INTERVAL '30 seconds');
+                """,
+                (email,)
+            )
+            if cur.fetchone():
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail="Please wait 30 seconds before requesting another verification email."
+                )
+
+            token = secrets.token_urlsafe(32)
+            otp_code = f"{secrets.randbelow(900000) + 100000}"
+
+            cur.execute("DELETE FROM ticketing_system.email_verifications WHERE email = %s;", (email,))
+            cur.execute(
+                """
+                INSERT INTO ticketing_system.email_verifications 
+                (email, otp_code, token, purpose, attempts, expires_at)
+                VALUES (%s, %s, %s, 'registration', 0, NOW() + INTERVAL '24 hours');
+                """,
+                (email, otp_code, token)
+            )
+
+        client_host = request.headers.get("origin") or f"http://{request.headers.get('host', f'{HOST}:{PORT}')}"
+        verification_url = f"{client_host}/api/auth/verify-email?token={token}"
+
+        email_res = send_otp_email(
+            to_email=email,
+            recipient_name=user["full_name"],
+            otp_code=otp_code,
+            verification_url=verification_url
+        )
+
+        return {
+            "success": True,
+            "message": f"A new verification link has been sent to {email}. Please check your email.",
+            "email": email,
+            "dev_code": email_res.get("dev_code")
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Resend verification error: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend verification email: {str(e)}"
         )
 
 @app.post("/api/auth/login")
@@ -432,6 +895,12 @@ def login(req: LoginRequest):
             detail="Invalid email or password."
         )
 
+    if user.get("is_verified") is False:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Your account email address has not been verified yet. Please complete verification."
+        )
+
     # Normalize legacy roles for active token session
     user_role = user["role"]
     if user_role == "admin":
@@ -452,6 +921,7 @@ def login(req: LoginRequest):
         "department": user.get("department", "General"),
         "position": user.get("position", "Employee"),
         "can_manage_departments": bool(user.get("can_manage_departments", False)),
+        "is_verified": bool(user.get("is_verified", True)),
         "created_at": user["created_at"].isoformat() if user.get("created_at") else None
     }
 

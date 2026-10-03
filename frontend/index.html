@@ -30,6 +30,30 @@
                     <p>Enter your credentials to access your tickets</p>
                 </div>
                 
+                <div id="verified-success-banner" style="display: none; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.88rem; color: #4ade80; align-items: center; gap: 0.75rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Your email has been verified! You can now sign in below.</span>
+                </div>
+
+                <div id="signin-unverified-alert" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #f87171;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <strong style="color: #fff;">Account Verification Required</strong>
+                    </div>
+                    <p style="margin: 0 0 0.5rem 0; color: #fecaca;">Please enter the 6-digit verification code sent to your email to activate your account.</p>
+                    <div style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="link-goto-otp-verify" class="btn-link-action" style="font-weight: 700; color: var(--accent-yellow); text-decoration: underline;">Enter verification code &rarr;</button>
+                        <span style="color: rgba(255, 255, 255, 0.3);">&bull;</span>
+                        <button type="button" id="link-resend-signin-verify" class="btn-link-action" style="font-weight: 600;">Resend code</button>
+                    </div>
+                </div>
+
                 <form id="signin-form" novalidate>
                     <div class="form-group">
                         <label for="signin-email" class="form-label">Email Address</label>
@@ -172,7 +196,7 @@
                 </div>
             </div>
 
-            <!-- --- SIGN UP STEP 2: PASSWORD SETUP & CONFIRMATION CARD --- -->
+            <!-- --- SIGN UP STEP 2: PASSWORD SETUP & REGISTRATION CARD --- -->
             <div id="signup-password-container" class="form-container">
                 <div class="auth-card-header">
                     <span style="display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--accent-yellow); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">Step 2 of 2: Security &amp; Password</span>
@@ -219,12 +243,20 @@
                         </div>
                     </div>
 
+                    <div style="background-color: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.15); border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.6rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-yellow); flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>For safety, a 6-digit verification code will be sent to your email to verify and activate your account.</span>
+                    </div>
+
                     <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
                         <button type="button" class="btn-secondary" id="btn-back-to-step1" style="flex: 1; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
                             &larr; Back
                         </button>
                         <button type="submit" class="btn-primary" id="btn-complete-signup" style="flex: 2;">
-                            <span>Create Account</span>
+                            <span>Continue to Verification &rarr;</span>
                         </button>
                     </div>
                 </form>
@@ -232,6 +264,63 @@
                 <div class="auth-switch">
                     Already have an account? 
                     <a href="#" class="auth-switch-link" id="link-step2-to-signin">Sign in here</a>
+                </div>
+            </div>
+
+            <!-- --- STEP 3: EMAIL OTP VERIFICATION CARD --- -->
+            <div id="signup-otp-container" class="form-container">
+                <div class="auth-card-header">
+                    <span style="display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--accent-yellow); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">Step 3 of 3: Safety Verification</span>
+                    <h2 id="otp-title">Enter Verification Code</h2>
+                    <p id="otp-subtitle">We sent a 6-digit verification code to <strong id="otp-display-email" style="color: var(--accent-yellow); font-weight: 600;">your email</strong></p>
+                </div>
+                
+                <form id="otp-form" novalidate>
+                    <div class="form-group">
+                        <label for="signup-otp-code" class="form-label" style="text-align: center; display: block;">6-Digit Verification Code</label>
+                        <div class="input-wrapper" style="justify-content: center;">
+                            <input 
+                                type="text" 
+                                id="signup-otp-code" 
+                                class="form-input otp-code-input" 
+                                placeholder="000000" 
+                                maxlength="6" 
+                                inputmode="numeric" 
+                                pattern="[0-9]*" 
+                                autocomplete="one-time-code"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="otp-resend-bar">
+                        <span>Didn't receive the code?</span>
+                        <button type="button" id="btn-resend-otp" class="btn-link-action" disabled>
+                            Resend in <span id="resend-countdown">60</span>s
+                        </button>
+                    </div>
+
+                    <div style="background-color: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.15); border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 1rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.6rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-yellow); flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Code expires in <strong id="otp-expiry-timer" style="color: var(--accent-yellow);">10:00</strong>. Please also check your spam or junk folder.</span>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn-secondary" id="btn-back-to-step2" style="flex: 1; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+                            &larr; Back
+                        </button>
+                        <button type="submit" class="btn-primary" id="btn-verify-otp" style="flex: 2;">
+                            <span>Verify &amp; Create Account &rarr;</span>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="auth-switch">
+                    Entered the wrong email? 
+                    <a href="#" class="auth-switch-link" id="link-otp-back-to-step1">Change email address</a>
                 </div>
             </div>
             

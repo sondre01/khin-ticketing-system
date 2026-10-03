@@ -1215,3 +1215,60 @@ body.dashboard-page {
     white-space: pre-wrap;
 }
 
+/* --- Email Verification / OTP Code Styles --- */
+.otp-code-input {
+    letter-spacing: 0.6em;
+    text-align: center;
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    font-family: 'SF Mono', Consolas, Monaco, 'Courier New', monospace !important;
+    color: var(--accent-yellow) !important;
+    padding: 0.85rem !important;
+    background: rgba(0, 0, 0, 0.45) !important;
+    border: 1.5px solid rgba(255, 215, 0, 0.35) !important;
+    border-radius: 8px !important;
+    max-width: 280px;
+    width: 100%;
+    margin: 0 auto;
+    transition: var(--transition-smooth);
+}
+
+.otp-code-input:focus {
+    border-color: var(--accent-yellow) !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3) !important;
+    outline: none;
+}
+
+.otp-resend-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.85rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.btn-link-action {
+    background: none;
+    border: none;
+    color: var(--accent-yellow);
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0;
+    transition: var(--transition-smooth);
+    text-decoration: underline;
+}
+
+.btn-link-action:hover:not(:disabled) {
+    color: #ffffff;
+}
+
+.btn-link-action:disabled {
+    color: var(--text-muted);
+    cursor: not-allowed;
+    text-decoration: none;
+    opacity: 0.6;
+}
+
+

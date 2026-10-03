@@ -25,8 +25,11 @@ PORT = int(os.getenv("PORT", "5000"))
 # Tech Team / Admin Access Passcode
 TECH_ACCESS_KEY = os.getenv("TECH_ACCESS_KEY", "P@55w0rdKt!()")
 
-# Gmail IMAP Configuration
+# Gmail IMAP & SMTP Configuration
 GMAIL_USER = os.getenv("GMAIL_USER", "gamboa.khinandrei@gmail.com")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD", "").replace(" ", "")
 GMAIL_IMAP_HOST = os.getenv("GMAIL_IMAP_HOST", "imap.gmail.com")
 GMAIL_IMAP_PORT = int(os.getenv("GMAIL_IMAP_PORT", "993"))
+GMAIL_SMTP_HOST = os.getenv("GMAIL_SMTP_HOST", "smtp.gmail.com")
+GMAIL_SMTP_PORT = int(os.getenv("GMAIL_SMTP_PORT", "465"))
+OTP_EXPIRE_MINUTES = int(os.getenv("OTP_EXPIRE_MINUTES", "10"))

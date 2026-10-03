@@ -4,9 +4,19 @@ import email
 import email.message
 import email.utils
 from email.header import decode_header
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 import logging
 from backend.database import get_db_cursor
-from backend.config import GMAIL_IMAP_HOST, GMAIL_IMAP_PORT, GMAIL_USER, GMAIL_APP_PASSWORD
+from backend.config import (
+    GMAIL_IMAP_HOST,
+    GMAIL_IMAP_PORT,
+    GMAIL_SMTP_HOST,
+    GMAIL_SMTP_PORT,
+    GMAIL_USER,
+    GMAIL_APP_PASSWORD,
+)
 
 logger = logging.getLogger("ticketing_system.email_service")
 
@@ -319,6 +329,137 @@ def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = False) -> dict:
             "synced_count": 0,
             "message": f"Failed to sync emails: {str(e)}"
         }
+
+
+def send_otp_email(to_email: str, recipient_name: str, otp_code: str, verification_url: str = "", purpose: str = "registration") -> dict:
+    """
+    Sends an email verification OTP code via Gmail SMTP.
+    Features a responsive, high-contrast HTML template styled to match the Khin Ticket branding.
+    """
+    if not GMAIL_USER or not GMAIL_APP_PASSWORD:
+        logger.warning(f"GMAIL_APP_PASSWORD not set. Cannot send verification email to {to_email}. Code was: {otp_code}")
+        return {
+            "success": False,
+            "message": "Email service credentials not configured. Please contact administrator.",
+            "dev_code": otp_code
+        }
+
+    display_name = recipient_name.strip() if recipient_name else "User"
+    subject = f"Your Verification Code: {otp_code} - Khin Ticket System"
+
+    html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{subject}</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #e2e8f0;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background-color: #0b0f19; padding: 30px 15px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width: 520px; background-color: #111827; border: 1px solid rgba(255, 215, 0, 0.25); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 28px 24px; text-align: center; border-bottom: 1px solid rgba(255, 215, 0, 0.2);">
+              <div style="display: inline-block; background-color: #000; border: 1px solid #ffd700; border-radius: 8px; padding: 6px 14px; margin-bottom: 10px;">
+                <span style="color: #ffd700; font-weight: 800; font-size: 16px; letter-spacing: 0.1em; text-transform: uppercase;">KHIN TICKET</span>
+              </div>
+              <h1 style="color: #ffffff; font-size: 20px; font-weight: 700; margin: 0; letter-spacing: -0.01em;">Account Verification Code</h1>
+            </td>
+          </tr>
+          <!-- Body -->
+          <tr>
+            <td style="padding: 32px 28px;">
+              <p style="font-size: 15px; line-height: 1.6; margin: 0 0 14px 0; color: #f1f5f9;">
+                Hello <strong>{display_name}</strong>,
+              </p>
+              <p style="font-size: 14px; line-height: 1.6; margin: 0 0 22px 0; color: #94a3b8;">
+                Thank you for creating an account with Khin Ticket System. For your security and safety, please enter this 6-digit verification code on the registration screen:
+              </p>
+              
+              <!-- Code Card -->
+              <div style="background-color: #0a0f1d; border: 2px dashed rgba(255, 215, 0, 0.5); border-radius: 10px; padding: 22px 16px; text-align: center; margin: 0 0 24px 0;">
+                <div style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.15em; color: #ffd700; font-weight: 700; margin-bottom: 10px;">
+                  Your 6-Digit Code
+                </div>
+                <div style="font-family: 'SF Mono', Consolas, Monaco, 'Courier New', monospace; font-size: 38px; font-weight: 800; color: #ffd700; letter-spacing: 10px; padding-left: 10px;">
+                  {otp_code}
+                </div>
+                <div style="font-size: 12px; color: #94a3b8; margin-top: 10px;">
+                  Expires in <strong>10 minutes</strong>
+                </div>
+              </div>
+
+              <div style="background-color: rgba(255, 215, 0, 0.05); border-left: 3px solid #ffd700; padding: 12px 14px; border-radius: 4px; margin-bottom: 24px;">
+                <p style="font-size: 13px; color: #cbd5e1; margin: 0; line-height: 1.5;">
+                  Type or paste this code directly into the verification screen in your browser to activate your account.
+                </p>
+              </div>
+
+              <p style="font-size: 12px; line-height: 1.5; color: #64748b; margin: 0;">
+                <strong>Security Notice:</strong> Never share this verification code with anyone. If you did not request this registration, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #0b0f19; padding: 18px 24px; text-align: center; border-top: 1px solid rgba(255, 255, 255, 0.05);">
+              <p style="font-size: 11px; color: #64748b; margin: 0;">
+                Khin Ticket System &bull; Secure Corporate Enterprise Helpdesk
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>"""
+
+    plain_content = f"""Khin Ticket System - Account Verification Code
+
+Hello {display_name},
+
+Thank you for registering with Khin Ticket System.
+
+Please enter the 6-digit verification code below in your browser registration screen to verify and activate your account:
+
+VERIFICATION CODE: {otp_code}
+
+This code will expire in 10 minutes.
+
+Security Notice: Never share this verification code with anyone. If you did not request this registration, please ignore this email.
+
+Khin Ticket System
+"""
+
+    msg = MIMEMultipart("alternative")
+    msg["Subject"] = subject
+    msg["From"] = f"Khin Ticket System <{GMAIL_USER}>"
+    msg["To"] = to_email
+    msg.attach(MIMEText(plain_content, "plain", "utf-8"))
+    msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+    try:
+        with smtplib.SMTP_SSL(GMAIL_SMTP_HOST, GMAIL_SMTP_PORT, timeout=12) as server:
+            server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_USER, [to_email], msg.as_string())
+        logger.info(f"Verification OTP email sent successfully to {to_email}")
+        return {"success": True, "message": "Verification email sent successfully"}
+    except Exception as ssl_err:
+        logger.warning(f"SMTP SSL connection failed ({ssl_err}), attempting STARTTLS on port 587...")
+        try:
+            with smtplib.SMTP(GMAIL_SMTP_HOST, 587, timeout=12) as server:
+                server.starttls()
+                server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
+                server.sendmail(GMAIL_USER, [to_email], msg.as_string())
+            logger.info(f"Verification OTP email sent successfully via STARTTLS to {to_email}")
+            return {"success": True, "message": "Verification email sent successfully"}
+        except Exception as e:
+            logger.error(f"Failed to send verification email to {to_email}: {e}")
+            return {"success": False, "error": str(e), "message": f"Failed to send email: {str(e)}"}
+
 
 if __name__ == "__main__":
     import sys

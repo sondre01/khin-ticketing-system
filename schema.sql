@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS ticketing_system.users (
     department VARCHAR(100) DEFAULT 'General',
     position VARCHAR(100) DEFAULT 'Employee',
     can_manage_departments BOOLEAN DEFAULT FALSE,
+    is_verified BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -21,6 +22,24 @@ ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS role VARCHAR(30) DEF
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS department VARCHAR(100) DEFAULT 'General';
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS position VARCHAR(100) DEFAULT 'Employee';
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS can_manage_departments BOOLEAN DEFAULT FALSE;
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;
+
+-- Email Verifications table for registration verification
+CREATE TABLE IF NOT EXISTS ticketing_system.email_verifications (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) NOT NULL,
+    otp_code VARCHAR(10) NOT NULL,
+    token VARCHAR(255),
+    purpose VARCHAR(30) DEFAULT 'registration' NOT NULL,
+    payload JSONB,
+    attempts INTEGER DEFAULT 0,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_verifications_email ON ticketing_system.email_verifications(email);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_token ON ticketing_system.email_verifications(token);
+CREATE INDEX IF NOT EXISTS idx_email_verifications_expires_at ON ticketing_system.email_verifications(expires_at);
 
 -- Default first registered user or admin to super_admin (Developer Team Lead in Software Development / Engineering)
 UPDATE ticketing_system.users 
