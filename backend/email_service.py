@@ -434,18 +434,28 @@ Security Notice: Never share this verification code with anyone. If you did not 
 Khin Ticket System
 """
 
+    clean_to = to_email.strip().lower()
+
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"] = f"Khin Ticket System <{GMAIL_USER}>"
-    msg["To"] = to_email
+    msg["To"] = clean_to
+    msg["Reply-To"] = f"Khin Ticket System <{GMAIL_USER}>"
+    msg["Date"] = email.utils.formatdate(localtime=True)
+    msg["Message-ID"] = email.utils.make_msgid(domain="gmail.com")
+    msg["Auto-Submitted"] = "auto-generated"
+    msg["X-Auto-Response-Suppress"] = "All"
     msg.attach(MIMEText(plain_content, "plain", "utf-8"))
     msg.attach(MIMEText(html_content, "html", "utf-8"))
+
+    logger.info(f"Dispatching verification email strictly to recipient: {clean_to} (Sender account: {GMAIL_USER})")
 
     try:
         with smtplib.SMTP_SSL(GMAIL_SMTP_HOST, GMAIL_SMTP_PORT, timeout=12) as server:
             server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-            server.sendmail(GMAIL_USER, [to_email], msg.as_string())
-        logger.info(f"Verification OTP email sent successfully to {to_email}")
+            # Enforce that clean_to is the only recipient in the SMTP envelope
+            server.sendmail(GMAIL_USER, [clean_to], msg.as_string())
+        logger.info(f"Verification OTP email delivered strictly to {clean_to}")
         return {"success": True, "message": "Verification email sent successfully"}
     except Exception as ssl_err:
         logger.warning(f"SMTP SSL connection failed ({ssl_err}), attempting STARTTLS on port 587...")
@@ -453,11 +463,12 @@ Khin Ticket System
             with smtplib.SMTP(GMAIL_SMTP_HOST, 587, timeout=12) as server:
                 server.starttls()
                 server.login(GMAIL_USER, GMAIL_APP_PASSWORD)
-                server.sendmail(GMAIL_USER, [to_email], msg.as_string())
-            logger.info(f"Verification OTP email sent successfully via STARTTLS to {to_email}")
+                # Enforce that clean_to is the only recipient in the SMTP envelope
+                server.sendmail(GMAIL_USER, [clean_to], msg.as_string())
+            logger.info(f"Verification OTP email delivered strictly via STARTTLS to {clean_to}")
             return {"success": True, "message": "Verification email sent successfully"}
         except Exception as e:
-            logger.error(f"Failed to send verification email to {to_email}: {e}")
+            logger.error(f"Failed to send verification email to {clean_to}: {e}")
             return {"success": False, "error": str(e), "message": f"Failed to send email: {str(e)}"}
 
 
