@@ -247,7 +247,9 @@ def require_super_admin(current_user: dict = Depends(get_current_user)):
     return current_user
 
 def require_tech_access(current_user: dict = Depends(get_current_user)):
-    if not is_staff(current_user.get("role", "")):
+    user_role = current_user.get("role", "")
+    can_manage = bool(current_user.get("can_manage_departments", False))
+    if not is_staff(user_role) and not can_manage:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Staff access required (Super Admin, Tech Member, or Department Lead/Agent)."

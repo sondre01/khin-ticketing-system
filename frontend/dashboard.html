@@ -11,11 +11,8 @@
         // Inline blocking script to prevent Flash of Unauthenticated Content (FOUC)
         (function() {
             const token = localStorage.getItem('access_token');
-            const role = localStorage.getItem('user_role');
             if (!token) {
                 window.location.href = 'index.html';
-            } else if (role === 'customer' || role === 'user' || role === 'employee') {
-                window.location.href = 'portal.html';
             }
         })();
     </script>
@@ -748,8 +745,20 @@
                 const data = await response.json();
                 currentUser = data.user;
 
-                // Employees go to regular employee portal
-                if (currentUser.role === 'employee' || currentUser.role === 'customer' || currentUser.role === 'user') {
+                // Sync latest authoritative role to localStorage
+                localStorage.setItem('user_role', currentUser.role || 'employee');
+                localStorage.setItem('can_manage_departments', currentUser.can_manage_departments ? 'true' : 'false');
+                localStorage.setItem('user_name', currentUser.full_name || '');
+                localStorage.setItem('user_email', currentUser.email || '');
+
+                const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+                const isDeptLead = currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
+                const isTechMember = currentUser.role === 'tech_member' || currentUser.role === 'agent';
+                const isDeptAgent = currentUser.role === 'dept_agent' || currentUser.role === 'dept_member';
+                const canAccessDashboard = isSuperAdmin || isDeptLead || isTechMember || isDeptAgent || Boolean(currentUser.can_manage_departments);
+
+                // Non-staff employees are routed to employee portal
+                if (!canAccessDashboard) {
                     window.location.href = 'portal.html';
                     return;
                 }
@@ -758,9 +767,6 @@
                 document.getElementById('display-user-name').textContent = currentUser.full_name;
                 document.getElementById('display-user-email').textContent = currentUser.email;
 
-                const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
-                const isDeptLead = currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
-                const isTechMember = currentUser.role === 'tech_member' || currentUser.role === 'agent';
                 const canManageDepts = isSuperAdmin || isDeptLead;
 
                 const dept = currentUser.department || 'Software Development / Engineering';

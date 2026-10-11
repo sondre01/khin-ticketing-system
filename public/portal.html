@@ -35,6 +35,18 @@
                     Tech Dashboard
                 </a>
             </div>
+            <script>
+                // Instant zero-delay check from cached role in localStorage
+                (function() {
+                    const role = localStorage.getItem('user_role');
+                    const canManage = localStorage.getItem('can_manage_departments') === 'true';
+                    const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
+                    if (staffRoles.includes(role) || canManage) {
+                        const el = document.getElementById('admin-switch-btn');
+                        if (el) el.style.display = 'block';
+                    }
+                })();
+            </script>
             <button id="btn-logout" class="btn-secondary">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -325,15 +337,39 @@
                 const data = await response.json();
                 currentUser = data.user;
 
-                // If user is Admin, Dept Lead, Agent, or Tech Staff, show switch to dashboard
+                // Sync latest permissions and role to localStorage immediately!
                 const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
-                if (staffRoles.includes(currentUser.role) || currentUser.can_manage_departments) {
-                    document.getElementById('admin-switch-btn').style.display = 'block';
+                const isStaff = staffRoles.includes(currentUser.role) || Boolean(currentUser.can_manage_departments);
+                
+                localStorage.setItem('user_role', currentUser.role || 'employee');
+                localStorage.setItem('can_manage_departments', currentUser.can_manage_departments ? 'true' : 'false');
+                localStorage.setItem('user_name', currentUser.full_name || '');
+                localStorage.setItem('user_email', currentUser.email || '');
+
+                const adminBtn = document.getElementById('admin-switch-btn');
+                if (adminBtn) {
+                    adminBtn.style.display = isStaff ? 'block' : 'none';
                 }
 
                 // Update Profile Info
                 document.getElementById('portal-user-name').textContent = `Welcome, ${currentUser.full_name}`;
                 document.getElementById('portal-user-email').textContent = currentUser.email;
+
+                // Update role badge in portal banner
+                const roleBadge = document.getElementById('portal-user-role-badge');
+                if (roleBadge) {
+                    if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
+                        roleBadge.textContent = 'Super Admin';
+                    } else if (currentUser.role === 'tech_member' || currentUser.role === 'agent') {
+                        roleBadge.textContent = 'Developer Team Member';
+                    } else if (currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead') {
+                        roleBadge.textContent = 'Department Admin Lead';
+                    } else if (currentUser.role === 'dept_agent' || currentUser.role === 'dept_member') {
+                        roleBadge.textContent = 'Department Staff';
+                    } else {
+                        roleBadge.textContent = 'Requester Portal';
+                    }
+                }
 
                 const dept = currentUser.department || 'General';
                 const pos = currentUser.position || 'Employee';
@@ -350,10 +386,12 @@
                     .substring(0, 2);
                 document.getElementById('portal-user-avatar').textContent = initials || 'U';
 
-                // Load departments, tickets and metrics
-                await loadDepartmentsForPortal();
-                await fetchMetrics();
-                await loadMyTickets();
+                // Load departments, tickets and metrics in parallel for instant rendering
+                await Promise.all([
+                    loadDepartmentsForPortal(),
+                    fetchMetrics(),
+                    loadMyTickets()
+                ]);
 
             } catch (err) {
                 console.error('fetchUserProfile error:', err);
@@ -732,13 +770,86 @@
             window.location.href = 'index.html';
         });
 
-        // Auto-refresh every 60 seconds
+        // Auto-refresh metrics and tickets every 30 seconds
         setInterval(() => {
             if (currentUser) {
                 fetchMetrics();
                 loadMyTickets();
             }
-        }, 60000);
+        }, 30000);
+
+        // --- Live Fast Permission Synchronizer (Detects promotions in real time) ---
+        let isSyncingPermissions = false;
+        async function syncUserPermissionsSilently() {
+            if (isSyncingPermissions) return;
+            const token = localStorage.getItem('access_token');
+            if (!token) return;
+
+            try {
+                isSyncingPermissions = true;
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) return;
+                const data = await response.json();
+                const freshUser = data.user;
+                if (!freshUser) return;
+
+                const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
+                const previousRole = currentUser ? currentUser.role : localStorage.getItem('user_role');
+                const wasStaff = staffRoles.includes(previousRole) || (currentUser && Boolean(currentUser.can_manage_departments));
+                const isNowStaff = staffRoles.includes(freshUser.role) || Boolean(freshUser.can_manage_departments);
+
+                // Update localStorage immediately
+                localStorage.setItem('user_role', freshUser.role || 'employee');
+                localStorage.setItem('can_manage_departments', freshUser.can_manage_departments ? 'true' : 'false');
+                localStorage.setItem('user_name', freshUser.full_name || '');
+                localStorage.setItem('user_email', freshUser.email || '');
+
+                const roleChanged = currentUser && (currentUser.role !== freshUser.role || currentUser.can_manage_departments !== freshUser.can_manage_departments);
+                currentUser = freshUser;
+
+                const adminBtn = document.getElementById('admin-switch-btn');
+                if (adminBtn) {
+                    adminBtn.style.display = isNowStaff ? 'block' : 'none';
+                }
+
+                if (!wasStaff && isNowStaff) {
+                    showToast('Ticketing access granted! "Tech Dashboard" is now available.', 'success');
+                    loadDepartmentsForPortal();
+                }
+
+                if (roleChanged) {
+                    const roleBadge = document.getElementById('portal-user-role-badge');
+                    if (roleBadge) {
+                        if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
+                            roleBadge.textContent = 'Super Admin';
+                        } else if (currentUser.role === 'tech_member' || currentUser.role === 'agent') {
+                            roleBadge.textContent = 'Developer Team Member';
+                        } else if (currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead') {
+                            roleBadge.textContent = 'Department Admin Lead';
+                        } else if (currentUser.role === 'dept_agent' || currentUser.role === 'dept_member') {
+                            roleBadge.textContent = 'Department Staff';
+                        } else {
+                            roleBadge.textContent = 'Requester Portal';
+                        }
+                    }
+                }
+            } catch (e) {
+                // Ignore silent sync network errors
+            } finally {
+                isSyncingPermissions = false;
+            }
+        }
+
+        // Live check every 5 seconds plus instant sync when switching back to tab
+        setInterval(syncUserPermissionsSilently, 5000);
+        window.addEventListener('focus', syncUserPermissionsSilently);
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                syncUserPermissionsSilently();
+            }
+        });
 
         window.addEventListener('DOMContentLoaded', fetchUserProfile);
     </script>

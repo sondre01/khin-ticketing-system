@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 showToast('Sign-in successful! Redirecting...', 'success');
                 
-                // Role-based routing
+                // Fast role-based routing (350ms for toast visibility)
                 setTimeout(() => {
                     const role = data.user ? (data.user.role || 'employee') : 'employee';
                     const canManage = data.user && Boolean(data.user.can_manage_departments);
@@ -298,7 +298,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     } else {
                         window.location.href = 'portal.html';
                     }
-                }, 1000);
+                }, 350);
 
             } catch (error) {
                 console.error('Sign-in error:', error);
