@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS ticketing_system.tickets (
     department_id INTEGER REFERENCES ticketing_system.departments(id) ON DELETE SET NULL,
     department_name VARCHAR(100) DEFAULT 'Information Technology',
     source VARCHAR(50) DEFAULT 'portal',           -- 'email' or 'portal'
-    status VARCHAR(50) DEFAULT 'open',            -- 'open', 'in_progress', 'resolved', 'closed'
+    status VARCHAR(50) DEFAULT 'open',            -- 'open', 'waiting_on_us', 'waiting_contact', 'on_hold', 'closed' (also 'in_progress', 'resolved')
     priority VARCHAR(20) DEFAULT 'medium',        -- 'low', 'medium', 'high', 'urgent'
     assigned_to INTEGER REFERENCES ticketing_system.users(id) ON DELETE SET NULL,
     email_message_id VARCHAR(255) UNIQUE,

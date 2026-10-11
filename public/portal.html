@@ -474,11 +474,24 @@
                                 <span class="priority-dot"></span>${t.priority}
                             </span>
                         </td>
-                        <td><span class="badge badge-${t.status}">${t.status.replace('_', ' ')}</span></td>
+                        <td><span class="badge badge-${t.status}">${formatStatusLabel(t.status)}</span></td>
                         <td style="color: var(--text-muted); font-size: 0.85rem;">${dateStr}</td>
                     </tr>
                 `;
             }).join('');
+        }
+
+        function formatStatusLabel(status) {
+            switch(status) {
+                case 'waiting_on_us': return 'Waiting on Us';
+                case 'waiting_contact': return 'Waiting on Contact';
+                case 'on_hold': return 'On Hold';
+                case 'in_progress': return 'In Progress';
+                case 'resolved': return 'Resolved';
+                case 'closed': return 'Closed';
+                case 'open': return 'Open';
+                default: return (status || 'Open').replace(/_/g, ' ');
+            }
         }
 
         // --- View Ticket Details ---
@@ -493,7 +506,7 @@
                 
                 const badge = document.getElementById('detail-status-badge');
                 badge.className = `badge badge-${activeTicket.status}`;
-                badge.textContent = activeTicket.status.replace('_', ' ');
+                badge.textContent = formatStatusLabel(activeTicket.status);
 
                 const deptBadge = document.getElementById('detail-dept-badge');
                 if (deptBadge) {

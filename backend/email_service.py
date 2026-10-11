@@ -95,8 +95,11 @@ DEPARTMENT_ROUTING_MAP = {
     "corpstrategy": "Corporate Strategy",
     
     # General / Admin fallbacks
-    "admin": "Information Technology (IT)",
-    "general": "Operations",
+    "admin": "General / Administrative",
+    "general": "General / Administrative",
+    "administrative": "General / Administrative",
+    "secops": "SecOps_1789142120",
+    "security": "SecOps_1789142120",
 }
 
 def decode_mime_words(header_value: str | None) -> str:
@@ -160,10 +163,22 @@ def generate_ticket_code_helper(cur) -> str:
     next_id = (res["max_id"] or 0) + 1
     return f"KT-{1000 + next_id}"
 
-def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = False) -> dict:
+def get_department_email(dept_name: str) -> str:
+    """Returns the dedicated department ticket email address using plus-addressing."""
+    base_user = GMAIL_USER.split('@')[0] if '@' in GMAIL_USER else GMAIL_USER
+    domain = GMAIL_USER.split('@')[1] if '@' in GMAIL_USER else 'gmail.com'
+    
+    for tag, d_name in DEPARTMENT_ROUTING_MAP.items():
+        if d_name.lower() == dept_name.lower():
+            return f"{base_user}+{tag}@{domain}"
+    
+    slug = dept_name.lower().split()[0].replace('/', '').replace('&', '').replace('(', '').replace(')', '')
+    return f"{base_user}+{slug}@{domain}"
+
+def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = True) -> dict:
     """
-    Connects to Gmail via IMAP, fetches recent unread emails, and converts them to tickets.
-    Deduplicates using email Message-ID in PostgreSQL.
+    Connects to Gmail via IMAP, fetches unread emails, and converts ONLY department-targeted emails to tickets.
+    Personal emails sent directly to the inbox without department tags/addresses are strictly ignored and preserved.
     """
     if not GMAIL_USER or not GMAIL_APP_PASSWORD:
         return {
@@ -178,9 +193,11 @@ def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = False) -> dict:
         mail.login(GMAIL_USER, GMAIL_APP_PASSWORD)
         mail.select("INBOX")
         
-        # 2. Search for UNSEEN (unread) messages
+        # 2. Search STRICTLY for UNSEEN (unread) messages (do not touch read personal emails)
         status, search_data = mail.search(None, "UNSEEN")
-        if status != "OK" or not search_data or not search_data[0]:
+        unseen_ids = search_data[0].split() if (status == "OK" and search_data and search_data[0]) else []
+
+        if not unseen_ids:
             mail.logout()
             return {
                 "success": True,
@@ -188,9 +205,7 @@ def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = False) -> dict:
                 "message": "No new unread emails found in Gmail inbox."
             }
 
-        all_mail_ids = search_data[0].split()
-        # Process the newest emails up to the specified limit
-        mail_ids = all_mail_ids[-limit:] if len(all_mail_ids) > limit else all_mail_ids
+        mail_ids = unseen_ids[-limit:] if len(unseen_ids) > limit else unseen_ids
         mail_ids.reverse()
         synced_tickets = []
 
@@ -226,56 +241,106 @@ def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = False) -> dict:
                 if not body:
                     body = "(No message content provided in email body)"
 
-                # Filter out automated spam, notifications, and job boards
+                # Extract all recipients for routing evaluation
+                to_hdr = decode_mime_words(msg.get("To", "")).lower()
+                cc_hdr = decode_mime_words(msg.get("Cc", "")).lower()
+                deliv_hdr = decode_mime_words(msg.get("Delivered-To", "")).lower()
+                x_orig_to = decode_mime_words(msg.get("X-Original-To", "")).lower()
+                x_fwd_to = decode_mime_words(msg.get("X-Forwarded-To", "")).lower()
+                env_to = decode_mime_words(msg.get("Envelope-To", "")).lower()
+                resent_to = decode_mime_words(msg.get("Resent-To", "")).lower()
+                all_recipients = f"{to_hdr} {cc_hdr} {deliv_hdr} {x_orig_to} {x_fwd_to} {env_to} {resent_to}"
+
                 lower_sender = from_email.lower()
                 lower_from_name = from_name.lower()
                 lower_sub = subject.lower()
+
+                # Filter out automated spam, newsletters, e-commerce, banking, notifications
                 spam_keywords = [
                     "no-reply", "noreply", "donotreply", "do-not-reply",
-                    "mailer-daemon", "jobalert", "indeed", "linkedin", "jobstreet"
+                    "mailer-daemon", "jobalert", "indeed", "linkedin", "jobstreet",
+                    "newsletter", "promotions", "news@", "promo@", "marketing@",
+                    "updates@", "alerts@", "notifications@", "notification@",
+                    "talkpush", "concentrix", "adidas", "maribank", "neon.tech",
+                    "vercel.com", "academia-mail", "github.com", "facebook",
+                    "googleplay", "apple.com"
                 ]
-                if any(k in lower_sender or k in lower_from_name for k in spam_keywords):
-                    logger.info(f"Skipping automated newsletter/spam from: {from_email}")
-                    if mark_as_read:
-                        mail.store(m_id, "+FLAGS", "\\Seen")
+                has_spam_domain = any(k in lower_sender or k in lower_from_name for k in spam_keywords)
+                has_ticket_tag = any(f"+{tag}@" in all_recipients for tag in DEPARTMENT_ROUTING_MAP) or any(f"[{tag}]" in lower_sub for tag in ["ticket", "it", "support", "dev", "hr", "finance", "legal"])
+                if has_spam_domain and not has_ticket_tag:
+                    logger.info(f"Skipping automated personal/marketing email: {subject} from {from_email}")
                     continue
 
                 if lower_sub.startswith("out of office") or lower_sub.startswith("automatic reply"):
                     logger.info(f"Skipping auto-reply: {subject}")
-                    if mark_as_read:
-                        mail.store(m_id, "+FLAGS", "\\Seen")
                     continue
 
-                # Department routing based on recipient plus-addressing (+it, +hr, +billing, etc.)
-                to_hdr = decode_mime_words(msg.get("To", "")).lower()
-                cc_hdr = decode_mime_words(msg.get("Cc", "")).lower()
-                deliv_hdr = decode_mime_words(msg.get("Delivered-To", "")).lower()
-                all_recipients = f"{to_hdr} {cc_hdr} {deliv_hdr}"
+                # Check if this email is a response/reply to an existing ticket (e.g. KT-1006 in subject)
+                import re
+                kt_match = re.search(r'\b(KT-\d+)\b', subject, re.IGNORECASE)
+                if kt_match:
+                    kt_code = kt_match.group(1).upper()
+                    cur.execute("SELECT id, title, department_id, department_name FROM ticketing_system.tickets WHERE ticket_code = %s;", (kt_code,))
+                    existing_t = cur.fetchone()
+                    if existing_t:
+                        cur.execute("SELECT id FROM ticketing_system.users WHERE email = %s;", (from_email.lower(),))
+                        m_user = cur.fetchone()
+                        author_uid = m_user["id"] if m_user else None
+                        cur.execute(
+                            """
+                            INSERT INTO ticketing_system.ticket_comments (ticket_id, user_id, author_name, author_email, comment_text)
+                            VALUES (%s, %s, %s, %s, %s);
+                            """,
+                            (existing_t["id"], author_uid, from_name, from_email.lower(), body)
+                        )
+                        logger.info(f"Appended email response from {from_email} to existing ticket {kt_code}")
+                        if mark_as_read:
+                            mail.store(m_id, "+FLAGS", "\\Seen")
+                        continue
 
+                # Strictly determine department target
                 dept_target = None
+                
+                # 1. Plus-addressing matching (+it@, +dev@, +hr@, +pm@, +data@, +support@, etc.)
                 for tag, d_name in DEPARTMENT_ROUTING_MAP.items():
                     if f"+{tag}@" in all_recipients:
                         dept_target = d_name
                         break
+
+                # 2. Direct department address matching (it@, dev@, hr@, support@, etc.)
+                if not dept_target:
+                    for tag, d_name in DEPARTMENT_ROUTING_MAP.items():
+                        if f"{tag}@" in all_recipients:
+                            dept_target = d_name
+                            break
+
+                # 3. Subject bracket tag matching (e.g. [IT], [HR], [Dev], [Support], [Billing])
+                if not dept_target:
+                    for tag, d_name in DEPARTMENT_ROUTING_MAP.items():
+                        if f"[{tag}]" in lower_sub or f"[{tag.upper()}]" in subject or f"{tag}:" in lower_sub:
+                            dept_target = d_name
+                            break
 
                 dept_row = None
                 if dept_target:
                     cur.execute("SELECT id, name FROM ticketing_system.departments WHERE lower(name) = lower(%s) LIMIT 1;", (dept_target,))
                     dept_row = cur.fetchone()
 
-                # Dynamic fallback: check if any active department name matches a plus-address tag
+                # 4. Dynamic fallback: check if any active department name matches a slug in recipient
                 if not dept_row:
                     cur.execute("SELECT id, name FROM ticketing_system.departments WHERE is_active = TRUE;")
                     all_depts = cur.fetchall()
                     for d in all_depts:
                         slug = d["name"].lower().replace(" ", "").replace("&", "").replace("/", "")
-                        if f"+{slug}@" in all_recipients:
+                        if f"+{slug}@" in all_recipients or f"{slug}@" in all_recipients:
                             dept_row = d
                             break
 
-                # STRICT RULE: Only ingest if email was explicitly sent to a department alias (+it, +hr, +billing, etc.)
+                # STRICT SECURITY CHECK:
+                # If email does NOT match any department queue or ticket tag, it is a personal email.
+                # DO NOT CREATE A TICKET. Leave it intact in personal inbox.
                 if not dept_row:
-                    logger.info(f"Skipping non-department email: '{subject}' (To: {all_recipients.strip() or 'unknown'})")
+                    logger.info(f"Skipping personal email (not addressed to any department queue): '{subject}' from {from_email}")
                     continue
 
                 dept_id = dept_row["id"]
@@ -301,9 +366,9 @@ def sync_gmail_tickets(limit: int = 15, mark_as_read: bool = False) -> dict:
                 if new_ticket.get("created_at"):
                     new_ticket["created_at"] = new_ticket["created_at"].isoformat()
                 synced_tickets.append(new_ticket)
-                logger.info(f"Created ticket {ticket_code} ({dept_name}) from email: {subject}")
+                logger.info(f"Created ticket {ticket_code} for department [{dept_name}] from email: {subject}")
 
-                # Optionally mark email as read in Gmail
+                # Mark email as read in Gmail ONLY for real tickets
                 if mark_as_read:
                     mail.store(m_id, "+FLAGS", "\\Seen")
 

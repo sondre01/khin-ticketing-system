@@ -52,44 +52,60 @@
     <div class="dashboard-wrapper">
         
         <!-- Sidebar (Deep Charcoal) -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="dashboard-sidebar">
+            <!-- Sidebar Edge Toggle Arrow in Middle of Left Nav Bar -->
+            <button type="button" id="btn-sidebar-toggle" class="sidebar-edge-toggle" title="Collapse sidebar" aria-label="Toggle sidebar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <script>
+                if (localStorage.getItem('khin_sidebar_collapsed') === 'true') {
+                    document.getElementById('dashboard-sidebar').classList.add('collapsed');
+                }
+            </script>
             <ul class="sidebar-menu">
                 <li>
-                    <a href="#" class="sidebar-item-link active" id="menu-overview">
+                    <a href="#" class="sidebar-item-link active" id="menu-overview" data-tooltip="Overview &amp; Tickets">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <rect x="3" y="3" width="7" height="9" />
                             <rect x="14" y="3" width="7" height="5" />
                             <rect x="14" y="12" width="7" height="9" />
                             <rect x="3" y="16" width="7" height="5" />
                         </svg>
-                        Overview &amp; Tickets
+                        <span class="sidebar-item-label">Overview &amp; Tickets</span>
                     </a>
                 </li>
                 <li id="nav-item-departments" style="display: none;">
-                    <a href="#" class="sidebar-item-link" id="menu-departments">
+                    <a href="#" class="sidebar-item-link" id="menu-departments" data-tooltip="Departments">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
                             <polyline points="9 22 9 12 15 12 15 22"/>
                         </svg>
-                        Departments
+                        <span class="sidebar-item-label">Departments</span>
                     </a>
                 </li>
                 <li id="nav-item-users" style="display: none;">
-                    <a href="#" class="sidebar-item-link" id="menu-users">
+                    <a href="#" class="sidebar-item-link" id="menu-users" data-tooltip="Users &amp; Hierarchy">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
                             <circle cx="9" cy="7" r="4"/>
                             <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                             <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                         </svg>
-                        Users &amp; Hierarchy
+                        <span class="sidebar-item-label">Users &amp; Hierarchy</span>
                     </a>
                 </li>
             </ul>
             
             <!-- User Profile Section at Bottom of Sidebar -->
-            <div class="user-profile-section" id="profile-container">
-                <div class="user-avatar" id="user-avatar-initials">U</div>
+            <div class="user-profile-section" id="profile-container" data-tooltip="User Profile">
+                <div class="user-avatar" id="user-avatar-initials" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
                 <div class="user-info">
                     <div class="user-name" id="display-user-name">Loading...</div>
                     <div class="user-email" id="display-user-email">Loading...</div>
@@ -104,22 +120,6 @@
             
             <!-- VIEW 1: OVERVIEW & TICKETS -->
             <div id="view-overview" class="dashboard-section-view">
-                <!-- Dashboard Header Section -->
-                <div class="dashboard-header">
-                    <div class="dashboard-title">
-                        <h1 id="welcome-title">Welcome to Khin Ticket</h1>
-                        <p id="welcome-subtitle">Corporate Support &amp; Multi-Department Ticketing</p>
-                    </div>
-                    <div style="display: flex; gap: 0.75rem;">
-                        <button class="btn-primary" style="width: auto; padding: 0.5rem 1.25rem;" id="btn-sync-emails" title="Check Gmail for new support emails">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
-                            </svg>
-                            <span id="sync-button-text">Sync Gmail</span>
-                        </button>
-                    </div>
-                </div>
-
                 <!-- Stats Grid -->
                 <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
                     <div class="stat-card">
@@ -144,37 +144,127 @@
                     </div>
                 </section>
 
-                <!-- Ticket Controls & Filter Bar -->
-                <div class="ticket-toolbar" style="flex-wrap: wrap; gap: 0.75rem;">
-                    <div class="filter-tabs">
-                        <button class="filter-tab active" data-status="">All Statuses</button>
-                        <button class="filter-tab" data-status="open">Open</button>
-                        <button class="filter-tab" data-status="in_progress">In Progress</button>
-                        <button class="filter-tab" data-status="resolved">Resolved</button>
-                        <button class="filter-tab" data-status="closed">Closed</button>
-                    </div>
-                    <div style="display: flex; gap: 0.5rem; flex: 1; min-width: 280px; justify-content: flex-end;">
-                        <select id="dept-filter-select" class="form-input" style="width: auto; max-width: 220px; background-color: var(--bg-pitch-black); cursor: pointer;">
-                            <option value="">All Departments</option>
-                        </select>
-                        <div class="search-wrapper" style="flex: 1; max-width: 320px;">
-                            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                            <input type="text" id="ticket-search" class="search-input" placeholder="Search by title, code, email...">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Tickets Table -->
+                <!-- Tickets Management Card (Kanban & List POV) -->
                 <div class="tickets-card">
-                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0;">
+                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0; flex-wrap: wrap; gap: 0.75rem;">
                         <div style="display: flex; align-items: center; gap: 0.75rem;">
                             <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">Support &amp; Technical Tickets</h3>
                             <span style="font-size: 0.8rem; color: var(--text-secondary);" id="tickets-count-badge">0 tickets</span>
                         </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div class="search-wrapper" style="width: 260px;">
+                                <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="ticket-search" class="search-input" placeholder="Search tickets..." style="padding: 0.45rem 0.85rem 0.45rem 2.2rem; font-size: 0.85rem;">
+                            </div>
+                            <!-- View Mode Toggle (Preference Switcher) -->
+                            <div class="view-mode-toggle" id="tickets-view-mode-toggle" role="group" aria-label="Ticket view preference">
+                                <button type="button" class="view-mode-btn active" id="btn-view-kanban" data-view="kanban" title="Kanban Board View (Card based & align per column)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                                        <rect x="10" y="3" width="5" height="18" rx="1"></rect>
+                                        <rect x="17" y="3" width="5" height="18" rx="1"></rect>
+                                    </svg>
+                                    <span>Board</span>
+                                </button>
+                                <button type="button" class="view-mode-btn" id="btn-view-list" data-view="list" title="Standard List View (Table POV)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                                        <circle cx="4" cy="6" r="1.5" fill="currentColor"></circle>
+                                        <circle cx="4" cy="12" r="1.5" fill="currentColor"></circle>
+                                        <circle cx="4" cy="18" r="1.5" fill="currentColor"></circle>
+                                    </svg>
+                                    <span>List</span>
+                                </button>
+                                <button type="button" class="view-mode-btn" id="btn-view-split" data-view="split" title="1:3 Split View (Column Tickets &amp; Ticket Info)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                                        <rect x="10" y="3" width="11" height="18" rx="1"></rect>
+                                    </svg>
+                                    <span>1:3 Split</span>
+                                </button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="tickets-table-container table-scroll-container">
+
+                    <!-- KANBAN BOARD VIEW (Card-based per column) -->
+                    <div class="kanban-board-container" id="tickets-kanban-container">
+                        <!-- Open Column -->
+                        <div class="kanban-column" id="kanban-col-open">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-open"></span>
+                                    <h4 class="kanban-column-title">Open</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-open">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-open" data-status="open">
+                                <div class="kanban-empty-placeholder">No open tickets</div>
+                            </div>
+                        </div>
+
+                        <!-- Waiting on Us Column -->
+                        <div class="kanban-column" id="kanban-col-waiting_on_us">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-waiting_on_us"></span>
+                                    <h4 class="kanban-column-title">Waiting on Us</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-waiting_on_us">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-waiting_on_us" data-status="waiting_on_us">
+                                <div class="kanban-empty-placeholder">No tickets in progress</div>
+                            </div>
+                        </div>
+
+                        <!-- Waiting on Contact Column -->
+                        <div class="kanban-column" id="kanban-col-waiting_contact">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-waiting_contact"></span>
+                                    <h4 class="kanban-column-title">Waiting on Contact</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-waiting_contact">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-waiting_contact" data-status="waiting_contact">
+                                <div class="kanban-empty-placeholder">No tickets waiting on contact</div>
+                            </div>
+                        </div>
+
+                        <!-- On Hold Column -->
+                        <div class="kanban-column" id="kanban-col-on_hold">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-on_hold"></span>
+                                    <h4 class="kanban-column-title">On Hold</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-on_hold">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-on_hold" data-status="on_hold">
+                                <div class="kanban-empty-placeholder">No tickets on hold</div>
+                            </div>
+                        </div>
+
+                        <!-- Closed Column -->
+                        <div class="kanban-column" id="kanban-col-closed">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-closed"></span>
+                                    <h4 class="kanban-column-title">Closed</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-closed">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-closed" data-status="closed">
+                                <div class="kanban-empty-placeholder">No closed tickets</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABLE LIST VIEW (Retained POV) -->
+                    <div class="tickets-table-container table-scroll-container" id="tickets-table-container" style="display: none;">
                         <table class="tickets-table">
                             <thead>
                                 <tr>
@@ -182,7 +272,7 @@
                                     <th>Subject &amp; Requester</th>
                                     <th style="width: 160px;">Department</th>
                                     <th style="width: 100px;">Source</th>
-                                    <th style="width: 120px;">Status</th>
+                                    <th style="width: 140px;">Status</th>
                                     <th style="width: 110px;">Priority</th>
                                     <th style="width: 150px;">Assignee</th>
                                     <th style="width: 130px;">Created</th>
@@ -197,14 +287,128 @@
                             </tbody>
                         </table>
                     </div>
+
+                    <!-- 1:3 RATIO SPLIT VIEW (Left: Column Tickets / Right: Full Ticket Info) -->
+                    <div class="tickets-split-container" id="tickets-split-container" style="display: none;">
+                        <!-- Left Column (1 Part): Column Tickets List -->
+                        <div class="split-column-pane" id="split-column-pane">
+                            <div class="split-column-header">
+                                <div class="split-column-title-wrap">
+                                    <span class="kanban-status-indicator indicator-open" id="split-column-indicator"></span>
+                                    <select id="split-column-filter" class="split-column-select" aria-label="Select Column Tickets">
+                                        <option value="all">All Column Tickets</option>
+                                        <option value="open" selected>Open Tickets</option>
+                                        <option value="waiting_on_us">Waiting on Us</option>
+                                        <option value="waiting_contact">Waiting on Contact</option>
+                                        <option value="on_hold">On Hold</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                </div>
+                                <span class="kanban-count-pill" id="split-column-count">0</span>
+                            </div>
+                            <div class="split-column-tickets-list" id="split-column-tickets-list">
+                                <div class="kanban-empty-placeholder">No tickets in this column</div>
+                            </div>
+                        </div>
+
+                        <!-- Right Pane (3 Parts): Full Ticket Info -->
+                        <div class="split-info-pane" id="split-info-pane">
+                            <!-- Scrollable Ticket Details Body -->
+                            <div class="split-info-scroll-body" id="split-info-scroll-body">
+                                <!-- Ticket Title & Meta Row -->
+                                <div class="split-info-header">
+                                    <h2 id="detail-ticket-title" class="split-ticket-title">Select a ticket to view</h2>
+                                    <div class="split-meta-row">
+                                        <div class="split-meta-item">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                            <span id="detail-requester-info">-</span>
+                                        </div>
+                                        <div class="split-meta-item">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            <span id="detail-source-info">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Workflow Controls (Status, Priority, Assignee) -->
+                                <div class="split-workflow-card">
+                                    <div class="split-workflow-controls">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" for="detail-status-select">Status</label>
+                                            <select id="detail-status-select" class="form-input">
+                                                <option value="open">Open</option>
+                                                <option value="waiting_on_us">Waiting on Us</option>
+                                                <option value="waiting_contact">Waiting on Contact</option>
+                                                <option value="on_hold">On Hold</option>
+                                                <option value="closed">Closed</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" for="detail-priority-select">Priority</label>
+                                            <select id="detail-priority-select" class="form-input">
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;" id="assignee-control-group">
+                                            <label class="form-label" for="detail-assignee-select">Assigned Member</label>
+                                            <select id="detail-assignee-select" class="form-input">
+                                                <option value="0">Unassigned</option>
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-end;">
+                                            <button type="button" class="btn-primary" id="btn-save-ticket-status" style="height: 40px; padding: 0 1.25rem;">
+                                                <span>Save Changes</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="assignee-permission-note" class="split-permission-note" style="display: none;">
+                                        🔒 Only the Super Admin or Department Admin Lead can assign tickets to team members.
+                                    </div>
+                                </div>
+
+                                <!-- Initial Request Details / Body -->
+                                <div class="split-content-section">
+                                    <div class="split-section-header">
+                                        <h4>Initial Request Details</h4>
+                                    </div>
+                                    <div id="detail-ticket-desc" class="split-ticket-desc">-</div>
+                                </div>
+
+                                <!-- Internal Notes & Discussion Thread -->
+                                <div class="split-comments-section">
+                                    <div class="split-section-header">
+                                        <h4>Internal Notes &amp; Discussion</h4>
+                                    </div>
+                                    <div id="comments-container" class="split-comments-container">
+                                        <p style="color: var(--text-muted); font-size: 0.85rem;">No notes logged yet.</p>
+                                    </div>
+                                    
+                                    <form id="add-comment-form" class="split-comment-form">
+                                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                                            <textarea id="new-comment-text" class="form-input" rows="3" placeholder="Add an internal note or reply to requester..." required></textarea>
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end;">
+                                            <button type="submit" class="btn-secondary" style="width: auto; padding: 0.5rem 1.25rem;">
+                                                <span>Post Note</span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- VIEW 2: DEPARTMENTS MANAGEMENT -->
             <div id="view-departments" class="dashboard-section-view" style="display: none;">
-                <div class="dashboard-header" style="margin-bottom: 0.85rem;">
-                    <div class="dashboard-title">
+                <div class="dashboard-header compact-header">
+                    <div class="dashboard-title compact-title">
                         <h1>Departments Management</h1>
+                        <span class="compact-header-sep">•</span>
                         <p>Configure departments that need ticketing systems and manage access restrictions</p>
                     </div>
                 </div>
@@ -272,69 +476,72 @@
                     </div>
                 </div>
 
-                <!-- TAB PANEL 2: Department Access Restrictions (Super Admin only) -->
+                <!-- TAB PANEL 2: Department Access Checklist (Super Admin only) -->
+                <!-- TAB PANEL 2: Department Access Restrictions (Per-Employee Department Dropdown Checklist) -->
                 <div id="panel-department-restrictions" class="dept-tab-panel" style="display: none;">
-                    <div class="tickets-card" id="card-department-restrictions" style="padding: 1.5rem;">
-                        <div style="margin-bottom: 1.25rem; flex-shrink: 0;">
-                            <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 0.35rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 0.5rem;">
-                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                                </svg>
-                                Department Access Restrictions
-                            </h3>
-                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0;">
-                                Restrict specific employees who shouldn't have access to raise tickets to a certain department queue.
-                            </p>
+                    <div class="tickets-card" id="card-department-restrictions" style="padding: 1.25rem; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                        <!-- Header & Description -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.85rem; flex-shrink: 0;">
+                            <div>
+                                <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 0.25rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 0.5rem;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    Department Access Restrictions
+                                </h3>
+                                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">
+                                    Configure department access for each employee. Open any employee's department dropdown to check or uncheck accessible departments.
+                                </p>
+                            </div>
                         </div>
 
-                        <!-- Add Restriction Form -->
-                        <form id="form-add-restriction" style="display: grid; grid-template-columns: 1fr 1fr 1.5fr auto; gap: 1rem; align-items: flex-end; margin-bottom: 1.5rem; flex-shrink: 0; background-color: var(--bg-pitch-black); padding: 1.1rem 1.25rem; border-radius: 8px; border: 1px solid var(--border-color);">
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Department *</label>
-                                <select id="restrict-dept-select" class="form-input" style="background-color: var(--bg-deep-charcoal);" required>
-                                    <option value="">Select department...</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">User / Employee *</label>
-                                <select id="restrict-user-select" class="form-input" style="background-color: var(--bg-deep-charcoal);" required>
-                                    <option value="">Select employee...</option>
-                                </select>
-                            </div>
-                            <div class="form-group" style="margin-bottom: 0;">
-                                <label class="form-label">Reason for Restriction</label>
-                                <input type="text" id="restrict-reason" class="form-input" style="background-color: var(--bg-deep-charcoal);" placeholder="e.g. Not authorized for internal IT tickets">
-                            </div>
-                            <button type="submit" class="btn-secondary" id="btn-add-restriction" style="height: 42px; padding: 0 1.25rem; color: var(--error-red); border-color: var(--error-red); white-space: nowrap; display: inline-flex; align-items: center; gap: 0.4rem;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                                </svg>
-                                <span>Restrict Access</span>
-                            </button>
-                        </form>
+                        <!-- Filter Toolbar & Live Metrics -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background-color: var(--bg-pitch-black); border: 1px solid var(--border-color); border-radius: 8px; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex: 1;">
+                                <div class="search-wrapper" style="width: 270px;">
+                                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="checklist-employee-search" class="search-input" placeholder="Search employees by name, email..." style="padding: 0.4rem 0.75rem 0.4rem 2rem; font-size: 0.82rem;">
+                                </div>
 
-                        <!-- Restrictions Table Header -->
-                        <div style="margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;">
-                            <h4 style="font-family: var(--font-heading); font-size: 0.95rem; margin: 0; color: var(--text-primary);">Current Restriction Rules</h4>
-                            <span style="font-size: 0.78rem; color: var(--text-secondary);" id="restrictions-count-badge">Active restrictions</span>
+                                <!-- Filter Buttons -->
+                                <div class="view-mode-toggle" id="checklist-filter-toggle">
+                                    <button type="button" class="view-mode-btn active" data-filter="all" id="btn-filter-all-emp">
+                                        <span>All Staff</span>
+                                    </button>
+                                    <button type="button" class="view-mode-btn" data-filter="full" id="btn-filter-full-emp">
+                                        <span>Full Access</span>
+                                    </button>
+                                    <button type="button" class="view-mode-btn" data-filter="restricted" id="btn-filter-restricted-emp">
+                                        <span>Restricted Access</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Summary Count Badges -->
+                            <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                <span class="badge" id="check-badge-total" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">0 Staff</span>
+                                <span class="badge badge-open" id="check-badge-allowed" style="font-size: 0.75rem;">0 Full Access</span>
+                                <span class="badge badge-urgent" id="check-badge-restricted" style="font-size: 0.75rem;">0 Restricted</span>
+                            </div>
                         </div>
 
-                        <!-- Restrictions Table -->
-                        <div class="table-scroll-container" style="flex: 1; min-height: 200px; overflow-y: scroll !important; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                        <!-- Employees Access Checklist Table -->
+                        <div class="table-scroll-container" style="flex: 1; min-height: 220px; overflow-y: auto !important; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px;">
                             <table class="tickets-table">
                                 <thead>
                                     <tr>
-                                        <th>Restricted Employee</th>
-                                        <th>Email</th>
-                                        <th>Department</th>
-                                        <th>Reason</th>
-                                        <th style="width: 130px;">Action</th>
+                                        <th style="width: 220px;">Employee</th>
+                                        <th style="width: 200px;">Department &amp; Position</th>
+                                        <th style="width: 140px;">System Role</th>
+                                        <th style="width: 320px;">Accessible Departments (Checklist Dropdown)</th>
+                                        <th style="width: 130px;">Access Level</th>
                                     </tr>
                                 </thead>
                                 <tbody id="restrictions-table-body">
-                                    <tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">Select a department above to view restrictions.</td></tr>
+                                    <tr><td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">Loading employee access directory...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -344,9 +551,10 @@
 
             <!-- VIEW 3: USERS & HIERARCHY (SUPER ADMIN ONLY) -->
             <div id="view-users" class="dashboard-section-view" style="display: none;">
-                <div class="dashboard-header">
-                    <div class="dashboard-title">
+                <div class="dashboard-header compact-header">
+                    <div class="dashboard-title compact-title">
                         <h1>Users &amp; Hierarchy Access</h1>
+                        <span class="compact-header-sep">•</span>
                         <p>Manage employee roles, promote tech team members to Super Admin, and delegate permissions</p>
                     </div>
                 </div>
@@ -468,90 +676,6 @@
         </div>
     </div>
 
-    <!-- --- TICKET DETAILS MODAL --- -->
-    <div class="modal-overlay" id="modal-ticket-details">
-        <div class="modal-box" style="max-width: 720px;">
-            <div class="modal-header">
-                <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
-                    <span class="ticket-code-tag" id="detail-ticket-code">KT-1000</span>
-                    <span id="detail-status-badge" class="badge badge-open">Open</span>
-                    <span id="detail-dept-badge" class="badge" style="background: rgba(255,255,255,0.08); color: var(--text-primary); border: 1px solid var(--border-color);">IT</span>
-                </div>
-                <button class="btn-close" id="btn-close-details-modal">&times;</button>
-            </div>
-
-            <h3 id="detail-ticket-title" style="margin-top: 0.5rem; margin-bottom: 1rem; font-family: var(--font-heading); font-size: 1.25rem;">Ticket Title</h3>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 8px;">
-                <div>
-                    <div class="stat-label" style="font-size: 0.75rem;">Requester</div>
-                    <div id="detail-requester-info" style="font-size: 0.9rem; margin-top: 0.2rem; font-weight: 500;">-</div>
-                </div>
-                <div>
-                    <div class="stat-label" style="font-size: 0.75rem;">Source &amp; Date</div>
-                    <div id="detail-source-info" style="font-size: 0.9rem; margin-top: 0.2rem; font-weight: 500;">-</div>
-                </div>
-            </div>
-
-            <!-- Workflow Controls: Status, Priority, Assignment -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="detail-status-select">Status</label>
-                    <select id="detail-status-select" class="form-input" style="background-color: var(--bg-pitch-black);">
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                        <option value="closed">Closed</option>
-                    </select>
-                </div>
-                <div class="form-group" style="margin-bottom: 0;">
-                    <label class="form-label" for="detail-priority-select">Priority</label>
-                    <select id="detail-priority-select" class="form-input" style="background-color: var(--bg-pitch-black);">
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
-                        <option value="urgent">Urgent</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="form-group" style="margin-bottom: 1.25rem;" id="assignee-control-group">
-                <label class="form-label" for="detail-assignee-select">Assigned Member</label>
-                <select id="detail-assignee-select" class="form-input" style="background-color: var(--bg-pitch-black);">
-                    <option value="0">Unassigned</option>
-                </select>
-                <span id="assignee-permission-note" style="font-size: 0.75rem; color: var(--accent-yellow); display: none; margin-top: 0.35rem;">
-                    🔒 Only the Super Admin or Department Admin Lead can assign tickets to team members.
-                </span>
-            </div>
-
-            <button class="btn-primary" id="btn-save-ticket-status" style="margin-bottom: 1.5rem; width: 100%;">
-                <span>Save Ticket Changes</span>
-            </button>
-
-            <!-- Description -->
-            <div class="form-group">
-                <label class="form-label">Initial Request Details</label>
-                <div id="detail-ticket-desc" style="background-color: var(--bg-pitch-black); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); font-size: 0.9rem; max-height: 180px; overflow-y: auto; white-space: pre-wrap; line-height: 1.5;"></div>
-            </div>
-
-            <!-- Comments / Activity Thread -->
-            <div class="comments-section">
-                <h4 style="font-family: var(--font-heading); margin-bottom: 1rem; font-size: 1rem;">Internal Notes &amp; Discussion</h4>
-                <div id="comments-container">
-                    <p style="color: var(--text-muted); font-size: 0.85rem;">No notes logged yet.</p>
-                </div>
-                
-                <form id="add-comment-form" style="margin-top: 1rem;">
-                    <div class="form-group" style="margin-bottom: 0.75rem;">
-                        <textarea id="new-comment-text" class="form-input" rows="2" placeholder="Add an internal note or reply to requester..." required></textarea>
-                    </div>
-                    <button type="submit" class="btn-secondary" style="width: auto;">Post Note</button>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <!-- Toast Notification Container -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -652,23 +776,24 @@
                 if (emailEl) emailEl.title = currentUser.email;
                 
                 const roleBadge = document.getElementById('display-user-role');
+                const welcomeSub = document.getElementById('welcome-subtitle');
 
                 if (isSuperAdmin) {
                     roleBadge.textContent = 'Super Admin (Developer Team Lead)';
                     roleBadge.className = 'role-badge admin';
-                    document.getElementById('welcome-subtitle').textContent = 'Developer Team Lead Control Center: Global Tickets, Departments & User Hierarchy';
+                    if (welcomeSub) welcomeSub.textContent = 'Developer Team Lead Control Center: Global Tickets, Departments & User Hierarchy';
                 } else if (isDeptLead) {
                     roleBadge.textContent = 'Department Admin Lead';
                     roleBadge.className = 'role-badge admin';
-                    document.getElementById('welcome-subtitle').textContent = `${dept} Admin Lead Workspace: Department Tickets & Member Assignment`;
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Admin Lead Workspace: Department Tickets & Member Assignment`;
                 } else if (isTechMember) {
                     roleBadge.textContent = 'Developer Team Member';
                     roleBadge.className = 'role-badge user';
-                    document.getElementById('welcome-subtitle').textContent = 'Developer Team Workspace: Technical Tickets & System Tasks';
+                    if (welcomeSub) welcomeSub.textContent = 'Developer Team Workspace: Technical Tickets & System Tasks';
                 } else {
                     roleBadge.textContent = 'Department Staff';
                     roleBadge.className = 'role-badge user';
-                    document.getElementById('welcome-subtitle').textContent = `${dept} Staff Workspace: Assigned Tickets & Inquiries`;
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Staff Workspace: Assigned Tickets & Inquiries`;
                 }
 
                 // Show conditional navigation items based on user role & permissions
@@ -683,14 +808,11 @@
                     tabDeptRestrictionsBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
                 }
 
-                // Initials
-                const initials = currentUser.full_name
-                    .split(' ')
-                    .map(w => w[0])
-                    .join('')
-                    .toUpperCase()
-                    .substring(0, 2);
-                document.getElementById('user-avatar-initials').textContent = initials || 'U';
+                const profileContainer = document.getElementById('profile-container');
+                if (profileContainer) {
+                    profileContainer.setAttribute('data-tooltip', `${currentUser.full_name} (${roleBadge.textContent})`);
+                    profileContainer.title = `${currentUser.full_name} (${roleBadge.textContent})`;
+                }
 
                 // Load initial dashboard data
                 await fetchDashboardStats();
@@ -733,16 +855,10 @@
                 const data = await res.json();
                 allDepartments = data.departments || [];
 
-                // Populate Toolbar Department Filter
+                // Populate Toolbar Department Filter if present
                 const deptFilter = document.getElementById('dept-filter-select');
-                deptFilter.innerHTML = '<option value="">All Departments</option>' + allDepartments.map(d => 
-                    `<option value="${d.id}">${escapeHtml(d.name)}</option>`
-                ).join('');
-
-                // Populate Restrictions Dept select
-                const restrictDept = document.getElementById('restrict-dept-select');
-                if (restrictDept) {
-                    restrictDept.innerHTML = '<option value="">Select department...</option>' + allDepartments.map(d => 
+                if (deptFilter) {
+                    deptFilter.innerHTML = '<option value="">All Departments</option>' + allDepartments.map(d => 
                         `<option value="${d.id}">${escapeHtml(d.name)}</option>`
                     ).join('');
                 }
@@ -836,18 +952,100 @@
             }
         }
 
+        // --- View Mode Preference & Normalization Helpers ---
+        const VIEW_PREF_KEY = 'khin_ticket_view_pref';
+        let currentViewMode = localStorage.getItem(VIEW_PREF_KEY) || 'kanban';
+        let previousViewMode = (currentViewMode === 'split') ? 'kanban' : currentViewMode;
+        if (currentViewMode === 'split') currentViewMode = 'kanban';
+
+        let splitColumnFilter = 'all';
+
+        function setViewMode(mode) {
+            if (currentViewMode !== 'split') {
+                previousViewMode = currentViewMode;
+            }
+            currentViewMode = mode;
+            if (mode !== 'split') {
+                localStorage.setItem(VIEW_PREF_KEY, mode);
+            }
+            applyViewMode();
+        }
+
+        function closeSplitView() {
+            setViewMode(previousViewMode === 'list' ? 'list' : 'kanban');
+        }
+
+        function applyViewMode() {
+            const btnKanban = document.getElementById('btn-view-kanban');
+            const btnList = document.getElementById('btn-view-list');
+            const btnSplit = document.getElementById('btn-view-split');
+            const kanbanContainer = document.getElementById('tickets-kanban-container');
+            const tableContainer = document.getElementById('tickets-table-container');
+            const splitContainer = document.getElementById('tickets-split-container');
+
+
+            if (currentViewMode === 'split') {
+                if (btnSplit) btnSplit.classList.add('active');
+                if (btnKanban) btnKanban.classList.remove('active');
+                if (btnList) btnList.classList.remove('active');
+                if (kanbanContainer) kanbanContainer.style.display = 'none';
+                if (tableContainer) tableContainer.style.display = 'none';
+                if (splitContainer) splitContainer.style.display = 'grid';
+                renderSplitTicketsColumn();
+            } else if (currentViewMode === 'list') {
+                if (btnList) btnList.classList.add('active');
+                if (btnKanban) btnKanban.classList.remove('active');
+                if (btnSplit) btnSplit.classList.remove('active');
+                if (kanbanContainer) kanbanContainer.style.display = 'none';
+                if (tableContainer) tableContainer.style.display = 'block';
+                if (splitContainer) splitContainer.style.display = 'none';
+            } else {
+                if (btnKanban) btnKanban.classList.add('active');
+                if (btnList) btnList.classList.remove('active');
+                if (btnSplit) btnSplit.classList.remove('active');
+                if (tableContainer) tableContainer.style.display = 'none';
+                if (kanbanContainer) kanbanContainer.style.display = 'flex';
+                if (splitContainer) splitContainer.style.display = 'none';
+            }
+        }
+
+        const KANBAN_STAGES = [
+            { key: 'open', label: 'Open', emptyMsg: 'No open tickets' },
+            { key: 'waiting_on_us', label: 'Waiting on Us', emptyMsg: 'No tickets in progress' },
+            { key: 'waiting_contact', label: 'Waiting on Contact', emptyMsg: 'No tickets waiting on contact' },
+            { key: 'on_hold', label: 'On Hold', emptyMsg: 'No tickets on hold' },
+            { key: 'closed', label: 'Closed', emptyMsg: 'No closed tickets' }
+        ];
+
+        function normalizeTicketStatus(status) {
+            if (!status) return 'open';
+            const s = String(status).toLowerCase().trim();
+            if (s === 'in_progress' || s === 'waiting_on_us') return 'waiting_on_us';
+            if (s === 'waiting_contact' || s === 'waiting_on_them' || s === 'waiting_client') return 'waiting_contact';
+            if (s === 'on_hold' || s === 'onhold') return 'on_hold';
+            if (s === 'resolved' || s === 'closed') return 'closed';
+            return 'open';
+        }
+
+        function formatStatusLabel(status) {
+            switch(normalizeTicketStatus(status)) {
+                case 'waiting_on_us': return 'Waiting on Us';
+                case 'waiting_contact': return 'Waiting on Contact';
+                case 'on_hold': return 'On Hold';
+                case 'closed': return 'Closed';
+                case 'open':
+                default: return 'Open';
+            }
+        }
+
         // --- Load & Render Tickets ---
         async function loadTickets() {
             try {
-                let url = `${API_URL}/api/tickets?`;
-                if (activeStatus) url += `status_filter=${encodeURIComponent(activeStatus)}&`;
-                if (activeDepartmentId) url += `dept_filter=${encodeURIComponent(activeDepartmentId)}&`;
-
-                const res = await fetch(url, { headers: authHeaders() });
+                const res = await fetch(`${API_URL}/api/tickets`, { headers: authHeaders() });
                 if (!res.ok) throw new Error('Could not load tickets');
                 const data = await res.json();
                 allTickets = data.tickets || [];
-                renderTicketsTable();
+                renderTickets();
             } catch (err) {
                 console.error(err);
                 document.getElementById('tickets-table-body').innerHTML = `
@@ -856,27 +1054,124 @@
             }
         }
 
-        function renderTicketsTable() {
-            const tbody = document.getElementById('tickets-table-body');
+        function getFilteredTickets() {
             const searchVal = document.getElementById('ticket-search').value.toLowerCase().trim();
-
-            const filtered = allTickets.filter(t => {
+            return allTickets.filter(t => {
                 if (!searchVal) return true;
                 return (
                     (t.ticket_code && t.ticket_code.toLowerCase().includes(searchVal)) ||
                     (t.title && t.title.toLowerCase().includes(searchVal)) ||
                     (t.department_name && t.department_name.toLowerCase().includes(searchVal)) ||
                     (t.requester_email && t.requester_email.toLowerCase().includes(searchVal)) ||
-                    (t.requester_name && t.requester_name.toLowerCase().includes(searchVal))
+                    (t.requester_name && t.requester_name.toLowerCase().includes(searchVal)) ||
+                    (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal))
                 );
             });
+        }
 
+        function getSplitColumnTickets() {
+            const filtered = getFilteredTickets();
+            if (!splitColumnFilter || splitColumnFilter === 'all') {
+                return filtered;
+            }
+            return filtered.filter(t => normalizeTicketStatus(t.status) === splitColumnFilter);
+        }
+
+        function renderSplitTicketsColumn() {
+            const listEl = document.getElementById('split-column-tickets-list');
+            const countEl = document.getElementById('split-column-count');
+            const indicatorEl = document.getElementById('split-column-indicator');
+            const selectFilter = document.getElementById('split-column-filter');
+
+            if (!listEl) return;
+
+            if (selectFilter && selectFilter.value !== splitColumnFilter) {
+                selectFilter.value = splitColumnFilter;
+            }
+
+            if (indicatorEl) {
+                indicatorEl.className = `kanban-status-indicator indicator-${splitColumnFilter === 'all' ? 'open' : splitColumnFilter}`;
+            }
+
+            const tickets = getSplitColumnTickets();
+            if (countEl) countEl.textContent = tickets.length;
+
+            if (tickets.length === 0) {
+                listEl.innerHTML = `
+                    <div class="kanban-empty-placeholder" style="padding: 2.5rem 1rem;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity: 0.35;">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <line x1="9" y1="12" x2="15" y2="12"></line>
+                        </svg>
+                        <span>No tickets in this column</span>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = tickets.map(t => {
+                const isActive = activeTicket && String(activeTicket.id) === String(t.id);
+                const normStatus = normalizeTicketStatus(t.status);
+                const statusLabel = formatStatusLabel(t.status);
+                const dateStr = t.created_at ? new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+                
+                return `
+                    <div class="split-ticket-card ${isActive ? 'active-split-card' : ''}" 
+                         data-ticket-id="${t.id}"
+                         onclick="selectSplitTicket(${t.id})">
+                        <div class="split-card-header">
+                            <span class="kanban-card-code">${escapeHtml(t.ticket_code)}</span>
+                            <span class="badge badge-${normStatus}" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">${statusLabel}</span>
+                        </div>
+                        <div class="split-card-title" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                        <div class="split-card-footer">
+                            <span class="kanban-card-dept" style="max-width: 130px;" title="${escapeHtml(t.department_name || 'General')}">${escapeHtml(t.department_name || 'General')}</span>
+                            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                <span class="priority-tag priority-${t.priority || 'medium'}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">
+                                    <span class="priority-dot"></span>${t.priority || 'medium'}
+                                </span>
+                                <span>${dateStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.selectSplitTicket = function(ticketId) {
+            viewTicketDetails(ticketId);
+        };
+
+        function renderTickets() {
+            const filtered = getFilteredTickets();
             const ticketsBadge = document.getElementById('tickets-count-badge');
             if (ticketsBadge) ticketsBadge.textContent = `${filtered.length} ticket${filtered.length === 1 ? '' : 's'}`;
 
+            renderTicketsTable(filtered);
+            renderTicketsKanban(filtered);
+            if (currentViewMode === 'split') {
+                renderSplitTicketsColumn();
+            }
+        }
+
+        function renderTicketsTable(filtered) {
+            const tbody = document.getElementById('tickets-table-body');
+            if (!tbody) return;
+
             if (filtered.length === 0) {
                 tbody.innerHTML = `
-                    <tr><td colspan="8" style="text-align:center; color: var(--text-secondary); padding: 3rem;">No matching tickets found.</td></tr>
+                    <tr>
+                        <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 4rem 1rem;">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity: 0.4;">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <span style="font-size: 0.9rem; font-weight: 500;">No matching tickets found</span>
+                                <span style="font-size: 0.78rem; color: var(--text-muted);">Try adjusting your search query or filters</span>
+                            </div>
+                        </td>
+                    </tr>
                 `;
                 return;
             }
@@ -891,6 +1186,9 @@
                     ? `<span style="font-weight: 500; color: var(--text-primary);">${escapeHtml(t.assignee_name)}</span>` 
                     : `<span style="color: var(--text-muted);">Unassigned</span>`;
 
+                const normStatus = normalizeTicketStatus(t.status);
+                const statusLabel = formatStatusLabel(t.status);
+
                 return `
                     <tr onclick="viewTicketDetails(${t.id})">
                         <td><span class="ticket-code-tag">${escapeHtml(t.ticket_code)}</span></td>
@@ -904,10 +1202,10 @@
                             </span>
                         </td>
                         <td>${sourceIcon}</td>
-                        <td><span class="badge badge-${t.status}">${t.status.replace('_', ' ')}</span></td>
+                        <td><span class="badge badge-${normStatus}">${statusLabel}</span></td>
                         <td>
-                            <span class="priority-tag priority-${t.priority}">
-                                <span class="priority-dot"></span>${t.priority}
+                            <span class="priority-tag priority-${t.priority || 'medium'}">
+                                <span class="priority-dot"></span>${t.priority || 'medium'}
                             </span>
                         </td>
                         <td>${assigneeDisplay}</td>
@@ -917,7 +1215,176 @@
             }).join('');
         }
 
-        // --- Ticket Details Modal ---
+        let draggedTicketId = null;
+
+        function renderTicketsKanban(filtered) {
+            KANBAN_STAGES.forEach(stage => {
+                const colBody = document.getElementById(`col-body-${stage.key}`);
+                const colCount = document.getElementById(`col-count-${stage.key}`);
+                if (!colBody) return;
+
+                const stageTickets = filtered.filter(t => normalizeTicketStatus(t.status) === stage.key);
+                if (colCount) colCount.textContent = stageTickets.length;
+
+                if (stageTickets.length === 0) {
+                    colBody.innerHTML = `
+                        <div class="kanban-empty-placeholder">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity: 0.35;">
+                                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                <line x1="9" y1="12" x2="15" y2="12"></line>
+                            </svg>
+                            <span>${stage.emptyMsg}</span>
+                        </div>
+                    `;
+                    return;
+                }
+
+                colBody.innerHTML = stageTickets.map(t => {
+                    const sourceIcon = t.source === 'email' 
+                        ? `<span class="source-badge" title="Inbound Gmail"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Gmail</span>`
+                        : `<span class="source-badge" title="Web Portal">Portal</span>`;
+
+                    const assigneeText = t.assignee_name ? escapeHtml(t.assignee_name) : 'Unassigned';
+                    const assigneeClass = t.assignee_name ? '' : 'unassigned';
+
+                    return `
+                        <div class="kanban-card" 
+                             draggable="true" 
+                             data-ticket-id="${t.id}"
+                             onclick="handleKanbanCardClick(${t.id})">
+                            <div class="kanban-card-top">
+                                <span class="kanban-card-code">${escapeHtml(t.ticket_code)}</span>
+                                <span class="priority-tag priority-${t.priority || 'medium'}">
+                                    <span class="priority-dot"></span>${t.priority || 'medium'}
+                                </span>
+                            </div>
+                            <div class="kanban-card-title" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                            <div class="kanban-card-requester" title="${escapeHtml(t.requester_name || t.requester_email)} &lt;${escapeHtml(t.requester_email)}&gt;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.7; flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <span>${escapeHtml(t.requester_name || t.requester_email)}</span>
+                            </div>
+                            <div class="kanban-card-bottom">
+                                <span class="kanban-card-dept" title="${escapeHtml(t.department_name || 'General')}">${escapeHtml(t.department_name || 'General')}</span>
+                                <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                    ${sourceIcon}
+                                    <span class="kanban-card-assignee ${assigneeClass}" title="Assignee: ${assigneeText}">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                        <span>${assigneeText}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+
+            setupKanbanCardDragListeners();
+        }
+
+        let isCardDragging = false;
+        window.handleKanbanCardClick = function(ticketId) {
+            if (isCardDragging) return;
+            viewTicketDetails(ticketId);
+        };
+
+        function setupKanbanCardDragListeners() {
+            document.querySelectorAll('.kanban-card').forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    const ticketId = card.getAttribute('data-ticket-id');
+                    draggedTicketId = ticketId;
+                    isCardDragging = true;
+                    card.classList.add('is-dragging');
+                    e.dataTransfer.setData('text/plain', String(ticketId));
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('is-dragging');
+                    draggedTicketId = null;
+                    document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+                    setTimeout(() => { isCardDragging = false; }, 150);
+                });
+            });
+        }
+
+        function setupKanbanColumnDropzones() {
+            document.querySelectorAll('.kanban-column-body').forEach(zone => {
+                const col = zone.closest('.kanban-column');
+
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (col && !col.classList.contains('drag-over')) {
+                        col.classList.add('drag-over');
+                    }
+                });
+
+                zone.addEventListener('dragleave', (e) => {
+                    if (col && !col.contains(e.relatedTarget)) {
+                        col.classList.remove('drag-over');
+                    }
+                });
+
+                zone.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    if (col) col.classList.remove('drag-over');
+
+                    const idStr = e.dataTransfer.getData('text/plain') || draggedTicketId;
+                    const ticketId = parseInt(idStr, 10);
+                    const targetStatus = zone.getAttribute('data-status');
+
+                    if (!ticketId || !targetStatus) return;
+
+                    const ticket = allTickets.find(item => item.id === ticketId);
+                    if (!ticket) return;
+
+                    const currentNorm = normalizeTicketStatus(ticket.status);
+                    if (currentNorm === targetStatus) return;
+
+                    await moveTicketStatus(ticketId, targetStatus);
+                });
+            });
+        }
+
+        async function moveTicketStatus(ticketId, newStatus) {
+            const ticket = allTickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+
+            const previousStatus = ticket.status;
+            // Optimistic update
+            ticket.status = newStatus;
+            renderTickets();
+
+            try {
+                const res = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
+                    method: 'PATCH',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Failed to update ticket status');
+                }
+
+                const data = await res.json();
+                if (data.ticket) {
+                    Object.assign(ticket, data.ticket);
+                }
+
+                showToast(`Ticket ${ticket.ticket_code} moved to ${formatStatusLabel(newStatus)}`, 'success');
+                if (typeof fetchDashboardStats === 'function') {
+                    fetchDashboardStats();
+                }
+            } catch (err) {
+                console.error('Error moving ticket status:', err);
+                ticket.status = previousStatus;
+                renderTickets();
+                showToast(err.message || 'Failed to move ticket. Check permissions.', 'error');
+            }
+        }
+
+        // --- 1:3 Split View Ticket Details Loader ---
         window.viewTicketDetails = async function(ticketId) {
             try {
                 const res = await fetch(`${API_URL}/api/tickets/${ticketId}`, { headers: authHeaders() });
@@ -925,46 +1392,98 @@
                 const data = await res.json();
                 activeTicket = data.ticket;
 
-                document.getElementById('detail-ticket-code').textContent = activeTicket.ticket_code;
-                document.getElementById('detail-ticket-title').textContent = activeTicket.title;
-                document.getElementById('detail-requester-info').textContent = `${activeTicket.requester_name || 'Anonymous'} (${activeTicket.requester_email})`;
-                document.getElementById('detail-source-info').textContent = `${activeTicket.source === 'email' ? 'Inbound Gmail' : 'Web Portal'} • ${new Date(activeTicket.created_at).toLocaleString()}`;
-                document.getElementById('detail-ticket-desc').textContent = activeTicket.description || '(No message content)';
-                
+                // Sync Split Column Filter to active ticket's column if currently single column
+                const normStatus = normalizeTicketStatus(activeTicket.status);
+                if (splitColumnFilter !== 'all' && splitColumnFilter !== normStatus) {
+                    splitColumnFilter = normStatus;
+                }
+
+                // Switch to 1:3 ratio split view
+                setViewMode('split');
+
+                // Populate Right Pane Details
+                const codeEl = document.getElementById('detail-ticket-code');
+                if (codeEl) codeEl.textContent = activeTicket.ticket_code;
+
+                const titleEl = document.getElementById('detail-ticket-title');
+                if (titleEl) titleEl.textContent = activeTicket.ticket_code ? `[${activeTicket.ticket_code}] ${activeTicket.title}` : activeTicket.title;
+
+                const reqEl = document.getElementById('detail-requester-info');
+                if (reqEl) reqEl.textContent = `${activeTicket.requester_name || 'Anonymous'} (${activeTicket.requester_email})`;
+
+                const srcEl = document.getElementById('detail-source-info');
+                if (srcEl) srcEl.textContent = `${activeTicket.source === 'email' ? 'Inbound Gmail' : 'Web Portal'} • Submitted ${new Date(activeTicket.created_at).toLocaleString()}`;
+
+                const descEl = document.getElementById('detail-ticket-desc');
+                if (descEl) descEl.textContent = activeTicket.description || '(No message content)';
+
                 const statusBadge = document.getElementById('detail-status-badge');
-                statusBadge.className = `badge badge-${activeTicket.status}`;
-                statusBadge.textContent = activeTicket.status.replace('_', ' ');
+                if (statusBadge) {
+                    statusBadge.className = `badge badge-${normStatus}`;
+                    statusBadge.textContent = formatStatusLabel(activeTicket.status);
+                }
 
-                document.getElementById('detail-dept-badge').textContent = activeTicket.department_name || 'General';
+                const priorityBadge = document.getElementById('detail-priority-badge');
+                if (priorityBadge) {
+                    const prio = activeTicket.priority || 'medium';
+                    priorityBadge.className = `priority-tag priority-${prio}`;
+                    priorityBadge.innerHTML = `<span class="priority-dot"></span><span style="text-transform: capitalize;">${prio}</span>`;
+                }
 
-                document.getElementById('detail-status-select').value = activeTicket.status || 'open';
-                document.getElementById('detail-priority-select').value = activeTicket.priority || 'medium';
-                // Fetch relevant team members
+                const deptBadge = document.getElementById('detail-dept-badge');
+                if (deptBadge) deptBadge.textContent = activeTicket.department_name || 'General';
+
+                const sourceBadge = document.getElementById('detail-source-badge');
+                if (sourceBadge) {
+                    sourceBadge.innerHTML = activeTicket.source === 'email' 
+                        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Gmail`
+                        : `Portal`;
+                }
+
+                const statusSelect = document.getElementById('detail-status-select');
+                if (statusSelect) statusSelect.value = normStatus;
+
+                const prioSelect = document.getElementById('detail-priority-select');
+                if (prioSelect) prioSelect.value = activeTicket.priority || 'medium';
+
+                // Team members fetch
                 if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
                     await fetchTeamMembers(activeTicket.department_id);
                 } else {
                     await fetchTeamMembers();
                 }
 
-                document.getElementById('detail-assignee-select').value = activeTicket.assigned_to || 0;
+                const assigneeSelect = document.getElementById('detail-assignee-select');
+                if (assigneeSelect) assigneeSelect.value = activeTicket.assigned_to || 0;
 
-                // Enforce Assignee permissions: ONLY Super Admin or Department Admin Lead can assign tickets!
+                // Enforce Assignee permissions
                 const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
                 const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
-                const assigneeSelect = document.getElementById('detail-assignee-select');
                 const noteEl = document.getElementById('assignee-permission-note');
 
-                if (isDeptLead) {
-                    assigneeSelect.disabled = false;
-                    noteEl.style.display = 'none';
-                } else {
-                    assigneeSelect.disabled = true;
-                    noteEl.textContent = '🔒 Only the Super Admin or Department Admin Lead can assign tickets.';
-                    noteEl.style.display = 'block';
+                if (assigneeSelect) {
+                    if (isDeptLead) {
+                        assigneeSelect.disabled = false;
+                        if (noteEl) noteEl.style.display = 'none';
+                    } else {
+                        assigneeSelect.disabled = true;
+                        if (noteEl) {
+                            noteEl.textContent = '🔒 Only the Super Admin or Department Admin Lead can assign tickets.';
+                            noteEl.style.display = 'block';
+                        }
+                    }
                 }
 
                 renderComments(activeTicket.comments || []);
-                document.getElementById('modal-ticket-details').classList.add('active');
+                renderSplitTicketsColumn();
+
+                // Smooth scroll active card into view in left column
+                setTimeout(() => {
+                    const activeCard = document.querySelector(`.split-ticket-card[data-ticket-id="${activeTicket.id}"]`);
+                    if (activeCard) {
+                        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 50);
 
             } catch (err) {
                 console.error(err);
@@ -995,41 +1514,44 @@
         }
 
         // --- Save Ticket Changes ---
-        document.getElementById('btn-save-ticket-status').addEventListener('click', async () => {
-            if (!activeTicket) return;
-            const status = document.getElementById('detail-status-select').value;
-            const priority = document.getElementById('detail-priority-select').value;
-            
-            const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
-            const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
-            const payload = { status, priority };
+        const btnSaveStatus = document.getElementById('btn-save-ticket-status');
+        if (btnSaveStatus) {
+            btnSaveStatus.addEventListener('click', async () => {
+                if (!activeTicket) return;
+                const status = document.getElementById('detail-status-select').value;
+                const priority = document.getElementById('detail-priority-select').value;
+                
+                const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+                const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
+                const payload = { status, priority };
 
-            // Only send assigned_to if Super Admin or Department Admin Lead
-            if (isDeptLead) {
-                payload.assigned_to = parseInt(document.getElementById('detail-assignee-select').value, 10);
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/api/tickets/${activeTicket.id}`, {
-                    method: 'PATCH',
-                    headers: authHeaders(),
-                    body: JSON.stringify(payload)
-                });
-
-                if (!res.ok) {
-                    const errData = await res.json();
-                    throw new Error(errData.detail || 'Failed to update ticket');
+                if (isDeptLead) {
+                    payload.assigned_to = parseInt(document.getElementById('detail-assignee-select').value, 10);
                 }
 
-                showToast('Ticket updated successfully!', 'success');
-                document.getElementById('modal-ticket-details').classList.remove('active');
-                await fetchDashboardStats();
-                await loadTickets();
+                try {
+                    const res = await fetch(`${API_URL}/api/tickets/${activeTicket.id}`, {
+                        method: 'PATCH',
+                        headers: authHeaders(),
+                        body: JSON.stringify(payload)
+                    });
 
-            } catch (err) {
-                showToast(err.message, 'error');
-            }
-        });
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        throw new Error(errData.detail || 'Failed to update ticket');
+                    }
+
+                    showToast('Ticket updated successfully!', 'success');
+                    await fetchDashboardStats();
+                    await loadTickets();
+                    // Keep split view active and update with fresh ticket
+                    window.viewTicketDetails(activeTicket.id);
+
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
+            });
+        }
 
         // --- Add Comment Handler ---
         document.getElementById('add-comment-form').addEventListener('submit', async (e) => {
@@ -1162,13 +1684,7 @@
                 if (panelDeptRestrictions) panelDeptRestrictions.style.display = 'flex';
                 if (panelActiveDepts) panelActiveDepts.style.display = 'none';
 
-                const restrictDeptSelect = document.getElementById('restrict-dept-select');
-                if (restrictDeptSelect && restrictDeptSelect.value) {
-                    loadDepartmentRestrictions(restrictDeptSelect.value);
-                } else if (restrictDeptSelect && restrictDeptSelect.options.length > 1 && !restrictDeptSelect.value) {
-                    restrictDeptSelect.selectedIndex = 1;
-                    loadDepartmentRestrictions(restrictDeptSelect.value);
-                }
+                loadDepartmentAccessRestrictionsView();
             }
         }
 
@@ -1186,95 +1702,414 @@
             });
         }
 
-        // --- Department Restrictions Handlers ---
-        document.getElementById('restrict-dept-select').addEventListener('change', async (e) => {
-            const deptId = e.target.value;
-            if (deptId) {
-                await loadDepartmentRestrictions(deptId);
-            } else {
-                document.getElementById('restrictions-table-body').innerHTML = `
-                    <tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">Select a department above to view restrictions.</td></tr>
-                `;
-            }
-        });
+        // --- Department Access Restrictions (Per-Employee Department Dropdown Checklist) ---
+        let userRestrictionsMap = new Map(); // userId -> Set of restricted deptId
+        let currentChecklistFilter = 'all';
+        let checklistSearchQuery = '';
 
-        async function loadDepartmentRestrictions(deptId) {
+        // Search Input Handler
+        const checklistSearchInput = document.getElementById('checklist-employee-search');
+        if (checklistSearchInput) {
+            checklistSearchInput.addEventListener('input', (e) => {
+                checklistSearchQuery = e.target.value.toLowerCase().trim();
+                renderEmployeeDepartmentAccessTable();
+            });
+        }
+
+        // Filter Toggle Handler (All Staff / Full Access / Restricted Access)
+        const filterToggleContainer = document.getElementById('checklist-filter-toggle');
+        if (filterToggleContainer) {
+            filterToggleContainer.querySelectorAll('.view-mode-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    filterToggleContainer.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentChecklistFilter = btn.dataset.filter || 'all';
+                    renderEmployeeDepartmentAccessTable();
+                });
+            });
+        }
+
+        async function loadDepartmentAccessRestrictionsView() {
             const tbody = document.getElementById('restrictions-table-body');
             try {
-                const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions`, { headers: authHeaders() });
-                if (!res.ok) throw new Error('Failed to load restrictions');
-                const data = await res.json();
-                const list = data.restrictions || [];
-
-                if (list.length === 0) {
-                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: var(--text-muted);">No employees restricted from this department.</td></tr>`;
-                    return;
+                if (!allDepartments || allDepartments.length === 0) {
+                    await fetchDepartments();
+                }
+                if (!allUsers || allUsers.length === 0) {
+                    await loadUsersDirectory();
                 }
 
-                tbody.innerHTML = list.map(r => `
-                    <tr>
-                        <td style="font-weight: 500;">${escapeHtml(r.full_name)}</td>
-                        <td>${escapeHtml(r.email)}</td>
-                        <td>${escapeHtml(r.user_department)} • ${escapeHtml(r.position)}</td>
-                        <td style="color: var(--text-secondary);">${escapeHtml(r.reason || 'Restricted')}</td>
-                        <td>
-                            <button class="btn-secondary" style="font-size: 0.75rem; padding: 0.25rem 0.6rem; color: var(--error-red);" onclick="removeRestriction(${deptId}, ${r.user_id})">
-                                Lift Restriction
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
+                const res = await fetch(`${API_URL}/api/department-restrictions`, { headers: authHeaders() });
+                if (!res.ok) throw new Error('Failed to load department restrictions');
+                const data = await res.json();
+                const restrictions = data.restrictions || [];
+
+                userRestrictionsMap = new Map();
+                allUsers.forEach(u => userRestrictionsMap.set(Number(u.id), new Set()));
+                restrictions.forEach(r => {
+                    const uid = Number(r.user_id);
+                    if (!userRestrictionsMap.has(uid)) {
+                        userRestrictionsMap.set(uid, new Set());
+                    }
+                    userRestrictionsMap.get(uid).add(Number(r.department_id));
+                });
+
+                renderEmployeeDepartmentAccessTable();
             } catch (err) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 1.5rem; color: var(--error-red);">${err.message}</td></tr>`;
+                console.error('Error loading department access restrictions:', err);
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--error-red);">${escapeHtml(err.message)}</td></tr>`;
+                }
             }
         }
 
-        window.removeRestriction = async function(deptId, userId) {
+        function getEmployeeAccessStats(userId) {
+            const restrictedSet = userRestrictionsMap.get(Number(userId)) || new Set();
+            const totalDepts = allDepartments.length;
+            const restrictedCount = restrictedSet.size;
+            const allowedCount = Math.max(0, totalDepts - restrictedCount);
+            return { restrictedSet, totalDepts, restrictedCount, allowedCount };
+        }
+
+        function renderEmployeeDepartmentAccessTable() {
+            const tbody = document.getElementById('restrictions-table-body');
+            const badgeTotal = document.getElementById('check-badge-total');
+            const badgeAllowed = document.getElementById('check-badge-allowed');
+            const badgeRestricted = document.getElementById('check-badge-restricted');
+
+            const totalEmployees = allUsers.length;
+            let totalFullAccess = 0;
+            let totalRestrictedEmployees = 0;
+
+            allUsers.forEach(u => {
+                const { restrictedCount } = getEmployeeAccessStats(u.id);
+                if (restrictedCount === 0) {
+                    totalFullAccess++;
+                } else {
+                    totalRestrictedEmployees++;
+                }
+            });
+
+            if (badgeTotal) badgeTotal.textContent = `${totalEmployees} Staff`;
+            if (badgeAllowed) badgeAllowed.textContent = `${totalFullAccess} Full Access`;
+            if (badgeRestricted) badgeRestricted.textContent = `${totalRestrictedEmployees} Restricted`;
+
+            if (!tbody) return;
+
+            let filteredUsers = allUsers.filter(u => {
+                const { restrictedCount } = getEmployeeAccessStats(u.id);
+                if (currentChecklistFilter === 'full' && restrictedCount > 0) return false;
+                if (currentChecklistFilter === 'restricted' && restrictedCount === 0) return false;
+
+                if (checklistSearchQuery) {
+                    const matchName = (u.full_name || '').toLowerCase().includes(checklistSearchQuery);
+                    const matchEmail = (u.email || '').toLowerCase().includes(checklistSearchQuery);
+                    const matchDept = (u.department || '').toLowerCase().includes(checklistSearchQuery);
+                    const matchPos = (u.position || '').toLowerCase().includes(checklistSearchQuery);
+                    if (!matchName && !matchEmail && !matchDept && !matchPos) return false;
+                }
+                return true;
+            });
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No employees match the selected criteria.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredUsers.map(u => {
+                const { restrictedSet, totalDepts, restrictedCount, allowedCount } = getEmployeeAccessStats(u.id);
+
+                const roleBadgeClass = (u.role === 'super_admin' || u.role === 'admin') ? 'badge-urgent' 
+                    : (u.role === 'dept_lead' || u.role === 'admin_lead') ? 'badge-waiting' 
+                    : (u.role === 'tech_member' || u.role === 'agent') ? 'badge-in-progress'
+                    : 'badge-open';
+                const roleLabel = (u.role === 'super_admin' || u.role === 'admin') ? 'Super Admin'
+                    : (u.role === 'dept_lead' || u.role === 'admin_lead') ? 'Dept Lead'
+                    : (u.role === 'tech_member' || u.role === 'agent') ? 'Developer Team'
+                    : 'Staff / Member';
+
+                let dropdownBtnClass = 'access-full';
+                let dropdownSummaryText = `All ${totalDepts} Departments`;
+                let accessLevelBadge = `<span class="badge badge-open" style="font-size: 0.75rem;">Full Access</span>`;
+
+                if (restrictedCount > 0 && restrictedCount < totalDepts) {
+                    dropdownBtnClass = 'access-partial';
+                    dropdownSummaryText = `${allowedCount} of ${totalDepts} Allowed (${restrictedCount} Restricted)`;
+                    accessLevelBadge = `<span class="badge badge-waiting" style="font-size: 0.75rem;">${restrictedCount} Restricted</span>`;
+                } else if (restrictedCount >= totalDepts && totalDepts > 0) {
+                    dropdownBtnClass = 'access-none';
+                    dropdownSummaryText = `No Access (0 of ${totalDepts})`;
+                    accessLevelBadge = `<span class="badge badge-urgent" style="font-size: 0.75rem;">No Access</span>`;
+                }
+
+                const initials = (u.full_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+                const deptItemsHtml = allDepartments.map(d => {
+                    const isRestricted = restrictedSet.has(Number(d.id));
+                    const isAllowed = !isRestricted;
+                    return `
+                        <label class="dept-checklist-item" onclick="event.stopPropagation();">
+                            <input type="checkbox" 
+                                   id="chk-dept-${u.id}-${d.id}"
+                                   ${isAllowed ? 'checked' : ''} 
+                                   onchange="handleDeptCheckboxChange(${u.id}, ${d.id}, this.checked)">
+                            <span class="dept-checklist-label" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</span>
+                            <span class="dept-badge-pill ${isAllowed ? 'pill-allowed' : 'pill-restricted'}" id="pill-dept-${u.id}-${d.id}">
+                                ${isAllowed ? 'Allowed' : 'Restricted'}
+                            </span>
+                        </label>
+                    `;
+                }).join('');
+
+                return `
+                    <tr id="employee-access-row-${u.id}">
+                        <td>
+                            <div class="user-cell-wrap">
+                                <div class="user-mini-avatar">${initials}</div>
+                                <div class="user-cell-info">
+                                    <span class="user-cell-name">${escapeHtml(u.full_name || 'Unnamed')}</span>
+                                    <span class="user-cell-email">${escapeHtml(u.email || '-')}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">
+                                ${escapeHtml(u.department || 'General')}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ${escapeHtml(u.position || 'Employee')}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge ${roleBadgeClass}" style="font-size: 0.72rem;">${roleLabel}</span>
+                        </td>
+                        <td>
+                            <div class="dept-dropdown-wrapper" id="dept-dropdown-wrap-${u.id}">
+                                <button type="button" 
+                                        class="btn-dept-access-dropdown ${dropdownBtnClass}" 
+                                        id="btn-dept-access-${u.id}"
+                                        onclick="toggleDeptAccessDropdown(event, ${u.id})"
+                                        title="Click to configure accessible departments">
+                                    <span class="dept-access-indicator"></span>
+                                    <span class="dept-access-text" id="text-dept-access-${u.id}">${dropdownSummaryText}</span>
+                                    <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="dept-access-popover" id="popover-dept-access-${u.id}" style="display: none;" onclick="event.stopPropagation();">
+                                    <div class="dept-popover-header">
+                                        <span class="dept-popover-title">Accessible Departments</span>
+                                        <div class="dept-popover-actions">
+                                            <button type="button" class="btn-mini-action" onclick="setEmployeeAllDeptAccess(${u.id}, true); event.stopPropagation();">Allow All</button>
+                                            <button type="button" class="btn-mini-action" onclick="setEmployeeAllDeptAccess(${u.id}, false); event.stopPropagation();">Restrict All</button>
+                                        </div>
+                                    </div>
+                                    <div class="dept-popover-list">
+                                        ${deptItemsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td id="cell-access-level-${u.id}">
+                            ${accessLevelBadge}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.toggleDeptAccessDropdown = function(event, userId) {
+            event.stopPropagation();
+            const targetPopover = document.getElementById(`popover-dept-access-${userId}`);
+            const targetBtn = document.getElementById(`btn-dept-access-${userId}`);
+            if (!targetPopover || !targetBtn) return;
+
+            const isCurrentlyOpen = targetPopover.style.display === 'block';
+
+            // Close all open popovers first
+            closeAllDeptAccessPopovers();
+
+            if (!isCurrentlyOpen) {
+                // Check if button is near the bottom of viewport to flip popover upwards
+                const rect = targetBtn.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                if (spaceBelow < 280) {
+                    targetPopover.classList.add('open-up');
+                } else {
+                    targetPopover.classList.remove('open-up');
+                }
+
+                targetPopover.style.display = 'block';
+                targetBtn.classList.add('is-open');
+            }
+        };
+
+        function closeAllDeptAccessPopovers() {
+            document.querySelectorAll('.dept-access-popover').forEach(pop => {
+                pop.style.display = 'none';
+            });
+            document.querySelectorAll('.btn-dept-access-dropdown').forEach(btn => {
+                btn.classList.remove('is-open');
+            });
+        }
+
+        // Global click listener to close popovers when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dept-dropdown-wrapper')) {
+                closeAllDeptAccessPopovers();
+            }
+        });
+
+        window.handleDeptCheckboxChange = async function(userId, deptId, isAllowed) {
+            userId = Number(userId);
+            deptId = Number(deptId);
+            
+            let restrictedSet = userRestrictionsMap.get(userId);
+            if (!restrictedSet) {
+                restrictedSet = new Set();
+                userRestrictionsMap.set(userId, restrictedSet);
+            }
+
+            // Optimistic update
+            if (isAllowed) {
+                restrictedSet.delete(deptId);
+            } else {
+                restrictedSet.add(deptId);
+            }
+
+            // Update UI elements in place immediately
+            updateEmployeeRowAccessUI(userId);
+
             try {
-                const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions/${userId}`, {
-                    method: 'DELETE',
-                    headers: authHeaders()
+                if (isAllowed) {
+                    const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions/${userId}`, {
+                        method: 'DELETE',
+                        headers: authHeaders()
+                    });
+                    if (!res.ok && res.status !== 404) {
+                        throw new Error('Failed to update department access');
+                    }
+                } else {
+                    const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions`, {
+                        method: 'POST',
+                        headers: authHeaders(),
+                        body: JSON.stringify({
+                            user_id: userId,
+                            reason: 'Restricted by Admin'
+                        })
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.detail || 'Failed to update department access');
+                    }
+                }
+            } catch (err) {
+                // Rollback on failure
+                if (isAllowed) {
+                    restrictedSet.add(deptId);
+                } else {
+                    restrictedSet.delete(deptId);
+                }
+                const chk = document.getElementById(`chk-dept-${userId}-${deptId}`);
+                if (chk) chk.checked = !isAllowed;
+                updateEmployeeRowAccessUI(userId);
+                showToast(err.message, 'error');
+            }
+        };
+
+        window.setEmployeeAllDeptAccess = async function(userId, allowAll) {
+            userId = Number(userId);
+            const restrictedIds = allowAll ? [] : allDepartments.map(d => Number(d.id));
+
+            try {
+                const res = await fetch(`${API_URL}/api/users/${userId}/department-access`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        restricted_department_ids: restrictedIds,
+                        reason: allowAll ? null : 'Restricted from all departments'
+                    })
                 });
-                if (!res.ok) throw new Error('Failed to lift restriction');
-                showToast('Access restriction lifted.', 'success');
-                await loadDepartmentRestrictions(deptId);
-                await fetchDepartments();
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed to batch update department access');
+                }
+
+                userRestrictionsMap.set(userId, new Set(restrictedIds));
+                
+                // Update all checkboxes for this user
+                allDepartments.forEach(d => {
+                    const chk = document.getElementById(`chk-dept-${userId}-${d.id}`);
+                    if (chk) chk.checked = allowAll;
+                });
+
+                updateEmployeeRowAccessUI(userId);
+                showToast(allowAll ? 'All departments allowed for employee' : 'All departments restricted for employee', 'success');
+
             } catch (err) {
                 showToast(err.message, 'error');
             }
         };
 
-        document.getElementById('form-add-restriction').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const deptId = document.getElementById('restrict-dept-select').value;
-            const userId = document.getElementById('restrict-user-select').value;
-            const reason = document.getElementById('restrict-reason').value.trim();
+        function updateEmployeeRowAccessUI(userId) {
+            const { restrictedSet, totalDepts, restrictedCount, allowedCount } = getEmployeeAccessStats(userId);
 
-            if (!deptId || !userId) {
-                showToast('Please select both a department and a user.', 'error');
-                return;
-            }
-
-            try {
-                const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions`, {
-                    method: 'POST',
-                    headers: authHeaders(),
-                    body: JSON.stringify({ user_id: parseInt(userId, 10), reason: reason || 'Restricted by manager' })
-                });
-
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.detail || 'Failed to add restriction');
+            // Update badge pills in popover checklist
+            allDepartments.forEach(d => {
+                const isRestricted = restrictedSet.has(Number(d.id));
+                const pill = document.getElementById(`pill-dept-${userId}-${d.id}`);
+                if (pill) {
+                    pill.className = `dept-badge-pill ${isRestricted ? 'pill-restricted' : 'pill-allowed'}`;
+                    pill.textContent = isRestricted ? 'Restricted' : 'Allowed';
                 }
+            });
 
-                showToast('Employee restriction saved.', 'success');
-                document.getElementById('restrict-reason').value = '';
-                await loadDepartmentRestrictions(deptId);
-                await fetchDepartments();
-            } catch (err) {
-                showToast(err.message, 'error');
+            // Update dropdown button classes & text
+            const btn = document.getElementById(`btn-dept-access-${userId}`);
+            const textSpan = document.getElementById(`text-dept-access-${userId}`);
+            const levelCell = document.getElementById(`cell-access-level-${userId}`);
+
+            let dropdownBtnClass = 'access-full';
+            let dropdownSummaryText = `All ${totalDepts} Departments`;
+            let accessLevelBadge = `<span class="badge badge-open" style="font-size: 0.75rem;">Full Access</span>`;
+
+            if (restrictedCount > 0 && restrictedCount < totalDepts) {
+                dropdownBtnClass = 'access-partial';
+                dropdownSummaryText = `${allowedCount} of ${totalDepts} Allowed (${restrictedCount} Restricted)`;
+                accessLevelBadge = `<span class="badge badge-waiting" style="font-size: 0.75rem;">${restrictedCount} Restricted</span>`;
+            } else if (restrictedCount >= totalDepts && totalDepts > 0) {
+                dropdownBtnClass = 'access-none';
+                dropdownSummaryText = `No Access (0 of ${totalDepts})`;
+                accessLevelBadge = `<span class="badge badge-urgent" style="font-size: 0.75rem;">No Access</span>`;
             }
-        });
+
+            if (btn) {
+                btn.classList.remove('access-full', 'access-partial', 'access-none');
+                btn.classList.add(dropdownBtnClass);
+            }
+            if (textSpan) {
+                textSpan.textContent = dropdownSummaryText;
+            }
+            if (levelCell) {
+                levelCell.innerHTML = accessLevelBadge;
+            }
+
+            // Update header live counters
+            let totalFullAccess = 0;
+            let totalRestrictedEmployees = 0;
+            allUsers.forEach(u => {
+                const stats = getEmployeeAccessStats(u.id);
+                if (stats.restrictedCount === 0) totalFullAccess++;
+                else totalRestrictedEmployees++;
+            });
+            const badgeTotal = document.getElementById('check-badge-total');
+            const badgeAllowed = document.getElementById('check-badge-allowed');
+            const badgeRestricted = document.getElementById('check-badge-restricted');
+            if (badgeTotal) badgeTotal.textContent = `${allUsers.length} Staff`;
+            if (badgeAllowed) badgeAllowed.textContent = `${totalFullAccess} Full Access`;
+            if (badgeRestricted) badgeRestricted.textContent = `${totalRestrictedEmployees} Restricted`;
+        }
 
         // --- Users & Hierarchy Management Handlers (Super Admin Only) ---
         async function loadUsersDirectory() {
@@ -1496,6 +2331,9 @@
                 viewDepartments.style.display = 'flex';
                 fetchDepartments();
                 loadUsersDirectory();
+                if (panelDeptRestrictions && panelDeptRestrictions.style.display !== 'none') {
+                    loadDepartmentAccessRestrictionsView();
+                }
             } else if (target === 'users') {
                 menuUsers.classList.add('active');
                 viewUsers.style.display = 'flex';
@@ -1507,61 +2345,167 @@
         if (menuDepartments) menuDepartments.addEventListener('click', (e) => { e.preventDefault(); switchSection('departments'); });
         if (menuUsers) menuUsers.addEventListener('click', (e) => { e.preventDefault(); switchSection('users'); });
 
-        // --- Filter Tabs ---
-        document.querySelectorAll('.filter-tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                activeStatus = tab.getAttribute('data-status');
-                loadTickets();
-            });
-        });
+        // --- Sidebar Collapse/Expand Toggle ---
+        const btnSidebarToggle = document.getElementById('btn-sidebar-toggle');
+        const dashboardSidebar = document.getElementById('dashboard-sidebar');
 
-        // --- Department Filter Change ---
-        document.getElementById('dept-filter-select').addEventListener('change', (e) => {
-            activeDepartmentId = e.target.value;
-            loadTickets();
-        });
+        function updateSidebarToggleBtn(isCollapsed) {
+            if (btnSidebarToggle) {
+                btnSidebarToggle.classList.toggle('collapsed', isCollapsed);
+                btnSidebarToggle.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            }
+        }
+
+        if (btnSidebarToggle && dashboardSidebar) {
+            btnSidebarToggle.addEventListener('click', () => {
+                const isCollapsed = dashboardSidebar.classList.toggle('collapsed');
+                localStorage.setItem('khin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+                updateSidebarToggleBtn(isCollapsed);
+            });
+
+            // Initialize button state from current sidebar class
+            updateSidebarToggleBtn(dashboardSidebar.classList.contains('collapsed'));
+        }
 
         // --- Search Input Filter ---
-        document.getElementById('ticket-search').addEventListener('input', () => {
-            renderTicketsTable();
+        const ticketSearchInput = document.getElementById('ticket-search');
+        if (ticketSearchInput) {
+            ticketSearchInput.addEventListener('input', () => {
+                renderTickets();
+            });
+        }
+
+        // --- View Mode Toggle Listeners ---
+        const btnViewKanban = document.getElementById('btn-view-kanban');
+        const btnViewList = document.getElementById('btn-view-list');
+        const btnViewSplit = document.getElementById('btn-view-split');
+
+        if (btnViewKanban) {
+            btnViewKanban.addEventListener('click', (e) => {
+                e.preventDefault();
+                setViewMode('kanban');
+            });
+        }
+        if (btnViewList) {
+            btnViewList.addEventListener('click', (e) => {
+                e.preventDefault();
+                setViewMode('list');
+            });
+        }
+        if (btnViewSplit) {
+            btnViewSplit.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (activeTicket) {
+                    setViewMode('split');
+                } else if (allTickets.length > 0) {
+                    viewTicketDetails(allTickets[0].id);
+                } else {
+                    setViewMode('split');
+                }
+            });
+        }
+
+
+
+        const splitFilterSelect = document.getElementById('split-column-filter');
+        if (splitFilterSelect) {
+            splitFilterSelect.addEventListener('change', (e) => {
+                splitColumnFilter = e.target.value;
+                renderSplitTicketsColumn();
+                const tickets = getSplitColumnTickets();
+                if (tickets.length > 0 && (!activeTicket || !tickets.some(t => String(t.id) === String(activeTicket.id)))) {
+                    viewTicketDetails(tickets[0].id);
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && currentViewMode === 'split') {
+                closeSplitView();
+            }
         });
 
-        // --- Gmail Ingestion Sync Trigger ---
-        document.getElementById('btn-sync-emails').addEventListener('click', async () => {
-            const btn = document.getElementById('btn-sync-emails');
-            const btnText = document.getElementById('sync-button-text');
-            const origText = btnText.textContent;
+        // Apply view preference & initialize dropzones
+        applyViewMode();
+        setupKanbanColumnDropzones();
+
+        // --- Automated Gmail Sync & Continuous Ticket Polling ---
+        let autoSyncTimer = null;
+        let isSyncingEmails = false;
+
+        async function performAutoSync(isManual = false) {
+            if (isSyncingEmails) return;
+            const syncIconBtn = document.getElementById('btn-sync-emails');
+
+            isSyncingEmails = true;
+            if (syncIconBtn) syncIconBtn.classList.add('is-syncing');
 
             try {
-                btnText.textContent = 'Syncing...';
-                btn.disabled = true;
-
                 const res = await fetch(`${API_URL}/api/tickets/sync-emails`, {
                     method: 'POST',
                     headers: authHeaders()
                 });
 
-                const data = await res.json();
-                if (data.success) {
-                    showToast(data.message || 'Gmail sync finished.', 'success');
-                    await fetchDashboardStats();
-                    await loadTickets();
-                } else {
-                    showToast(data.message || 'Failed to sync emails.', 'error');
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.synced_count > 0) {
+                        showToast(`Auto-ingested ${data.synced_count} new email ticket(s)!`, 'success');
+                        await fetchDashboardStats();
+                        await loadTickets();
+                    } else if (isManual) {
+                        showToast(data.message || 'Gmail checked: no new unread support emails.', 'info');
+                    }
                 }
             } catch (err) {
-                showToast('Network error during Gmail sync.', 'error');
+                // Silently ignore if not authorized or network blip
             } finally {
-                btnText.textContent = origText;
-                btn.disabled = false;
-            }
-        });
+                // Refresh tickets to catch any new tickets created by backend worker
+                try {
+                    const prevCount = allTickets.length;
+                    await loadTickets();
+                    if (allTickets.length > prevCount && prevCount > 0 && !isManual) {
+                        showToast('New ticket arrived automatically!', 'info');
+                        await fetchDashboardStats();
+                    }
+                } catch (e) {
+                    // ignore
+                }
 
-        document.getElementById('btn-close-details-modal').addEventListener('click', () => {
-            document.getElementById('modal-ticket-details').classList.remove('active');
-        });
+                if (syncIconBtn) syncIconBtn.classList.remove('is-syncing');
+                isSyncingEmails = false;
+            }
+        }
+
+        const btnSyncEmails = document.getElementById('btn-sync-emails');
+        if (btnSyncEmails) {
+            btnSyncEmails.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                performAutoSync(true);
+            });
+        }
+
+        const autoSyncBadge = document.getElementById('auto-sync-status');
+        if (autoSyncBadge) {
+            autoSyncBadge.addEventListener('click', () => {
+                performAutoSync(true);
+            });
+        }
+
+        // Run automated sync and polling every 15 seconds continuously
+        if (autoSyncTimer) clearInterval(autoSyncTimer);
+        autoSyncTimer = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                performAutoSync(false);
+            }
+        }, 15000);
+
+        const btnCloseDetailsModal = document.getElementById('btn-close-details-modal');
+        if (btnCloseDetailsModal) {
+            btnCloseDetailsModal.addEventListener('click', () => {
+                closeSplitView();
+            });
+        }
 
         // --- Logout ---
         document.getElementById('btn-logout').addEventListener('click', () => {

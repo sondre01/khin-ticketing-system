@@ -4,11 +4,12 @@ from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
 import logging
 from contextlib import contextmanager
-from backend.config import DATABASE_URL as CONFIG_DATABASE_URL
+from backend.config import DATABASE_URL as CONFIG_DATABASE_URL, DB_SCHEMA, DB_SCHEMA_QUOTED
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("ticketing_system.database")
+logger.info(f"Using database schema: {DB_SCHEMA} ({DB_SCHEMA_QUOTED})")
 
 _pool = None
 
@@ -128,11 +129,33 @@ def get_db_connection():
             _pool.putconn(conn)
 
 
+def rewrite_schema_query(query: str) -> str:
+    """Translates generic/legacy schema references to the active configured schema."""
+    if not isinstance(query, str):
+        return query
+    # Replace unquoted and quoted schema prefixes
+    if "ticketing_system." in query:
+        query = query.replace("ticketing_system.", f"{DB_SCHEMA_QUOTED}.")
+    if '"ticketing_system".' in query:
+        query = query.replace('"ticketing_system".', f"{DB_SCHEMA_QUOTED}.")
+    if "CREATE SCHEMA IF NOT EXISTS ticketing_system" in query:
+        query = query.replace("CREATE SCHEMA IF NOT EXISTS ticketing_system", f"CREATE SCHEMA IF NOT EXISTS {DB_SCHEMA_QUOTED}")
+    if 'CREATE SCHEMA IF NOT EXISTS "ticketing_system"' in query:
+        query = query.replace('CREATE SCHEMA IF NOT EXISTS "ticketing_system"', f"CREATE SCHEMA IF NOT EXISTS {DB_SCHEMA_QUOTED}")
+    return query
+
+class SchemaAwareRealDictCursor(RealDictCursor):
+    def execute(self, query, vars=None):
+        return super().execute(rewrite_schema_query(query), vars)
+
+    def executemany(self, query, vars_list):
+        return super().executemany(rewrite_schema_query(query), vars_list)
+
 @contextmanager
 def get_db_cursor(commit=True):
     with get_db_connection() as conn:
-        # RealDictCursor returns rows as python dicts where keys are column names
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+        # SchemaAwareRealDictCursor returns dict rows and ensures queries target active schema
+        with conn.cursor(cursor_factory=SchemaAwareRealDictCursor) as cur:
             try:
                 yield cur
                 if commit:

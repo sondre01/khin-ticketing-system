@@ -28,7 +28,7 @@ from pydantic import BaseModel, Field
 from backend.config import HOST, PORT, TECH_ACCESS_KEY, GMAIL_USER, GMAIL_APP_PASSWORD, OTP_EXPIRE_MINUTES
 from backend.database import init_db_pool, close_db_pool, initialize_database, get_db_cursor
 from backend.auth import hash_password, verify_password, create_access_token, decode_access_token
-from backend.email_service import send_otp_email
+from backend.email_service import send_otp_email, get_department_email
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -55,10 +55,16 @@ async def lifespan(app: FastAPI):
         from backend.email_service import sync_gmail_tickets
 
         async def background_gmail_worker():
-            logger.info(f"Background Gmail ticket ingestion active (polling {GMAIL_USER} every 30s).")
+            logger.info(f"Background Gmail ticket ingestion active (polling {GMAIL_USER} continuously every 15s).")
+            # Immediate check on startup
+            try:
+                await asyncio.to_thread(sync_gmail_tickets, limit=15, mark_as_read=True)
+            except Exception as e:
+                logger.warning(f"Initial startup email sync warning: {e}")
+
             while True:
                 try:
-                    await asyncio.sleep(30)
+                    await asyncio.sleep(15)
                     await asyncio.to_thread(sync_gmail_tickets, limit=15, mark_as_read=True)
                 except asyncio.CancelledError:
                     break
@@ -133,6 +139,10 @@ class DepartmentRestrictionRequest(BaseModel):
     user_id: int
     reason: str | None = Field(default="Restricted by manager")
 
+class UserDepartmentAccessRequest(BaseModel):
+    restricted_department_ids: list[int] = Field(default_factory=list)
+    reason: str | None = Field(default="Restricted by manager")
+
 class TicketCreateRequest(BaseModel):
     title: str = Field(..., min_length=3, max_length=255)
     description: str = Field(default="")
@@ -174,14 +184,24 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
     
     try:
         with get_db_cursor(commit=False) as cur:
-            cur.execute(
-                """
-                SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
-                FROM ticketing_system.users 
-                WHERE id = %s;
-                """, 
-                (user_id,)
-            )
+            if str(user_id).isdigit():
+                cur.execute(
+                    """
+                    SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
+                    FROM ticketing_system.users 
+                    WHERE id = %s;
+                    """, 
+                    (int(user_id),)
+                )
+            else:
+                cur.execute(
+                    """
+                    SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
+                    FROM ticketing_system.users 
+                    WHERE lower(email) = lower(%s);
+                    """, 
+                    (str(user_id),)
+                )
             user = cur.fetchone()
     except Exception as e:
         logger.error(f"Database error during token validation: {e}")
@@ -1187,6 +1207,7 @@ def list_departments(current_user: dict = Depends(get_current_user)):
             for d in depts:
                 if d.get("created_at"):
                     d["created_at"] = d["created_at"].isoformat()
+                d["routing_email"] = get_department_email(d.get("name", ""))
             return {"departments": depts}
     except Exception as e:
         logger.error(f"Failed to list departments: {e}")
@@ -1315,6 +1336,73 @@ def remove_department_restriction(dept_id: int, user_id: int, current_user: dict
     except Exception as e:
         logger.error(f"Failed to remove restriction: {e}")
         raise HTTPException(status_code=500, detail="Failed to remove restriction.")
+
+@app.get("/api/department-restrictions")
+def get_all_department_restrictions(current_user: dict = Depends(require_super_admin)):
+    """Super Admin: get all user department restrictions across the company."""
+    try:
+        with get_db_cursor(commit=False) as cur:
+            cur.execute(
+                """
+                SELECT r.id, r.user_id, r.department_id, r.reason, r.created_at,
+                       d.name as department_name, u.full_name as user_name
+                FROM ticketing_system.department_restrictions r
+                LEFT JOIN ticketing_system.departments d ON r.department_id = d.id
+                LEFT JOIN ticketing_system.users u ON r.user_id = u.id
+                ORDER BY r.user_id, r.department_id;
+                """
+            )
+            restrictions = cur.fetchall()
+            for r in restrictions:
+                if r.get("created_at"):
+                    r["created_at"] = r["created_at"].isoformat()
+            return {"restrictions": restrictions}
+    except Exception as e:
+        logger.error(f"Failed to fetch all restrictions: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch department restrictions.")
+
+@app.put("/api/users/{user_id}/department-access")
+def update_user_department_access(
+    user_id: int,
+    req: UserDepartmentAccessRequest,
+    current_user: dict = Depends(require_super_admin)
+):
+    """Super Admin: batch update an employee's restricted departments."""
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute("SELECT id, full_name FROM ticketing_system.users WHERE id = %s;", (user_id,))
+            user_row = cur.fetchone()
+            if not user_row:
+                raise HTTPException(status_code=404, detail="User not found.")
+
+            # Remove existing restrictions for this user
+            cur.execute("DELETE FROM ticketing_system.department_restrictions WHERE user_id = %s;", (user_id,))
+
+            # Insert new restrictions if any
+            valid_restricted_ids = []
+            if req.restricted_department_ids:
+                cur.execute("SELECT id FROM ticketing_system.departments WHERE id = ANY(%s);", (req.restricted_department_ids,))
+                valid_ids_set = {r["id"] for r in cur.fetchall()}
+                valid_restricted_ids = [d_id for d_id in req.restricted_department_ids if d_id in valid_ids_set]
+                for dept_id in valid_restricted_ids:
+                    cur.execute(
+                        """
+                        INSERT INTO ticketing_system.department_restrictions (user_id, department_id, restricted_by, reason)
+                        VALUES (%s, %s, %s, %s)
+                        ON CONFLICT (user_id, department_id) DO NOTHING;
+                        """,
+                        (user_id, dept_id, current_user["id"], req.reason or "Restricted by manager")
+                    )
+            return {
+                "message": f"Updated department access for {user_row['full_name']}.",
+                "user_id": user_id,
+                "restricted_department_ids": valid_restricted_ids
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to update department access for user {user_id}: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update department access.")
 
 # --- Team Members Endpoint ---
 
@@ -1458,28 +1546,42 @@ def list_tickets(
             "%devops%",
             "%tech%"
         ])
-    elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member"):
-        # Department Admin Lead or Department Staff: STRICTLY see tickets belonging to their own department, or assigned to/raised by them!
-        user_dept = (current_user.get("department") or "General").strip()
-        dept_keyword = user_dept.split('(')[0].strip()
-        dept_pattern = f"%{dept_keyword}%"
-        query += """ AND (
-            t.assigned_to = %s 
-            OR t.requester_id = %s 
-            OR lower(t.requester_email) = lower(%s)
-            OR lower(t.department_name) LIKE lower(%s)
-            OR lower(d.name) LIKE lower(%s)
-        )"""
-        params.extend([current_user["id"], current_user["id"], current_user["email"], dept_pattern, dept_pattern])
+    elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member", "employee", "staff"):
+        # Department Members (Lead, Agent, Staff, or Member assigned to this department):
+        # STRICTLY see tickets belonging to their own department, or assigned to / raised by them!
+        user_dept = (current_user.get("department") or "").strip()
+        if user_dept and user_dept.lower() != 'general':
+            dept_keyword = user_dept.split('(')[0].strip()
+            dept_pattern = f"%{dept_keyword}%"
+            query += """ AND (
+                t.assigned_to = %s 
+                OR t.requester_id = %s 
+                OR lower(t.requester_email) = lower(%s)
+                OR lower(t.department_name) LIKE lower(%s)
+                OR lower(d.name) LIKE lower(%s)
+            )"""
+            params.extend([current_user["id"], current_user["id"], current_user["email"], dept_pattern, dept_pattern])
+        else:
+            # If user has no specific department or General, only see tickets they raised or assigned to them
+            query += " AND (t.assigned_to = %s OR t.requester_id = %s OR lower(t.requester_email) = lower(%s))"
+            params.extend([current_user["id"], current_user["id"], current_user["email"]])
     else:
-        # Non-developer regular employee: ONLY see tickets they raised!
+        # Fallback: ONLY see tickets they raised!
         query += " AND (t.requester_id = %s OR lower(t.requester_email) = lower(%s))"
         params.extend([current_user["id"], current_user["email"]])
 
 
     if status_filter:
-        query += " AND t.status = %s"
-        params.append(status_filter.lower())
+        stat = status_filter.lower()
+        if stat in ('waiting_on_us', 'in_progress'):
+            query += " AND t.status IN ('waiting_on_us', 'in_progress')"
+        elif stat in ('waiting_contact', 'waiting_on_them'):
+            query += " AND t.status IN ('waiting_contact', 'waiting_on_them')"
+        elif stat in ('closed', 'resolved'):
+            query += " AND t.status IN ('closed', 'resolved')"
+        else:
+            query += " AND t.status = %s"
+            params.append(stat)
 
     if priority_filter:
         query += " AND t.priority = %s"
@@ -1712,7 +1814,7 @@ def update_ticket(
 
                 # Status update
                 if req.status:
-                    valid_statuses = ("open", "in_progress", "resolved", "closed")
+                    valid_statuses = ("open", "in_progress", "waiting_on_us", "waiting_contact", "on_hold", "resolved", "closed")
                     if req.status.lower() in valid_statuses:
                         updates.append("status = %s")
                         params.append(req.status.lower())
@@ -1875,7 +1977,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 total = cur.fetchone()["total"]
                 cur.execute("SELECT COUNT(*) as open FROM ticketing_system.tickets WHERE status = 'open';")
                 open_count = cur.fetchone()["open"]
-                cur.execute("SELECT COUNT(*) as in_progress FROM ticketing_system.tickets WHERE status = 'in_progress';")
+                cur.execute("SELECT COUNT(*) as in_progress FROM ticketing_system.tickets WHERE status IN ('in_progress', 'waiting_on_us', 'waiting_contact', 'on_hold');")
                 in_progress = cur.fetchone()["in_progress"]
                 cur.execute("SELECT COUNT(*) as resolved FROM ticketing_system.tickets WHERE status IN ('resolved', 'closed');")
                 resolved = cur.fetchone()["resolved"]
@@ -1896,7 +1998,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                     SELECT 
                         COUNT(*) as total,
                         COUNT(CASE WHEN t.status = 'open' THEN 1 END) as open,
-                        COUNT(CASE WHEN t.status = 'in_progress' THEN 1 END) as in_progress,
+                        COUNT(CASE WHEN t.status IN ('in_progress', 'waiting_on_us', 'waiting_contact', 'on_hold') THEN 1 END) as in_progress,
                         COUNT(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 END) as resolved,
                         COUNT(CASE WHEN t.assigned_to IS NULL THEN 1 END) as unassigned
                     FROM ticketing_system.tickets t
@@ -1946,7 +2048,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                     SELECT 
                         COUNT(*) as total,
                         COUNT(CASE WHEN t.status = 'open' THEN 1 END) as open,
-                        COUNT(CASE WHEN t.status = 'in_progress' THEN 1 END) as in_progress,
+                        COUNT(CASE WHEN t.status IN ('in_progress', 'waiting_on_us', 'waiting_contact', 'on_hold') THEN 1 END) as in_progress,
                         COUNT(CASE WHEN t.status IN ('resolved', 'closed') THEN 1 END) as resolved,
                         COUNT(CASE WHEN t.assigned_to IS NULL THEN 1 END) as unassigned
                     FROM ticketing_system.tickets t
@@ -1979,7 +2081,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 total = cur.fetchone()["total"]
                 cur.execute("SELECT COUNT(*) as open FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status = 'open';", (user_id, user_email))
                 open_count = cur.fetchone()["open"]
-                cur.execute("SELECT COUNT(*) as in_progress FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status = 'in_progress';", (user_id, user_email))
+                cur.execute("SELECT COUNT(*) as in_progress FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status IN ('in_progress', 'waiting_on_us', 'waiting_contact', 'on_hold');", (user_id, user_email))
                 in_progress = cur.fetchone()["in_progress"]
                 cur.execute("SELECT COUNT(*) as resolved FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status IN ('resolved', 'closed');", (user_id, user_email))
                 resolved = cur.fetchone()["resolved"]
