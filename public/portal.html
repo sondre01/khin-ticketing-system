@@ -89,7 +89,12 @@
             
             <!-- User Profile Section at Bottom of Sidebar -->
             <div class="user-profile-section" id="portal-profile-container" data-tooltip="User Profile" style="cursor: pointer;">
-                <div class="user-avatar" id="portal-sidebar-user-avatar" style="width: 38px; height: 38px; min-width: 38px; font-size: 0.9rem; border-radius: 50%; background: var(--bg-pitch-black); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); font-weight: 700;">U</div>
+                <div class="user-avatar" id="portal-sidebar-user-avatar" style="width: 38px; height: 38px; min-width: 38px; font-size: 0.9rem; border-radius: 50%; background: var(--bg-pitch-black); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); font-weight: 700;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
                 <div class="user-info-text" style="min-width: 0;">
                     <div class="user-name" id="portal-sidebar-user-name" style="font-size: 0.85rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Employee</div>
                     <div class="user-role-badge" id="portal-sidebar-user-role" style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Internal Staff</div>
@@ -103,7 +108,12 @@
         <!-- Welcome / Profile Banner (Full Width Edge-to-Edge) -->
         <div class="welcome-banner portal-welcome-banner">
             <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
-                <div class="user-avatar" id="portal-user-avatar" style="width: 38px; height: 38px; min-width: 38px; font-size: 1rem; border-radius: 50%; background: var(--bg-deep-charcoal); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); font-weight: 700;">U</div>
+                <div class="user-avatar" id="portal-user-avatar" style="width: 38px; height: 38px; min-width: 38px; font-size: 1rem; border-radius: 50%; background: var(--bg-deep-charcoal); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); font-weight: 700;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
                 <div style="min-width: 0;">
                     <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;">
                         <h2 style="font-size: 1.05rem; margin: 0; font-family: var(--font-heading); color: #ffffff; letter-spacing: -0.01em;" id="portal-user-name">Welcome, Requester</h2>
@@ -111,18 +121,17 @@
                     </div>
                     <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.2rem; flex-wrap: wrap;">
                         <span id="portal-user-email">customer@company.com</span>
-                        <span style="color: var(--text-muted); opacity: 0.5;">•</span>
-                        <span id="portal-user-dept-pos" style="color: var(--text-muted);">General • Employee</span>
+                        <span style="color: var(--text-muted); opacity: 0.35;">/</span>
+                        <span id="portal-user-dept-pos" style="color: var(--text-muted);">General / Employee</span>
                     </div>
                 </div>
             </div>
 
             <!-- Central Live Helpdesk Status Chip -->
             <div class="portal-support-status-chip">
-                <span class="portal-pulse-dot"></span>
                 <div style="display: flex; flex-direction: column;">
-                    <span style="font-size: 0.74rem; font-weight: 600; color: #ffffff;">Helpdesk & Support Dispatch Active</span>
-                    <span style="font-size: 0.66rem; color: var(--text-muted);">Standard Response SLA: &lt; 2 hrs &bull; Real-time updates</span>
+                    <span style="font-size: 0.74rem; font-weight: 600; color: #ffffff;">Helpdesk &amp; Support Dispatch Active</span>
+                    <span style="font-size: 0.66rem; color: var(--text-muted);">Standard Response SLA: &lt; 2 hrs / Real-time updates</span>
                 </div>
             </div>
 
@@ -389,6 +398,29 @@
         let activeStatus = '';
         let activeTicket = null;
 
+        // Immediately populate initials from cached session so there is zero latency
+        (function initCachedUserData() {
+            const cachedName = localStorage.getItem('user_name');
+            if (cachedName) {
+                const inits = cachedName.split(' ').filter(Boolean).map(w => w[0]).join('').toUpperCase().substring(0, 2);
+                if (inits) {
+                    const el1 = document.getElementById('portal-user-avatar');
+                    const el2 = document.getElementById('portal-sidebar-user-avatar');
+                    if (el1) el1.textContent = inits;
+                    if (el2) el2.textContent = inits;
+                }
+                const nameEl = document.getElementById('portal-user-name');
+                if (nameEl) nameEl.textContent = `Welcome, ${cachedName}`;
+                const sbNameEl = document.getElementById('portal-sidebar-user-name');
+                if (sbNameEl) sbNameEl.textContent = cachedName;
+            }
+            const cachedEmail = localStorage.getItem('user_email');
+            if (cachedEmail) {
+                const emailEl = document.getElementById('portal-user-email');
+                if (emailEl) emailEl.textContent = cachedEmail;
+            }
+        })();
+
         function authHeaders() {
             const token = localStorage.getItem('access_token');
             return {
@@ -486,20 +518,33 @@
                 const pos = currentUser.position || 'Employee';
                 const deptPosEl = document.getElementById('portal-user-dept-pos');
                 if (deptPosEl) {
-                    deptPosEl.textContent = `${dept} • ${pos}`;
+                    deptPosEl.textContent = `${dept} / ${pos}`;
                 }
 
-                const initials = currentUser.full_name
+                const userFullName = currentUser.full_name || localStorage.getItem('user_name') || '';
+                const initials = userFullName
                     .split(' ')
+                    .filter(Boolean)
                     .map(w => w[0])
                     .join('')
                     .toUpperCase()
                     .substring(0, 2);
-                document.getElementById('portal-user-avatar').textContent = initials || 'U';
+
+                const defaultAvatarSvg = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+                const defaultSidebarSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>`;
+
+                const portalAvatarEl = document.getElementById('portal-user-avatar');
+                if (portalAvatarEl) {
+                    if (initials) portalAvatarEl.textContent = initials;
+                    else portalAvatarEl.innerHTML = defaultAvatarSvg;
+                }
 
                 // Sync sidebar profile
                 const sidebarAvatar = document.getElementById('portal-sidebar-user-avatar');
-                if (sidebarAvatar) sidebarAvatar.textContent = initials || 'U';
+                if (sidebarAvatar) {
+                    if (initials) sidebarAvatar.textContent = initials;
+                    else sidebarAvatar.innerHTML = defaultSidebarSvg;
+                }
                 const sidebarName = document.getElementById('portal-sidebar-user-name');
                 if (sidebarName) sidebarName.textContent = currentUser.full_name || 'Employee';
                 const sidebarRole = document.getElementById('portal-sidebar-user-role');
