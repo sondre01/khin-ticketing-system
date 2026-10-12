@@ -2,13 +2,367 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=frontend/index.html">
-    <title>Redirecting to Khin Ticket...</title>
-    <script>
-        window.location.href = "frontend/index.html";
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign In & Sign Up - Khin Ticket</title>
+    <meta name="description" content="Access your ticketing dashboard. Register or log in to manage tickets, request support, and resolve issues.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="images/logo-box.png">
+    <style>
+        /* Fallback: strictly hide inactive registration steps */
+        .form-container:not(.active) {
+            display: none !important;
+        }
+    </style>
 </head>
 <body>
-    <p>Redirecting to <a href="frontend/index.html">Khin Ticket Frontend</a>...</p>
+
+    <!-- ========================================== -->
+    <!-- INTRO SPLASH COVER (Click to Lift Up)      -->
+    <!-- ========================================== -->
+    <div id="intro-splash-screen" class="intro-splash-screen" role="button" tabindex="0" aria-label="Welcome to Khin Ticket. Click to enter.">
+        <div class="intro-splash-backdrop"></div>
+        <div class="intro-splash-content">
+            <div class="intro-logo-wrapper">
+                <img src="images/logo-box.png" alt="Khin Ticket Logo" class="intro-brand-logo">
+            </div>
+            <div class="intro-badge">
+                <span>Welcome to the Project</span>
+            </div>
+            <h1 class="intro-title">Khin <span>Ticket</span></h1>
+        </div>
+        
+        <div class="intro-tap-sign">
+            <svg class="tap-arrow-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="18 15 12 9 6 15"></polyline>
+            </svg>
+            <span class="intro-tap-label">Tap screen to enter</span>
+        </div>
+    </div>
+
+    <!-- Outer Panel Header (Pitch Black) -->
+    <header>
+        <a href="#" class="logo" id="logo-link">
+            <img src="images/logo-box.png" alt="Khin Ticket Logo" class="brand-logo">
+            Khin <span>Ticket</span>
+        </a>
+        <a href="https://github.com" target="_blank" class="nav-link" id="nav-github-link">Documentation</a>
+    </header>
+
+    <!-- Main Dashboard Body (Near Black wrapper) -->
+    <main class="auth-wrapper">
+        <div class="auth-card" id="auth-container-card">
+            
+            <!-- --- SIGN IN FORM --- -->
+            <div id="signin-container" class="form-container active">
+                <div class="auth-card-header">
+                    <h2 id="signin-title">Welcome to Khin Ticket</h2>
+                    <p>Enter your credentials to access your tickets</p>
+                </div>
+                
+                <div id="verified-success-banner" style="display: none; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.88rem; color: #4ade80; align-items: center; gap: 0.75rem;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                    </svg>
+                    <span>Your email has been verified! You can now sign in below.</span>
+                </div>
+
+                <div id="signin-unverified-alert" style="display: none; background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.35); border-radius: 8px; padding: 0.85rem 1rem; margin-bottom: 1.25rem; font-size: 0.85rem; color: #f87171;">
+                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem;">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                        <strong style="color: #fff;">Account Verification Required</strong>
+                    </div>
+                    <p style="margin: 0 0 0.5rem 0; color: #fecaca;">Please enter the 6-digit verification code sent to your email to activate your account.</p>
+                    <div style="display: flex; gap: 0.85rem; align-items: center; flex-wrap: wrap;">
+                        <button type="button" id="link-goto-otp-verify" class="btn-link-action" style="font-weight: 700; color: var(--accent-yellow); text-decoration: underline;">Enter verification code &rarr;</button>
+                        <span style="color: rgba(255, 255, 255, 0.3);">&bull;</span>
+                        <button type="button" id="link-resend-signin-verify" class="btn-link-action" style="font-weight: 600;">Resend code</button>
+                    </div>
+                </div>
+
+                <form id="signin-form" novalidate autocomplete="off">
+                    <div class="form-group">
+                        <label for="signin-email" class="form-label">Email Address</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="email" 
+                                id="signin-email" 
+                                class="form-input" 
+                                placeholder="name@company.com" 
+                                required
+                                autocomplete="off"
+                                value=""
+                            >
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signin-password" class="form-label">Password</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="password" 
+                                id="signin-password" 
+                                class="form-input" 
+                                placeholder="Enter password" 
+                                required
+                                autocomplete="new-password"
+                                value=""
+                            >
+                            <button type="button" class="password-toggle" id="toggle-signin-password" aria-label="Toggle password visibility">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="btn-signin">
+                        <span>Sign In</span>
+                    </button>
+                </form>
+                
+                <div class="auth-switch">
+                    Don't have an account? 
+                    <a href="#" class="auth-switch-link" id="link-to-signup">Sign Up</a>
+                </div>
+            </div>
+
+            <!-- --- SIGN UP FORM --- -->
+            <div id="signup-container" class="form-container">
+                <div class="auth-card-header">
+                    <span style="display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--accent-yellow); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">Step 1 of 2: Profile &amp; Department</span>
+                    <h2 id="signup-title">Get Started</h2>
+                    <p>Create an account to join Khin Ticket</p>
+                </div>
+                
+                <form id="signup-form" novalidate>
+                    <div class="form-group">
+                        <label for="signup-fullname" class="form-label">Full Name</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="signup-fullname" 
+                                class="form-input" 
+                                placeholder="John Doe" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-email" class="form-label">Email Address</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="email" 
+                                id="signup-email" 
+                                class="form-input" 
+                                placeholder="name@company.com" 
+                                required
+                            >
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="signup-department" class="form-label">Department</label>
+                        <div class="input-wrapper">
+                            <select id="signup-department" class="form-input" style="cursor: pointer; background-color: var(--bg-pitch-black);">
+                                <optgroup label="Technology & Product">
+                                    <option value="Software Development / Engineering" selected>Software Development / Engineering</option>
+                                    <option value="Information Technology (IT)">Information Technology (IT)</option>
+                                    <option value="Product Management">Product Management</option>
+                                    <option value="Data & Analytics">Data & Analytics</option>
+                                </optgroup>
+                                <optgroup label="Revenue & Customer Growth">
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Sales">Sales</option>
+                                    <option value="Customer Success / Support">Customer Success / Support</option>
+                                </optgroup>
+                                <optgroup label="Business Operations & Infrastructure">
+                                    <option value="Operations">Operations</option>
+                                    <option value="Human Resources (HR)">Human Resources (HR)</option>
+                                    <option value="Finance & Accounting">Finance & Accounting</option>
+                                    <option value="Legal & Compliance">Legal & Compliance</option>
+                                    <option value="Procurement">Procurement</option>
+                                </optgroup>
+                                <optgroup label="Strategy & Innovation">
+                                    <option value="Research & Development (R&D)">Research & Development (R&D)</option>
+                                    <option value="Corporate Strategy">Corporate Strategy</option>
+                                </optgroup>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-position" class="form-label">Position / Job Title</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="text" 
+                                id="signup-position" 
+                                class="form-input" 
+                                placeholder="e.g. IT Specialist, Tech Lead, HR Officer" 
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div style="background-color: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.15); border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 0.25rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.6rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-yellow); flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="16" x2="12" y2="12"></line>
+                            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                        </svg>
+                        <span>All new accounts are created with standard non-ticketing access (Internal or External). Developer and lead privileges are managed by the Tech Manager.</span>
+                    </div>
+                    
+                    <button type="submit" class="btn-primary" id="btn-goto-password">
+                        <span>Continue to Password &rarr;</span>
+                    </button>
+                </form>
+                
+                <div class="auth-switch">
+                    Already have an account? 
+                    <a href="#" class="auth-switch-link" id="link-to-signin">Sign in here</a>
+                </div>
+            </div>
+
+            <!-- --- SIGN UP STEP 2: PASSWORD SETUP & REGISTRATION CARD --- -->
+            <div id="signup-password-container" class="form-container">
+                <div class="auth-card-header">
+                    <span style="display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--accent-yellow); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">Step 2 of 2: Security &amp; Password</span>
+                    <h2 id="password-title">Create Password</h2>
+                    <p id="password-subtitle">Choose and confirm a secure password for your account</p>
+                </div>
+                
+                <form id="password-form" novalidate>
+                    <div class="form-group">
+                        <label for="signup-password" class="form-label">Account Password</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="password" 
+                                id="signup-password" 
+                                class="form-input" 
+                                placeholder="Min. 6 characters" 
+                                required
+                            >
+                            <button type="button" class="password-toggle" id="toggle-signup-password" aria-label="Toggle password visibility">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="signup-confirm-password" class="form-label">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <input 
+                                type="password" 
+                                id="signup-confirm-password" 
+                                class="form-input" 
+                                placeholder="Re-enter your password" 
+                                required
+                            >
+                            <button type="button" class="password-toggle" id="toggle-signup-confirm-password" aria-label="Toggle password visibility">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="eye-icon">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                    <circle cx="12" cy="12" r="3" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div style="background-color: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.15); border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 1rem; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.6rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-yellow); flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>For safety, a 6-digit verification code will be sent to your email to verify and activate your account.</span>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn-secondary" id="btn-back-to-step1" style="flex: 1; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+                            &larr; Back
+                        </button>
+                        <button type="submit" class="btn-primary" id="btn-complete-signup" style="flex: 2;">
+                            <span>Continue to Verification &rarr;</span>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="auth-switch">
+                    Already have an account? 
+                    <a href="#" class="auth-switch-link" id="link-step2-to-signin">Sign in here</a>
+                </div>
+            </div>
+
+            <!-- --- STEP 3: EMAIL OTP VERIFICATION CARD --- -->
+            <div id="signup-otp-container" class="form-container">
+                <div class="auth-card-header">
+                    <span style="display: inline-block; font-size: 0.75rem; font-weight: 700; color: var(--accent-yellow); letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.4rem;">Step 3 of 3: Safety Verification</span>
+                    <h2 id="otp-title">Enter Verification Code</h2>
+                    <p id="otp-subtitle">We sent a 6-digit verification code to <strong id="otp-display-email" style="color: var(--accent-yellow); font-weight: 600;">your email</strong></p>
+                </div>
+                
+                <form id="otp-form" novalidate>
+                    <div class="form-group">
+                        <label for="signup-otp-code" class="form-label" style="text-align: center; display: block;">6-Digit Verification Code</label>
+                        <div class="input-wrapper" style="justify-content: center;">
+                            <input 
+                                type="text" 
+                                id="signup-otp-code" 
+                                class="form-input otp-code-input" 
+                                placeholder="000000" 
+                                maxlength="6" 
+                                inputmode="numeric" 
+                                pattern="[0-9]*" 
+                                autocomplete="one-time-code"
+                                required
+                            >
+                        </div>
+                    </div>
+
+                    <div class="otp-resend-bar">
+                        <span>Didn't receive the code?</span>
+                        <button type="button" id="btn-resend-otp" class="btn-link-action" disabled>
+                            Resend in <span id="resend-countdown">60</span>s
+                        </button>
+                    </div>
+
+                    <div style="background-color: rgba(255, 215, 0, 0.05); border: 1px solid rgba(255, 215, 0, 0.15); border-radius: 8px; padding: 0.75rem 0.9rem; margin-top: 1rem; margin-bottom: 1.25rem; font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.6rem;">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--accent-yellow); flex-shrink: 0;">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Code expires in <strong id="otp-expiry-timer" style="color: var(--accent-yellow);">10:00</strong>. Please also check your spam or junk folder.</span>
+                    </div>
+
+                    <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+                        <button type="button" class="btn-secondary" id="btn-back-to-step2" style="flex: 1; justify-content: center; padding: 0.85rem; font-size: 0.95rem;">
+                            &larr; Back
+                        </button>
+                        <button type="submit" class="btn-primary" id="btn-verify-otp" style="flex: 2;">
+                            <span>Verify &amp; Create Account &rarr;</span>
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="auth-switch">
+                    Entered the wrong email? 
+                    <a href="#" class="auth-switch-link" id="link-otp-back-to-step1">Change email address</a>
+                </div>
+            </div>
+            
+        </div>
+    </main>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="js/app.js"></script>
 </body>
 </html>

@@ -15,6 +15,38 @@ function formatApiError(error) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Intro Splash Screen (Click/Tap to Lift Up) ---
+    const introSplashScreen = document.getElementById('intro-splash-screen');
+
+    function triggerIntroLift() {
+        if (!introSplashScreen || introSplashScreen.classList.contains('lift-up')) return;
+        introSplashScreen.classList.add('lift-up');
+        setTimeout(() => {
+            introSplashScreen.style.display = 'none';
+        }, 900);
+    }
+
+    if (introSplashScreen) {
+        // Tapping or clicking anywhere on the intro screen lifts up
+        introSplashScreen.addEventListener('click', () => {
+            triggerIntroLift();
+        });
+
+        // Keyboard accessibility: Enter or Space lifts up
+        introSplashScreen.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowUp') {
+                e.preventDefault();
+                triggerIntroLift();
+            }
+        });
+
+        // Lift immediately if user arrived with verification status or redirect
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('verify_status') || urlParams.get('email') || urlParams.get('expired') || urlParams.get('action')) {
+            triggerIntroLift();
+        }
+    }
+
     // --- Container Elements ---
     const signinContainer = document.getElementById('signin-container');
     const signupContainer = document.getElementById('signup-container');
@@ -213,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const signinForm = document.getElementById('signin-form');
     const signupForm = document.getElementById('signup-form');
     const passwordForm = document.getElementById('password-form');
+    clearForms();
 
     // ==========================================
     // 1. SIGN IN HANDLER
@@ -738,8 +771,12 @@ function clearForms() {
     const otpForm = document.getElementById('otp-form');
     const verifiedSuccessBanner = document.getElementById('verified-success-banner');
     const signinUnverifiedAlert = document.getElementById('signin-unverified-alert');
+    const signinEmail = document.getElementById('signin-email');
+    const signinPassword = document.getElementById('signin-password');
 
     if (signinForm) signinForm.reset();
+    if (signinEmail) signinEmail.value = '';
+    if (signinPassword) signinPassword.value = '';
     if (signupForm) signupForm.reset();
     if (passwordForm) passwordForm.reset();
     if (otpForm) otpForm.reset();

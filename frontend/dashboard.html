@@ -73,6 +73,16 @@
                         <span class="sidebar-item-label">Overview &amp; Tickets</span>
                     </a>
                 </li>
+                <li>
+                    <a href="#" class="sidebar-item-link" id="menu-performance" data-tooltip="Support &amp; Performance">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                            <polyline points="8 13 10.5 10 12.5 15 14.5 11 16.5 13"/>
+                        </svg>
+                        <span class="sidebar-item-label">Support &amp; Performance</span>
+                    </a>
+                </li>
                 <li id="nav-item-departments" style="display: none;">
                     <a href="#" class="sidebar-item-link" id="menu-departments" data-tooltip="Departments">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -557,7 +567,7 @@
                 </div>
 
                 <!-- Stats Grid for Users & Roles -->
-                <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
                     <div class="stat-card">
                         <div class="stat-label">Total Accounts</div>
                         <div class="stat-value" id="stat-users-total">0</div>
@@ -567,25 +577,29 @@
                         <div class="stat-value" id="stat-users-superadmin" style="color: var(--accent-yellow);">0</div>
                     </div>
                     <div class="stat-card">
-                        <div class="stat-label">Department Admin Leads</div>
+                        <div class="stat-label">Dept Leads &amp; Tech</div>
                         <div class="stat-value" id="stat-users-deptleads" style="color: #60a5fa;">0</div>
                     </div>
-                    <div class="stat-card">
-                        <div class="stat-label">Staff &amp; Support</div>
-                        <div class="stat-value" id="stat-users-staff" style="color: var(--success-green);">0</div>
+                    <div class="stat-card" title="Serving company &amp; internal operations (Non-ticketing)">
+                        <div class="stat-label">Internals (Company)</div>
+                        <div class="stat-value" id="stat-users-internals" style="color: var(--success-green);">0</div>
+                    </div>
+                    <div class="stat-card" title="Serving outside people, clients &amp; customers (Non-ticketing)">
+                        <div class="stat-label">Externals (Clients)</div>
+                        <div class="stat-value" id="stat-users-externals" style="color: #a78bfa;">0</div>
                     </div>
                 </section>
 
                 <!-- Users Search & Filter Toolbar -->
                 <div class="user-toolbar">
                     <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
-                        <select id="user-role-filter-select" class="form-input" style="width: auto; max-width: 220px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                        <select id="user-role-filter-select" class="form-input" style="width: auto; max-width: 260px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
                             <option value="">All Hierarchy Roles</option>
-                            <option value="super_admin">Super Admin</option>
+                            <option value="super_admin">Super Admin (Dev Team Lead)</option>
                             <option value="dept_lead">Department Admin Lead</option>
                             <option value="tech_member">Developer Team</option>
-                            <option value="dept_agent">Department Staff</option>
-                            <option value="employee">Regular Employee</option>
+                            <option value="internal">Internals (Company Maintenance)</option>
+                            <option value="external">Externals (Clients &amp; Customers)</option>
                         </select>
                         <select id="user-dept-filter-select" class="form-input" style="width: auto; max-width: 200px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
                             <option value="">All Departments</option>
@@ -630,7 +644,137 @@
                 </div>
             </div>
 
-        </main>
+            <!-- ======================================================== -->
+            <!-- SECTION 4: SUPPORT HISTORY & PERFORMANCE VIEW            -->
+            <!-- ======================================================== -->
+            <div id="view-performance" class="dashboard-section-view" style="display: none;">
+                <!-- Header -->
+                <div class="dashboard-header compact-header">
+                    <div class="dashboard-title compact-title">
+                        <h1>Support History &amp; Performance</h1>
+                        <span class="compact-header-sep">•</span>
+                        <p>Track personal support efficiency, resolution metrics, and review your historical tickets</p>
+                    </div>
+                    <div style="display: flex; gap: 0.65rem; align-items: center;">
+                        <button id="btn-refresh-performance" class="btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;" title="Refresh Performance Analytics">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Scrollable Body Container -->
+                <div class="perf-scroll-body table-scroll-container" style="flex: 1; overflow-y: auto; padding-right: 0.25rem;">
+                    <!-- Key KPI Metrics Grid (Minimized) -->
+                    <section class="stats-grid perf-compact-stats" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0.65rem; gap: 0.65rem; flex-shrink: 0;">
+                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
+                            <div class="stat-label" style="font-size: 0.7rem;">Tickets Handled</div>
+                            <div class="stat-value" id="stat-perf-handled" style="font-size: 1.35rem; margin-top: 0.1rem;">0</div>
+                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem;">Assigned specialist</div>
+                        </div>
+                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
+                            <div class="stat-label" style="font-size: 0.7rem;">Resolved / Closed</div>
+                            <div class="stat-value" id="stat-perf-resolved" style="color: var(--success-green); font-size: 1.35rem; margin-top: 0.1rem;">0</div>
+                            <div id="stat-perf-rate" style="font-size: 0.68rem; color: var(--success-green); margin-top: 0.15rem; font-weight: 600;">0% Resolution Rate</div>
+                        </div>
+                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
+                            <div class="stat-label" style="font-size: 0.7rem;">Active in Queue</div>
+                            <div class="stat-value" id="stat-perf-active" style="color: #60a5fa; font-size: 1.35rem; margin-top: 0.1rem;">0</div>
+                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem;">Open or in progress</div>
+                        </div>
+                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
+                            <div class="stat-label" style="font-size: 0.7rem;">Avg. Resolution Speed</div>
+                            <div class="stat-value" id="stat-perf-speed" style="color: var(--accent-yellow); font-size: 1.35rem; margin-top: 0.1rem;">—</div>
+                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem;">Average completion</div>
+                        </div>
+                    </section>
+
+                    <!-- Visual Graphs Grid (Compact) -->
+                    <div class="perf-charts-grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.65rem; margin-bottom: 0.65rem;">
+                        <!-- Chart 1: 7-Day Day-by-Day Activity & Resolution Trend -->
+                        <div class="stat-card" style="padding: 0.65rem 1rem;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #ffffff;">7-Day Activity Trend</h4>
+                                    <span style="font-size: 0.68rem; color: var(--text-muted);">Handled &amp; resolved tickets</span>
+                                </div>
+                                <div style="display: flex; gap: 0.65rem; font-size: 0.68rem;">
+                                    <span style="display: flex; align-items: center; gap: 0.3rem; color: #60a5fa;"><span style="width: 7px; height: 7px; border-radius: 2px; background: #60a5fa;"></span>Handled</span>
+                                    <span style="display: flex; align-items: center; gap: 0.3rem; color: var(--accent-yellow);"><span style="width: 7px; height: 7px; border-radius: 2px; background: var(--accent-yellow);"></span>Resolved</span>
+                                </div>
+                            </div>
+                            <div id="perf-trend-chart-container" style="height: 85px; display: flex; align-items: flex-end; gap: 0.65rem; padding-top: 3px;">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Priority Breakdown & Efficiency Progress Meters -->
+                        <div class="stat-card" style="padding: 0.65rem 1rem;">
+                            <div style="margin-bottom: 0.45rem;">
+                                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #ffffff;">Priority Breakdown &amp; Efficiency</h4>
+                                <span style="font-size: 0.68rem; color: var(--text-muted);">Urgency distribution of tickets handled</span>
+                            </div>
+                            <div id="perf-priority-bars-container" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- History of Ticketing Section: Tickets Assigned to Me (Expanded) -->
+                    <div class="tickets-card" style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column; min-height: 480px;">
+                        <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-wrap: wrap; gap: 0.75rem; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <h3 style="font-family: var(--font-heading); font-size: 1rem; margin: 0; color: #fff;">Tickets Assigned to Me</h3>
+                                <span class="count-pill" id="badge-handled-count" style="font-size: 0.78rem;">0</span>
+                            </div>
+                            <!-- Search & Status filter -->
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 420px; min-width: 240px; justify-content: flex-end;">
+                                <select id="perf-status-filter" class="form-input" style="width: auto; background-color: var(--bg-pitch-black); padding: 0.35rem 0.65rem; font-size: 0.78rem;">
+                                    <option value="">All Statuses</option>
+                                    <option value="open">Open</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="waiting_on_us">Waiting on Us</option>
+                                    <option value="waiting_contact">Waiting on Contact</option>
+                                    <option value="on_hold">On Hold</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                                <div class="search-wrapper" style="flex: 1; margin: 0;">
+                                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="perf-search-input" class="search-input" placeholder="Search ticket code, title..." style="padding-top: 0.35rem; padding-bottom: 0.35rem; font-size: 0.78rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table Container (Expanded with ample height) -->
+                        <div class="perf-table-container table-scroll-container" style="flex: 1; min-height: 420px; overflow-y: auto;">
+                            <table class="tickets-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 110px;">Ticket ID</th>
+                                        <th>Subject</th>
+                                        <th style="width: 170px;" id="col-perf-person">Requester</th>
+                                        <th style="width: 170px;">Department</th>
+                                        <th style="width: 100px;">Priority</th>
+                                        <th style="width: 120px;">Status</th>
+                                        <th style="width: 140px;">Date</th>
+                                        <th style="width: 85px; text-align: center;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="perf-tickets-table-body">
+                                    <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Loading support history...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
     </div>
 
     <!-- --- ADD DEPARTMENT MODAL (OVERLAY ABOVE WEBSITE) --- -->
@@ -796,10 +940,14 @@
                     roleBadge.textContent = 'Developer Team Member';
                     roleBadge.className = 'role-badge user';
                     if (welcomeSub) welcomeSub.textContent = 'Developer Team Workspace: Technical Tickets & System Tasks';
-                } else {
-                    roleBadge.textContent = 'Department Staff';
+                } else if (currentUser.role === 'internal' || currentUser.role === 'internals' || currentUser.role === 'dept_agent' || currentUser.role === 'dept_member') {
+                    roleBadge.textContent = 'Internal Staff';
                     roleBadge.className = 'role-badge user';
-                    if (welcomeSub) welcomeSub.textContent = `${dept} Staff Workspace: Assigned Tickets & Inquiries`;
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Internal Workspace: Company Maintenance & Department Operations`;
+                } else {
+                    roleBadge.textContent = 'External';
+                    roleBadge.className = 'role-badge user';
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Workspace: Client & Customer Services`;
                 }
 
                 // Show conditional navigation items based on user role & permissions
@@ -1393,6 +1541,9 @@
         // --- 1:3 Split View Ticket Details Loader ---
         window.viewTicketDetails = async function(ticketId) {
             try {
+                if (typeof activeSection !== 'undefined' && activeSection !== 'overview') {
+                    switchSection('overview');
+                }
                 const res = await fetch(`${API_URL}/api/tickets/${ticketId}`, { headers: authHeaders() });
                 if (!res.ok) throw new Error('Failed to fetch ticket');
                 const data = await res.json();
@@ -2158,18 +2309,27 @@
             // Update stats cards
             const totalCount = allUsers.length;
             const superAdminCount = allUsers.filter(u => u.role === 'super_admin' || u.role === 'admin').length;
-            const deptLeadCount = allUsers.filter(u => u.role === 'dept_lead' || u.role === 'admin_lead' || Boolean(u.can_manage_departments)).length;
-            const staffCount = allUsers.filter(u => u.role === 'tech_member' || u.role === 'agent' || u.role === 'dept_agent' || u.role === 'dept_member' || u.role === 'employee' || u.role === 'customer' || u.role === 'user').length;
+            const deptLeadCount = allUsers.filter(u => u.role === 'dept_lead' || u.role === 'admin_lead' || u.role === 'tech_member' || u.role === 'agent' || Boolean(u.can_manage_departments)).length;
+            const internalsCount = allUsers.filter(u => {
+                const r = (u.role || '').toLowerCase();
+                return r === 'internal' || r === 'internals' || r === 'dept_agent' || r === 'dept_member' || r === 'employee';
+            }).length;
+            const externalsCount = allUsers.filter(u => {
+                const r = (u.role || '').toLowerCase();
+                return r === 'external' || r === 'externals' || r === 'customer' || r === 'user';
+            }).length;
 
             const statTotal = document.getElementById('stat-users-total');
             const statSuper = document.getElementById('stat-users-superadmin');
             const statLeads = document.getElementById('stat-users-deptleads');
-            const statStaff = document.getElementById('stat-users-staff');
+            const statInternals = document.getElementById('stat-users-internals');
+            const statExternals = document.getElementById('stat-users-externals');
 
             if (statTotal) statTotal.textContent = totalCount;
             if (statSuper) statSuper.textContent = superAdminCount;
             if (statLeads) statLeads.textContent = deptLeadCount;
-            if (statStaff) statStaff.textContent = staffCount;
+            if (statInternals) statInternals.textContent = internalsCount;
+            if (statExternals) statExternals.textContent = externalsCount;
 
             if (badge) badge.textContent = `${totalCount} user${totalCount === 1 ? '' : 's'}`;
 
@@ -2198,10 +2358,10 @@
                         matchRole = u.role === 'dept_lead' || u.role === 'admin_lead';
                     } else if (selectedRole === 'tech_member') {
                         matchRole = u.role === 'tech_member' || u.role === 'agent';
-                    } else if (selectedRole === 'dept_agent') {
-                        matchRole = u.role === 'dept_agent' || u.role === 'dept_member';
-                    } else if (selectedRole === 'employee') {
-                        matchRole = u.role === 'employee' || u.role === 'customer' || u.role === 'user';
+                    } else if (selectedRole === 'internal' || selectedRole === 'dept_agent') {
+                        matchRole = u.role === 'internal' || u.role === 'internals' || u.role === 'dept_agent' || u.role === 'dept_member' || u.role === 'employee';
+                    } else if (selectedRole === 'external') {
+                        matchRole = u.role === 'external' || u.role === 'externals' || u.role === 'customer' || u.role === 'user';
                     } else {
                         matchRole = u.role === selectedRole;
                     }
@@ -2225,8 +2385,8 @@
                 const isSuperAdmin = u.role === 'super_admin' || u.role === 'admin';
                 const isDeptLead = u.role === 'dept_lead' || u.role === 'admin_lead' || Boolean(u.can_manage_departments);
                 const isTech = u.role === 'tech_member' || u.role === 'agent';
-                const isDeptAgent = u.role === 'dept_agent' || u.role === 'dept_member';
-                const isEmployee = u.role === 'employee' || u.role === 'customer' || u.role === 'user';
+                const isExternal = u.role === 'external' || u.role === 'externals' || u.role === 'customer';
+                const isInternal = !isSuperAdmin && !isDeptLead && !isTech && !isExternal;
 
                 let roleOptions = '';
                 if (callerIsSuperAdmin) {
@@ -2234,14 +2394,14 @@
                         <option value="super_admin" ${isSuperAdmin ? 'selected' : ''}>Super Admin (Developer Team Lead)</option>
                         <option value="tech_member" ${isTech ? 'selected' : ''}>Developer Team Member</option>
                         <option value="dept_lead" ${isDeptLead && !isSuperAdmin ? 'selected' : ''}>Department Admin Lead</option>
-                        <option value="dept_agent" ${isDeptAgent ? 'selected' : ''}>Department Staff</option>
-                        <option value="employee" ${isEmployee ? 'selected' : ''}>Regular Employee (Portal Only)</option>
+                        <option value="internal" ${isInternal ? 'selected' : ''}>Internal (Company Maintenance)</option>
+                        <option value="external" ${isExternal ? 'selected' : ''}>External (Clients &amp; Customers)</option>
                     `;
                 } else {
                     roleOptions = `
                         ${isDeptLead ? '<option value="dept_lead" selected>Department Admin Lead</option>' : ''}
-                        <option value="dept_agent" ${isDeptAgent ? 'selected' : ''}>Department Staff</option>
-                        <option value="employee" ${isEmployee ? 'selected' : ''}>Regular Employee (Portal Only)</option>
+                        <option value="internal" ${isInternal ? 'selected' : ''}>Internal (Company Maintenance)</option>
+                        <option value="external" ${isExternal ? 'selected' : ''}>External (Clients &amp; Customers)</option>
                     `;
                 }
 
@@ -2312,19 +2472,21 @@
 
         // --- Sidebar View Switching ---
         const menuOverview = document.getElementById('menu-overview');
+        const menuPerformance = document.getElementById('menu-performance');
         const menuDepartments = document.getElementById('menu-departments');
         const menuUsers = document.getElementById('menu-users');
 
         const viewOverview = document.getElementById('view-overview');
+        const viewPerformance = document.getElementById('view-performance');
         const viewDepartments = document.getElementById('view-departments');
         const viewUsers = document.getElementById('view-users');
 
         function switchSection(target) {
             activeSection = target;
-            [menuOverview, menuDepartments, menuUsers].forEach(m => {
+            [menuOverview, menuPerformance, menuDepartments, menuUsers].forEach(m => {
                 if (m) m.classList.remove('active');
             });
-            [viewOverview, viewDepartments, viewUsers].forEach(v => {
+            [viewOverview, viewPerformance, viewDepartments, viewUsers].forEach(v => {
                 if (v) v.style.display = 'none';
             });
 
@@ -2332,6 +2494,10 @@
                 menuOverview.classList.add('active');
                 viewOverview.style.display = 'flex';
                 loadTickets();
+            } else if (target === 'performance') {
+                if (menuPerformance) menuPerformance.classList.add('active');
+                if (viewPerformance) viewPerformance.style.display = 'flex';
+                loadStaffPerformance();
             } else if (target === 'departments') {
                 menuDepartments.classList.add('active');
                 viewDepartments.style.display = 'flex';
@@ -2348,8 +2514,310 @@
         }
 
         menuOverview.addEventListener('click', (e) => { e.preventDefault(); switchSection('overview'); });
+        if (menuPerformance) menuPerformance.addEventListener('click', (e) => { e.preventDefault(); switchSection('performance'); });
         if (menuDepartments) menuDepartments.addEventListener('click', (e) => { e.preventDefault(); switchSection('departments'); });
         if (menuUsers) menuUsers.addEventListener('click', (e) => { e.preventDefault(); switchSection('users'); });
+
+        // ========================================================
+        // --- SECTION: SUPPORT HISTORY & PERFORMANCE LOGIC       ---
+        // ========================================================
+        let perfData = null;
+        let activePerfSubTab = 'handled'; // 'handled' | 'raised'
+        let perfSearchTerm = '';
+        let perfStatusFilter = '';
+
+        async function loadStaffPerformance() {
+            const tableBody = document.getElementById('perf-tickets-table-body');
+            if (!perfData && tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Loading support history...</td></tr>';
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/staff/performance`, {
+                    headers: authHeaders()
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Failed to load support performance.');
+                }
+                perfData = await res.json();
+                renderStaffPerformance();
+            } catch (err) {
+                console.error('Error loading staff performance:', err);
+                showToast(err.message || 'Error loading performance metrics', 'error');
+                if (tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #f87171; padding: 2.5rem;">Failed to load data: ${escapeHtml(err.message)}</td></tr>`;
+                }
+            }
+        }
+
+        function renderStaffPerformance() {
+            if (!perfData) return;
+            const stats = perfData.stats || {};
+
+            // 1. KPI Metric Numbers
+            const elHandled = document.getElementById('stat-perf-handled');
+            if (elHandled) elHandled.textContent = stats.total_handled ?? 0;
+
+            const elResolved = document.getElementById('stat-perf-resolved');
+            if (elResolved) elResolved.textContent = stats.resolved_count ?? 0;
+
+            const elRate = document.getElementById('stat-perf-rate');
+            if (elRate) elRate.textContent = `${stats.resolution_rate ?? 0}% Resolution Rate`;
+
+            const elActive = document.getElementById('stat-perf-active');
+            if (elActive) elActive.textContent = (stats.in_progress_count ?? 0) + (stats.open_count ?? 0);
+
+            const elSpeed = document.getElementById('stat-perf-speed');
+            if (elSpeed) {
+                if (stats.avg_resolution_hours !== null && stats.avg_resolution_hours !== undefined) {
+                    elSpeed.textContent = `${stats.avg_resolution_hours}h`;
+                } else {
+                    elSpeed.textContent = '—';
+                }
+            }
+
+            const elRaised = document.getElementById('stat-perf-raised');
+            if (elRaised) elRaised.textContent = stats.raised_count ?? 0;
+
+            const badgeHandled = document.getElementById('badge-handled-count');
+            if (badgeHandled) badgeHandled.textContent = stats.total_handled ?? (perfData.handled_tickets || []).length;
+
+            const badgeRaised = document.getElementById('badge-raised-count');
+            if (badgeRaised) badgeRaised.textContent = stats.raised_count ?? (perfData.raised_tickets || []).length;
+
+            // 2. 7-Day Trend Chart
+            renderPerfTrendChart(perfData.daily_activity || []);
+
+            // 3. Priority Breakdown Progress Meters
+            renderPerfPriorityMeters(perfData.priority_counts || {}, stats.total_handled || 0);
+
+            // 4. Dual-Tab Tickets History Table
+            renderPerfTicketsTable();
+        }
+
+        function renderPerfTrendChart(dailyActivity) {
+            const container = document.getElementById('perf-trend-chart-container');
+            if (!container) return;
+
+            if (!dailyActivity || dailyActivity.length === 0) {
+                container.innerHTML = '<div style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 2rem 0;">No activity data recorded in last 7 days.</div>';
+                return;
+            }
+
+            const maxVal = Math.max(1, ...dailyActivity.map(d => Math.max(d.created || 0, d.resolved || 0)));
+            const maxBarPx = 76;
+
+            container.innerHTML = dailyActivity.map(d => {
+                const handledHeight = d.created > 0 ? Math.max(6, Math.round((d.created / maxVal) * maxBarPx)) : 3;
+                const resolvedHeight = d.resolved > 0 ? Math.max(6, Math.round((d.resolved / maxVal) * maxBarPx)) : 3;
+
+                return `
+                    <div class="perf-trend-day" title="${d.date} (${d.label}): ${d.created} handled, ${d.resolved} resolved">
+                        <div class="perf-trend-bars-wrapper">
+                            <div class="perf-bar handled" style="height: ${handledHeight}px; opacity: ${d.created > 0 ? '1' : '0.2'};" title="Handled: ${d.created}"></div>
+                            <div class="perf-bar resolved" style="height: ${resolvedHeight}px; opacity: ${d.resolved > 0 ? '1' : '0.2'};" title="Resolved: ${d.resolved}"></div>
+                        </div>
+                        <span class="perf-trend-label">${escapeHtml(d.label)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPerfPriorityMeters(priorityCounts, totalHandled) {
+            const container = document.getElementById('perf-priority-bars-container');
+            if (!container) return;
+
+            const priorities = [
+                { key: 'urgent', label: 'Urgent', color: '#ef4444' },
+                { key: 'high', label: 'High', color: '#f97316' },
+                { key: 'medium', label: 'Medium', color: '#eab308' },
+                { key: 'low', label: 'Low', color: '#10b981' }
+            ];
+
+            const total = totalHandled > 0 ? totalHandled : 1;
+
+            container.innerHTML = priorities.map(p => {
+                const count = priorityCounts[p.key] || 0;
+                const pct = totalHandled > 0 ? Math.round((count / total) * 100) : 0;
+
+                return `
+                    <div class="priority-meter-row">
+                        <div class="priority-meter-header">
+                            <span style="display: flex; align-items: center; gap: 0.35rem; color: var(--text-secondary); text-transform: capitalize;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${p.color};"></span>
+                                ${p.label}
+                            </span>
+                            <span style="color: var(--text-primary); font-weight: 600; font-size: 0.78rem;">
+                                ${count} <span style="font-weight: 400; font-size: 0.7rem; color: var(--text-muted);">(${pct}%)</span>
+                            </span>
+                        </div>
+                        <div class="priority-meter-track">
+                            <div class="priority-meter-fill" style="width: ${pct}%; background-color: ${p.color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPerfTicketsTable() {
+            if (!perfData) return;
+
+            const tableBody = document.getElementById('perf-tickets-table-body');
+            const colPerson = document.getElementById('col-perf-person');
+            if (!tableBody) return;
+
+            const rawList = activePerfSubTab === 'handled' 
+                ? (perfData.handled_tickets || []) 
+                : (perfData.raised_tickets || []);
+
+            if (colPerson) {
+                colPerson.textContent = activePerfSubTab === 'handled' ? 'Requester' : 'Assigned Tech';
+            }
+
+            // Filter tickets
+            const filtered = rawList.filter(t => {
+                if (perfStatusFilter) {
+                    const norm = normalizeTicketStatus(t.status);
+                    if (norm !== perfStatusFilter && (t.status || '').toLowerCase() !== perfStatusFilter.toLowerCase()) {
+                        return false;
+                    }
+                }
+
+                if (perfSearchTerm) {
+                    const haystack = [
+                        t.ticket_code,
+                        t.title,
+                        t.description,
+                        t.department_name,
+                        t.requester_name,
+                        t.requester_email,
+                        t.assignee_name
+                    ].filter(Boolean).join(' ').toLowerCase();
+
+                    if (!haystack.includes(perfSearchTerm)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                            ${perfSearchTerm || perfStatusFilter 
+                                ? 'No tickets match the selected filters.' 
+                                : (activePerfSubTab === 'handled' ? 'No tickets assigned to you yet.' : 'You have not submitted any support requests yet.')}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(t => {
+                const normStatus = normalizeTicketStatus(t.status);
+                const statusLabel = formatStatusLabel(t.status);
+                const prio = (t.priority || 'medium').toLowerCase();
+                const dateStr = t.created_at 
+                    ? new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '—';
+
+                const personCellHtml = activePerfSubTab === 'handled'
+                    ? `
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(t.requester_name || t.requester_email || 'Anonymous')}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(t.requester_email || '')}</div>
+                        </div>
+                      `
+                    : `
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(t.assignee_name || 'Unassigned')}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">${t.assignee_name ? 'Support Specialist' : 'Pending Assignment'}</div>
+                        </div>
+                      `;
+
+                return `
+                    <tr onclick="viewTicketDetails(${t.id})" style="cursor: pointer;" title="Click to view ticket details">
+                        <td><span class="ticket-code-tag">${escapeHtml(t.ticket_code || ('#' + t.id))}</span></td>
+                        <td>
+                            <div class="ticket-title-link" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                            <div class="ticket-requester-info" style="font-size: 0.72rem; color: var(--text-muted); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${escapeHtml((t.description || '').replace(/\s+/g, ' ').slice(0, 65))}
+                            </div>
+                        </td>
+                        <td>${personCellHtml}</td>
+                        <td>
+                            <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 0.72rem; color: var(--text-primary); border: 1px solid var(--border-color);">
+                                ${escapeHtml(t.department_name || 'General')}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="priority-tag priority-${prio}">
+                                <span class="priority-dot"></span>${escapeHtml(t.priority || 'medium')}
+                            </span>
+                        </td>
+                        <td><span class="badge badge-${normStatus}">${statusLabel}</span></td>
+                        <td style="color: var(--text-muted); font-size: 0.76rem;">${dateStr}</td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.74rem;" onclick="event.stopPropagation(); viewTicketDetails(${t.id});">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        const btnTabHandledTickets = document.getElementById('btn-tab-handled-tickets');
+        const btnTabRaisedTickets = document.getElementById('btn-tab-raised-tickets');
+        const perfSearchInput = document.getElementById('perf-search-input');
+        const perfStatusFilterSelect = document.getElementById('perf-status-filter');
+        const btnRefreshPerformance = document.getElementById('btn-refresh-performance');
+
+        function setPerfSubTab(tab) {
+            activePerfSubTab = tab;
+            if (btnTabHandledTickets) btnTabHandledTickets.classList.toggle('active', tab === 'handled');
+            if (btnTabRaisedTickets) btnTabRaisedTickets.classList.toggle('active', tab === 'raised');
+            renderPerfTicketsTable();
+        }
+
+        if (btnTabHandledTickets) {
+            btnTabHandledTickets.addEventListener('click', (e) => {
+                e.preventDefault();
+                setPerfSubTab('handled');
+            });
+        }
+
+        if (btnTabRaisedTickets) {
+            btnTabRaisedTickets.addEventListener('click', (e) => {
+                e.preventDefault();
+                setPerfSubTab('raised');
+            });
+        }
+
+        if (perfSearchInput) {
+            perfSearchInput.addEventListener('input', (e) => {
+                perfSearchTerm = e.target.value.toLowerCase().trim();
+                renderPerfTicketsTable();
+            });
+        }
+
+        if (perfStatusFilterSelect) {
+            perfStatusFilterSelect.addEventListener('change', (e) => {
+                perfStatusFilter = e.target.value;
+                renderPerfTicketsTable();
+            });
+        }
+
+        if (btnRefreshPerformance) {
+            btnRefreshPerformance.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadStaffPerformance();
+                showToast('Performance metrics refreshed', 'info');
+            });
+        }
 
         // --- Sidebar Collapse/Expand Toggle ---
         const btnSidebarToggle = document.getElementById('btn-sidebar-toggle');
@@ -2527,6 +2995,8 @@
             if (currentUser && activeSection === 'overview') {
                 fetchDashboardStats();
                 loadTickets();
+            } else if (currentUser && activeSection === 'performance') {
+                loadStaffPerformance();
             }
         }, 60000);
 

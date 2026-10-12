@@ -19,6 +19,7 @@ import psycopg2
 from fastapi import FastAPI, Depends, HTTPException, status, Request
 import secrets
 import json
+from datetime import datetime, timedelta, timezone
 from fastapi.responses import RedirectResponse, FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
@@ -125,7 +126,7 @@ class LoginRequest(BaseModel):
     password: str
 
 class UserRoleUpdateRequest(BaseModel):
-    role: str = Field(..., description="Role: super_admin, tech_member, dept_lead, dept_agent, employee")
+    role: str = Field(..., description="Role: super_admin, tech_member, dept_lead, internal, external")
     department: str | None = None
     position: str | None = None
     can_manage_departments: bool | None = None
@@ -232,8 +233,8 @@ def is_dept_lead(user: dict) -> bool:
     return role in ("dept_lead", "admin_lead") or bool(user.get("can_manage_departments", False))
 
 def is_staff(role: str) -> bool:
-    """Returns True if user is an internal staff member (not regular employee requester)."""
-    return role in ("super_admin", "admin", "tech_member", "agent", "dept_lead", "admin_lead", "dept_agent", "dept_member")
+    """Returns True if user is an internal staff member (not regular external customer requester)."""
+    return role in ("super_admin", "admin", "tech_member", "agent", "dept_lead", "admin_lead", "dept_agent", "dept_member", "internal", "internals")
 
 def is_tech_or_agent(role: str) -> bool:
     return is_staff(role)
@@ -322,8 +323,10 @@ async def unhandled_exception_handler(request, exc):
 # --- System & Health Routes ---
 
 @app.get("/", include_in_schema=False)
+@app.get("/index.html", include_in_schema=False)
 def root_index():
     for candidate in [
+        os.path.join(ROOT_DIR, "index.html"),
         os.path.join(ROOT_DIR, "public", "index.html"),
         os.path.join(ROOT_DIR, "frontend", "index.html"),
     ]:
@@ -331,25 +334,29 @@ def root_index():
             return FileResponse(candidate)
     return {"name": "Khin Ticket API", "status": "online", "docs": "/docs"}
 
+@app.get("/portal", include_in_schema=False)
 @app.get("/portal.html", include_in_schema=False)
 def portal_page():
     for candidate in [
+        os.path.join(ROOT_DIR, "portal.html"),
         os.path.join(ROOT_DIR, "public", "portal.html"),
         os.path.join(ROOT_DIR, "frontend", "portal.html"),
     ]:
         if os.path.exists(candidate):
             return FileResponse(candidate)
-    return RedirectResponse(url="/portal", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+    raise HTTPException(status_code=404, detail="portal.html not found")
 
+@app.get("/dashboard", include_in_schema=False)
 @app.get("/dashboard.html", include_in_schema=False)
 def dashboard_page():
     for candidate in [
+        os.path.join(ROOT_DIR, "dashboard.html"),
         os.path.join(ROOT_DIR, "public", "dashboard.html"),
         os.path.join(ROOT_DIR, "frontend", "dashboard.html"),
     ]:
         if os.path.exists(candidate):
             return FileResponse(candidate)
-    return RedirectResponse(url="/dashboard", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+    raise HTTPException(status_code=404, detail="dashboard.html not found")
 
 @app.get("/api")
 def api_root():
@@ -382,13 +389,7 @@ def health_check():
         "database_configured": bool(os.environ.get("DATABASE_URL"))
     }
 
-@app.get("/portal", include_in_schema=False)
-def portal_redirect():
-    return RedirectResponse(url="/portal.html", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
-@app.get("/dashboard", include_in_schema=False)
-def dashboard_redirect():
-    return RedirectResponse(url="/dashboard.html", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
 
 # --- Auth Routes ---
 
@@ -1030,7 +1031,11 @@ def update_user_role(
             detail="Only Super Admin or Department Admin Leads can update user roles."
         )
 
-    valid_roles = ("super_admin", "tech_member", "dept_lead", "admin_lead", "dept_agent", "dept_member", "employee", "admin", "agent", "customer")
+    valid_roles = (
+        "super_admin", "tech_member", "dept_lead", "admin_lead",
+        "internal", "internals", "dept_agent", "dept_member",
+        "external", "externals", "employee", "admin", "agent", "customer", "user"
+    )
     target_role = req.role.strip().lower()
     if target_role not in valid_roles:
         raise HTTPException(status_code=400, detail=f"Invalid role. Must be one of: {valid_roles}")
@@ -1041,8 +1046,12 @@ def update_user_role(
         target_role = "tech_member"
     elif target_role == "admin_lead":
         target_role = "dept_lead"
-    elif target_role in ("customer", "user"):
-        target_role = "employee"
+    elif target_role in ("internal", "internals", "dept_agent", "dept_member"):
+        target_role = "internal"
+    elif target_role in ("external", "externals", "customer", "user"):
+        target_role = "external"
+    elif target_role == "employee":
+        target_role = "internal"
 
     try:
         with get_db_cursor(commit=True) as cur:
@@ -1429,7 +1438,7 @@ def get_team_members(dept_id: int | None = None, current_user: dict = Depends(ge
                         SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
                         FROM ticketing_system.users 
                         WHERE department = (SELECT name FROM ticketing_system.departments WHERE id = %s)
-                           OR role IN ('super_admin', 'admin', 'tech_member', 'dept_lead', 'dept_agent', 'dept_member')
+                           OR role IN ('super_admin', 'admin', 'tech_member', 'dept_lead', 'dept_agent', 'dept_member', 'internal', 'internals')
                         ORDER BY full_name ASC;
                         """,
                         (dept_id,)
@@ -1439,11 +1448,11 @@ def get_team_members(dept_id: int | None = None, current_user: dict = Depends(ge
                         """
                         SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
                         FROM ticketing_system.users 
-                        WHERE role IN ('super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member') 
+                        WHERE role IN ('super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member', 'internal', 'internals') 
                         ORDER BY full_name ASC;
                         """
                     )
-            elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member"):
+            elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member", "internal", "internals"):
                 user_dept = (current_user.get("department") or "General").strip()
                 dept_keyword = user_dept.split('(')[0].strip()
                 dept_pattern = f"%{dept_keyword}%"
@@ -1496,6 +1505,7 @@ def list_tickets(
     status_filter: str | None = None,
     priority_filter: str | None = None,
     dept_filter: int | None = None,
+    raised_only: bool = False,
     current_user: dict = Depends(get_current_user)
 ):
     query = """
@@ -1514,8 +1524,13 @@ def list_tickets(
     params = []
     user_role = current_user.get("role", "employee")
 
-    if is_super_admin(user_role):
-        # Super Admin: Sees ALL tickets across ALL departments
+    if raised_only or user_role == "employee" or not is_staff(user_role):
+        # In employee portal or for regular employee accounts:
+        # STRICTLY retain ONLY tickets raised by that person/account!
+        query += " AND (t.requester_id = %s OR lower(t.requester_email) = lower(%s))"
+        params.extend([current_user["id"], current_user["email"]])
+    elif is_super_admin(user_role):
+        # Super Admin: Sees ALL tickets across ALL departments in tech dashboard
         pass
     elif user_role == "tech_member":
         # Developer team member: ONLY see Software / IT / DevOps / Tech tickets, or tickets assigned to / raised by them
@@ -1548,7 +1563,7 @@ def list_tickets(
             "%devops%",
             "%tech%"
         ])
-    elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member", "employee", "staff"):
+    elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member", "staff", "internal", "internals"):
         # Department Members (Lead, Agent, Staff, or Member assigned to this department):
         # STRICTLY see tickets belonging to their own department, or assigned to / raised by them!
         user_dept = (current_user.get("department") or "").strip()
@@ -1785,21 +1800,22 @@ def update_ticket(
             updates = []
             params = []
 
-            # 1. Regular Employees: Can ONLY close or open their own tickets!
+            # 1. Regular Employees / Internals / Externals: Can update status of their own tickets!
             if not is_staff(user_role):
                 if ticket.get("requester_id") != user_id and ticket.get("requester_email") != current_user["email"]:
                     raise HTTPException(status_code=403, detail="You can only manage your own tickets.")
 
                 if req.assigned_to is not None or req.priority is not None or req.department_id is not None:
-                    raise HTTPException(status_code=403, detail="Employees can only close or reopen their tickets.")
+                    raise HTTPException(status_code=403, detail="Employees can only update status on their tickets.")
 
                 if req.status:
                     stat = req.status.lower()
-                    if stat in ("open", "closed"):
+                    valid_emp_statuses = ("open", "in_progress", "waiting_on_us", "waiting_contact", "on_hold", "resolved", "closed")
+                    if stat in valid_emp_statuses:
                         updates.append("status = %s")
                         params.append(stat)
                     else:
-                        raise HTTPException(status_code=400, detail="Employees can only set status to 'open' or 'closed'.")
+                        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {valid_emp_statuses}")
 
             # 2. Staff Roles (Super Admin, Tech Member, Department Admin Lead, Department Staff):
             else:
@@ -1969,12 +1985,29 @@ def add_comment(
         raise HTTPException(status_code=500, detail="Failed to add comment.")
 
 @app.get("/api/dashboard/stats")
-def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
+def get_dashboard_stats(
+    raised_only: bool = False,
+    current_user: dict = Depends(get_current_user)
+):
     try:
         with get_db_cursor(commit=False) as cur:
             user_role = current_user.get("role", "employee")
             
-            if is_super_admin(user_role):
+            if raised_only or user_role == "employee" or not is_staff(user_role):
+                user_id = current_user["id"]
+                user_email = current_user["email"]
+                cur.execute("SELECT COUNT(*) as total FROM ticketing_system.tickets WHERE requester_id = %s OR lower(requester_email) = lower(%s);", (user_id, user_email))
+                total = cur.fetchone()["total"]
+                cur.execute("SELECT COUNT(*) as open FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status = 'open';", (user_id, user_email))
+                open_count = cur.fetchone()["open"]
+                cur.execute("SELECT COUNT(*) as in_progress FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status IN ('in_progress', 'waiting_on_us', 'waiting_contact', 'on_hold');", (user_id, user_email))
+                in_progress = cur.fetchone()["in_progress"]
+                cur.execute("SELECT COUNT(*) as resolved FROM ticketing_system.tickets WHERE (requester_id = %s OR lower(requester_email) = lower(%s)) AND status IN ('resolved', 'closed');", (user_id, user_email))
+                resolved = cur.fetchone()["resolved"]
+                unassigned = 0
+                team_count = 0
+                dept_count = 1
+            elif is_super_admin(user_role):
                 cur.execute("SELECT COUNT(*) as total FROM ticketing_system.tickets;")
                 total = cur.fetchone()["total"]
                 cur.execute("SELECT COUNT(*) as open FROM ticketing_system.tickets WHERE status = 'open';")
@@ -1986,7 +2019,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 cur.execute("SELECT COUNT(*) as unassigned FROM ticketing_system.tickets WHERE assigned_to IS NULL;")
                 unassigned = cur.fetchone()["unassigned"]
 
-                cur.execute("SELECT COUNT(*) as team_count FROM ticketing_system.users WHERE role IN ('super_admin', 'admin', 'tech_member', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member');")
+                cur.execute("SELECT COUNT(*) as team_count FROM ticketing_system.users WHERE role IN ('super_admin', 'admin', 'tech_member', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member', 'internal', 'internals');")
                 team_count = cur.fetchone()["team_count"]
 
                 cur.execute("SELECT COUNT(*) as dept_count FROM ticketing_system.departments WHERE is_active = TRUE;")
@@ -2041,7 +2074,7 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
                 cur.execute("SELECT COUNT(*) as team_count FROM ticketing_system.users WHERE role IN ('super_admin', 'admin', 'tech_member');")
                 team_count = cur.fetchone()["team_count"]
                 dept_count = 1
-            elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member"):
+            elif is_dept_lead(current_user) or user_role in ("dept_agent", "dept_member", "internal", "internals"):
                 user_dept = (current_user.get("department") or "General").strip()
                 dept_keyword = user_dept.split('(')[0].strip()
                 dept_pattern = f"%{dept_keyword}%"
@@ -2105,6 +2138,137 @@ def get_dashboard_stats(current_user: dict = Depends(get_current_user)):
         logger.error(f"Error fetching dashboard stats: {e}")
         raise HTTPException(status_code=500, detail="Failed to fetch dashboard metrics.")
 
+@app.get("/api/staff/performance")
+def get_staff_performance(
+    user_id: int | None = None,
+    current_user: dict = Depends(get_current_user)
+):
+    user_role = current_user.get("role", "employee")
+    if not is_tech_or_agent(user_role) and not current_user.get("can_manage_departments"):
+        raise HTTPException(status_code=403, detail="Access denied. Staff members only.")
+
+    target_user_id = current_user["id"]
+    if user_id and is_super_admin(user_role):
+        target_user_id = user_id
+
+    try:
+        with get_db_cursor(commit=False) as cur:
+            # Fetch target user info
+            cur.execute("SELECT id, full_name, email, role, department, position FROM ticketing_system.users WHERE id = %s;", (target_user_id,))
+            target_user = cur.fetchone()
+            if not target_user:
+                raise HTTPException(status_code=404, detail="User not found.")
+
+            # Handled tickets (tickets where this staff is assigned to support)
+            cur.execute("""
+                SELECT 
+                    t.id, t.ticket_code, t.title, t.description, t.requester_email, 
+                    t.requester_name, t.department_name, t.status, t.priority,
+                    t.created_at, t.updated_at,
+                    EXTRACT(EPOCH FROM (t.updated_at - t.created_at)) / 3600.0 AS resolution_hours
+                FROM ticketing_system.tickets t
+                WHERE t.assigned_to = %s
+                ORDER BY t.created_at DESC;
+            """, (target_user_id,))
+            raw_handled = cur.fetchall() or []
+
+            # Raised tickets (tickets created by this staff member - personal support history)
+            cur.execute("""
+                SELECT 
+                    t.id, t.ticket_code, t.title, t.description, t.requester_email, 
+                    t.requester_name, t.department_name, t.status, t.priority,
+                    t.created_at, t.updated_at,
+                    u.full_name AS assignee_name
+                FROM ticketing_system.tickets t
+                LEFT JOIN ticketing_system.users u ON t.assigned_to = u.id
+                WHERE t.requester_id = %s OR lower(t.requester_email) = lower(%s)
+                ORDER BY t.created_at DESC;
+            """, (target_user_id, target_user["email"]))
+            raw_raised = cur.fetchall() or []
+
+            def serialize_ticket(t):
+                row = dict(t)
+                if row.get("created_at"):
+                    row["created_at"] = row["created_at"].isoformat()
+                if row.get("updated_at"):
+                    row["updated_at"] = row["updated_at"].isoformat()
+                if "resolution_hours" in row and row["resolution_hours"] is not None:
+                    row["resolution_hours"] = round(float(row["resolution_hours"]), 2)
+                return row
+
+            handled_tickets = [serialize_ticket(t) for t in raw_handled]
+            raised_tickets = [serialize_ticket(t) for t in raw_raised]
+
+            total_handled = len(handled_tickets)
+            resolved_count = sum(1 for t in handled_tickets if t["status"] in ("resolved", "closed"))
+            in_progress_count = sum(1 for t in handled_tickets if t["status"] in ("in_progress", "waiting_on_us", "waiting_contact", "on_hold"))
+            open_count = sum(1 for t in handled_tickets if t["status"] == "open")
+            resolution_rate = round((resolved_count / total_handled * 100), 1) if total_handled > 0 else 0
+
+            resolved_times = [
+                t["resolution_hours"] for t in handled_tickets 
+                if t["status"] in ("resolved", "closed") and t.get("resolution_hours") is not None and t["resolution_hours"] >= 0
+            ]
+            avg_resolution_hours = round(sum(resolved_times) / len(resolved_times), 1) if resolved_times else None
+
+            status_counts = {
+                "open": open_count,
+                "in_progress": in_progress_count,
+                "resolved": resolved_count,
+                "closed": sum(1 for t in handled_tickets if t["status"] == "closed")
+            }
+
+            priority_counts = {
+                "urgent": sum(1 for t in handled_tickets if (t.get("priority") or "").lower() == "urgent"),
+                "high": sum(1 for t in handled_tickets if (t.get("priority") or "").lower() == "high"),
+                "medium": sum(1 for t in handled_tickets if (t.get("priority") or "").lower() == "medium"),
+                "low": sum(1 for t in handled_tickets if (t.get("priority") or "").lower() == "low")
+            }
+
+            dept_counts = {}
+            for t in handled_tickets:
+                dept_name = t.get("department_name") or "General"
+                dept_counts[dept_name] = dept_counts.get(dept_name, 0) + 1
+
+            today = datetime.now(timezone.utc).date()
+            daily_activity = []
+            for i in range(6, -1, -1):
+                day = today - timedelta(days=i)
+                day_str = day.strftime("%Y-%m-%d")
+                day_label = day.strftime("%a")
+                created_on_day = sum(1 for t in raw_handled if t.get("created_at") and t["created_at"].date() == day)
+                resolved_on_day = sum(1 for t in raw_handled if t.get("updated_at") and t["updated_at"].date() == day and t["status"] in ("resolved", "closed"))
+                daily_activity.append({
+                    "date": day_str,
+                    "label": day_label,
+                    "created": created_on_day,
+                    "resolved": resolved_on_day
+                })
+
+            return {
+                "user": dict(target_user),
+                "stats": {
+                    "total_handled": total_handled,
+                    "resolved_count": resolved_count,
+                    "in_progress_count": in_progress_count,
+                    "open_count": open_count,
+                    "resolution_rate": resolution_rate,
+                    "avg_resolution_hours": avg_resolution_hours,
+                    "raised_count": len(raised_tickets)
+                },
+                "status_counts": status_counts,
+                "priority_counts": priority_counts,
+                "dept_counts": dept_counts,
+                "daily_activity": daily_activity,
+                "handled_tickets": handled_tickets,
+                "raised_tickets": raised_tickets
+            }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error fetching staff performance: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch staff performance.")
+
 @app.post("/api/tickets/sync-emails")
 def sync_emails(current_user: dict = Depends(get_current_user)):
     user_role = current_user.get("role", "employee")
@@ -2122,8 +2286,7 @@ for base_folder in ["public", "frontend"]:
             subpath = os.path.join(static_dir, sub)
             if os.path.exists(subpath):
                 app.mount(f"/{sub}", StaticFiles(directory=subpath), name=f"{base_folder}_{sub}")
-        if not os.environ.get("VERCEL"):
-            app.mount("/", StaticFiles(directory=static_dir, html=True), name=f"{base_folder}_root")
+        app.mount("/", StaticFiles(directory=static_dir, html=True), name=f"{base_folder}_root")
         logger.info(f"Mounted static files from: {static_dir}")
         break
 

@@ -17,7 +17,7 @@
         })();
     </script>
 </head>
-<body>
+<body class="portal-page">
 
     <!-- Outer Panel Header (Pitch Black) -->
     <header>
@@ -58,97 +58,197 @@
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="dashboard-main" style="max-width: 1200px; margin: 0 auto; width: 100%; padding: 2rem 1.5rem;">
+    <!-- Main Layout with Left Sidebar -->
+    <div class="dashboard-wrapper portal-layout">
+        <!-- Sidebar (Deep Charcoal) -->
+        <aside class="sidebar" id="portal-sidebar">
+            <!-- Sidebar Edge Toggle Arrow in Middle of Left Nav Bar -->
+            <button type="button" id="btn-sidebar-toggle" class="sidebar-edge-toggle" title="Collapse sidebar" aria-label="Toggle sidebar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <script>
+                if (localStorage.getItem('khin_portal_sidebar_collapsed') === 'true') {
+                    document.getElementById('portal-sidebar').classList.add('collapsed');
+                }
+            </script>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" class="sidebar-item-link active" id="menu-tickets" data-tooltip="Tickets">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="9" />
+                            <rect x="14" y="3" width="7" height="5" />
+                            <rect x="14" y="12" width="7" height="9" />
+                            <rect x="3" y="16" width="7" height="5" />
+                        </svg>
+                        <span class="sidebar-item-label">Tickets</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- User Profile Section at Bottom of Sidebar -->
+            <div class="user-profile-section" id="portal-profile-container" data-tooltip="User Profile" style="cursor: pointer;">
+                <div class="user-avatar" id="portal-sidebar-user-avatar" style="width: 38px; height: 38px; min-width: 38px; font-size: 0.9rem; border-radius: 50%; background: var(--bg-pitch-black); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); font-weight: 700;">U</div>
+                <div class="user-info-text" style="min-width: 0;">
+                    <div class="user-name" id="portal-sidebar-user-name" style="font-size: 0.85rem; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Employee</div>
+                    <div class="user-role-badge" id="portal-sidebar-user-role" style="font-size: 0.72rem; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">Internal Staff</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Container (Centrally Fixated & Maximized) -->
+        <main class="portal-main">
         
-        <!-- Welcome / Profile Banner -->
-        <div class="welcome-banner" style="padding: 1.8rem 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-            <div style="display: flex; align-items: center; gap: 1.25rem;">
-                <div class="user-avatar" id="portal-user-avatar" style="width: 52px; height: 52px; font-size: 1.3rem;">U</div>
-                <div>
-                    <h2 style="font-size: 1.4rem; margin-bottom: 0.2rem;" id="portal-user-name">Welcome, Requester</h2>
-                    <p style="color: var(--text-secondary); font-size: 0.85rem;" id="portal-user-email">customer@company.com</p>
-                    <div style="display: flex; gap: 0.6rem; align-items: center; margin-top: 0.35rem; flex-wrap: wrap;">
-                        <span class="role-badge" style="background-color: rgba(250, 204, 21, 0.15); color: var(--accent-yellow); border: 1px solid var(--border-yellow-glow);" id="portal-user-role-badge">
-                            Requester Portal
-                        </span>
-                        <span style="font-size: 0.78rem; color: var(--text-muted);" id="portal-user-dept-pos">
-                            General • Employee
-                        </span>
+        <!-- Welcome / Profile Banner (Full Width Edge-to-Edge) -->
+        <div class="welcome-banner portal-welcome-banner">
+            <div style="display: flex; align-items: center; gap: 0.75rem; min-width: 0;">
+                <div class="user-avatar" id="portal-user-avatar" style="width: 38px; height: 38px; min-width: 38px; font-size: 1rem; border-radius: 50%; background: var(--bg-deep-charcoal); border: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; color: var(--accent-yellow); font-weight: 700;">U</div>
+                <div style="min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 0.55rem; flex-wrap: wrap;">
+                        <h2 style="font-size: 1.05rem; margin: 0; font-family: var(--font-heading); color: #ffffff; letter-spacing: -0.01em;" id="portal-user-name">Welcome, Requester</h2>
+                        <span class="role-badge" style="background-color: rgba(250, 204, 21, 0.15); color: var(--accent-yellow); border: 1px solid var(--border-yellow-glow); font-size: 0.68rem; padding: 0.12rem 0.5rem; font-weight: 600; border-radius: 9999px;" id="portal-user-role-badge">Requester Portal</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; color: var(--text-secondary); margin-top: 0.2rem; flex-wrap: wrap;">
+                        <span id="portal-user-email">customer@company.com</span>
+                        <span style="color: var(--text-muted); opacity: 0.5;">•</span>
+                        <span id="portal-user-dept-pos" style="color: var(--text-muted);">General • Employee</span>
                     </div>
                 </div>
             </div>
-            <button class="btn-primary" id="btn-open-raise-ticket" style="width: auto; padding: 0.65rem 1.4rem; font-size: 0.9rem;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+
+            <!-- Central Live Helpdesk Status Chip -->
+            <div class="portal-support-status-chip">
+                <span class="portal-pulse-dot"></span>
+                <div style="display: flex; flex-direction: column;">
+                    <span style="font-size: 0.74rem; font-weight: 600; color: #ffffff;">Helpdesk & Support Dispatch Active</span>
+                    <span style="font-size: 0.66rem; color: var(--text-muted);">Standard Response SLA: &lt; 2 hrs &bull; Real-time updates</span>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="btn-open-raise-ticket" style="width: auto; padding: 0.45rem 1.15rem; font-size: 0.82rem; display: inline-flex; align-items: center; gap: 0.45rem; white-space: nowrap; border-radius: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                     <line x1="12" y1="5" x2="12" y2="19"></line>
                     <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
-                Raise a Ticket
+                <span>Raise a Ticket</span>
             </button>
         </div>
 
-        <!-- Requester Stats Grid -->
-        <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); margin-bottom: 2rem;">
+        <!-- Requester Stats Grid (Like Overview Ticketing) -->
+        <section class="stats-grid portal-stats-grid">
             <div class="stat-card">
-                <div class="stat-label">Total Submitted</div>
+                <div class="stat-card-header">
+                    <span class="stat-label">Total Submitted</span>
+                    <div class="stat-icon-badge" style="background: rgba(255, 255, 255, 0.05); color: var(--text-secondary); border: 1px solid var(--border-color);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                        </svg>
+                    </div>
+                </div>
                 <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-card-meta">All tickets raised by your account</div>
             </div>
+
             <div class="stat-card">
-                <div class="stat-label">Open Issues</div>
+                <div class="stat-card-header">
+                    <span class="stat-label">Open Issues</span>
+                    <div class="stat-icon-badge" style="background: rgba(250, 204, 21, 0.1); color: var(--accent-yellow); border: 1px solid rgba(250, 204, 21, 0.25);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                </div>
                 <div class="stat-value" id="stat-open" style="color: var(--accent-yellow);">0</div>
+                <div class="stat-card-meta">Awaiting specialist assignment</div>
             </div>
+
             <div class="stat-card">
-                <div class="stat-label">In Progress</div>
+                <div class="stat-card-header">
+                    <span class="stat-label">In Progress</span>
+                    <div class="stat-icon-badge" style="background: rgba(96, 165, 250, 0.1); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.25);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"></path>
+                        </svg>
+                    </div>
+                </div>
                 <div class="stat-value" id="stat-in-progress" style="color: #60a5fa;">0</div>
+                <div class="stat-card-meta">Under technician investigation</div>
             </div>
+
             <div class="stat-card">
-                <div class="stat-label">Resolved / Closed</div>
+                <div class="stat-card-header">
+                    <span class="stat-label">Resolved / Closed</span>
+                    <div class="stat-icon-badge" style="background: rgba(74, 222, 128, 0.1); color: var(--success-green); border: 1px solid rgba(74, 222, 128, 0.25);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                        </svg>
+                    </div>
+                </div>
                 <div class="stat-value" id="stat-resolved" style="color: var(--success-green);">0</div>
+                <div class="stat-card-meta">Successfully addressed issues</div>
             </div>
         </section>
 
-        <!-- Ticket Filter Toolbar -->
-        <div class="ticket-toolbar">
-            <div class="filter-tabs">
-                <button class="filter-tab active" data-status="">All Requests</button>
-                <button class="filter-tab" data-status="open">Open</button>
-                <button class="filter-tab" data-status="in_progress">In Progress</button>
-                <button class="filter-tab" data-status="resolved">Resolved</button>
-            </div>
-            <div class="search-wrapper">
-                <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                </svg>
-                <input type="text" id="ticket-search" class="search-input" placeholder="Search my tickets...">
-            </div>
-        </div>
-
-        <!-- My Tickets History Table -->
+        <!-- Maximized My Tickets History Card -->
         <div class="tickets-card">
-            <div style="padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="font-family: var(--font-heading); font-size: 1.1rem; font-weight: 600;">My Support Tickets</h3>
-                <span style="font-size: 0.8rem; color: var(--text-secondary);" id="ticket-count-label">0 tickets</span>
+            <div class="portal-card-header">
+                <div style="display: flex; align-items: center; gap: 0.85rem; min-width: 0;">
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.65rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; font-weight: 600; margin: 0; color: #ffffff;">My Support Tickets</h3>
+                            <span style="font-size: 0.76rem; color: var(--text-secondary); background: rgba(255,255,255,0.08); padding: 0.15rem 0.6rem; border-radius: 9999px;" id="ticket-count-label">0 tickets</span>
+                        </div>
+                        <span style="font-size: 0.72rem; color: var(--text-muted); display: block; margin-top: 0.15rem;">Live monitoring of requests submitted by your account</span>
+                    </div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap;">
+                    <!-- Filter Tabs -->
+                    <div class="filter-tabs" style="margin: 0; gap: 0.35rem;">
+                        <button class="filter-tab active" data-status="" style="padding: 0.38rem 0.8rem; font-size: 0.82rem;">All Requests</button>
+                        <button class="filter-tab" data-status="open" style="padding: 0.38rem 0.8rem; font-size: 0.82rem;">Open</button>
+                        <button class="filter-tab" data-status="in_progress" style="padding: 0.38rem 0.8rem; font-size: 0.82rem;">In Progress</button>
+                        <button class="filter-tab" data-status="resolved" style="padding: 0.38rem 0.8rem; font-size: 0.82rem;">Resolved</button>
+                    </div>
+                    <!-- Search Input -->
+                    <div class="search-wrapper" style="min-width: 240px; max-width: 320px; margin: 0;">
+                        <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="ticket-search" class="search-input" placeholder="Search by ID, subject, dept..." style="padding: 0.42rem 0.85rem 0.42rem 2.2rem; font-size: 0.82rem;">
+                    </div>
+                </div>
             </div>
-            <div style="overflow-x: auto;">
+            <!-- Internal Scrollable Table Container -->
+            <div class="portal-table-container table-scroll-container">
                 <table class="tickets-table">
                     <thead>
                         <tr>
-                            <th style="width: 100px;">Ticket ID</th>
-                            <th>Subject</th>
-                            <th style="width: 160px;">Department</th>
+                            <th style="width: 125px;">Ticket ID</th>
+                            <th>Subject & Issue Summary</th>
+                            <th style="width: 170px;">Department</th>
+                            <th style="width: 170px;">Assigned Specialist</th>
                             <th style="width: 110px;">Priority</th>
-                            <th style="width: 120px;">Status</th>
-                            <th style="width: 150px;">Submitted On</th>
+                            <th style="width: 130px;">Status</th>
+                            <th style="width: 155px;">Submitted On</th>
+                            <th style="width: 80px; text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="tickets-table-body">
-                        <tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 3rem;">Loading your tickets...</td></tr>
+                        <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 3rem;">Loading your tickets...</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
     </main>
+    </div> <!-- /.portal-layout -->
 
     <!-- RAISE TICKET MODAL -->
     <div class="modal-overlay" id="modal-raise-ticket">
@@ -215,10 +315,19 @@
                     <span id="detail-status-badge" class="badge badge-open"></span>
                     <span id="detail-dept-badge" class="badge" style="background: rgba(255,255,255,0.08); color: var(--text-primary); border: 1px solid var(--border-color);"></span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 0.6rem;">
-                    <button id="btn-toggle-ticket-status" class="btn-secondary" style="font-size: 0.75rem; padding: 0.35rem 0.75rem;">
-                        Close Ticket
-                    </button>
+                <div style="display: flex; align-items: center; gap: 0.65rem;">
+                    <div style="display: flex; align-items: center; gap: 0.35rem;">
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Status:</span>
+                        <select id="detail-status-select" class="form-input" style="padding: 0.28rem 0.65rem; font-size: 0.78rem; background-color: var(--bg-pitch-black); cursor: pointer; border-radius: 6px; width: auto;" onchange="changeTicketStatus(activeTicket.id, this.value)">
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="waiting_on_us">Waiting on Us</option>
+                            <option value="waiting_contact">Waiting on Contact</option>
+                            <option value="on_hold">On Hold</option>
+                            <option value="resolved">Resolved</option>
+                            <option value="closed">Closed</option>
+                        </select>
+                    </div>
                     <button class="btn-close" id="btn-close-details-modal">&times;</button>
                 </div>
             </div>
@@ -364,10 +473,12 @@
                         roleBadge.textContent = 'Developer Team Member';
                     } else if (currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead') {
                         roleBadge.textContent = 'Department Admin Lead';
-                    } else if (currentUser.role === 'dept_agent' || currentUser.role === 'dept_member') {
-                        roleBadge.textContent = 'Department Staff';
+                    } else if (currentUser.role === 'external' || currentUser.role === 'externals' || currentUser.role === 'customer') {
+                        roleBadge.textContent = 'External';
+                        roleBadge.title = 'External: Serving clients and customers outside the company';
                     } else {
-                        roleBadge.textContent = 'Requester Portal';
+                        roleBadge.textContent = 'Internal';
+                        roleBadge.title = 'Internal: Serving company and its employees to maintain operations';
                     }
                 }
 
@@ -385,6 +496,26 @@
                     .toUpperCase()
                     .substring(0, 2);
                 document.getElementById('portal-user-avatar').textContent = initials || 'U';
+
+                // Sync sidebar profile
+                const sidebarAvatar = document.getElementById('portal-sidebar-user-avatar');
+                if (sidebarAvatar) sidebarAvatar.textContent = initials || 'U';
+                const sidebarName = document.getElementById('portal-sidebar-user-name');
+                if (sidebarName) sidebarName.textContent = currentUser.full_name || 'Employee';
+                const sidebarRole = document.getElementById('portal-sidebar-user-role');
+                if (sidebarRole) {
+                    if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
+                        sidebarRole.textContent = 'Super Admin';
+                    } else if (currentUser.role === 'tech_member' || currentUser.role === 'agent') {
+                        sidebarRole.textContent = 'Developer Team Member';
+                    } else if (currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead') {
+                        sidebarRole.textContent = 'Department Admin Lead';
+                    } else if (currentUser.role === 'external' || currentUser.role === 'externals' || currentUser.role === 'customer') {
+                        sidebarRole.textContent = 'External Staff';
+                    } else {
+                        sidebarRole.textContent = 'Internal Staff';
+                    }
+                }
 
                 // Load departments, tickets and metrics in parallel for instant rendering
                 await Promise.all([
@@ -430,7 +561,7 @@
         // --- Fetch Metrics ---
         async function fetchMetrics() {
             try {
-                const res = await fetch(`${API_URL}/api/dashboard/stats`, { headers: authHeaders() });
+                const res = await fetch(`${API_URL}/api/dashboard/stats?raised_only=true`, { headers: authHeaders() });
                 if (!res.ok) return;
                 const stats = await res.json();
                 document.getElementById('stat-total').textContent = stats.total || 0;
@@ -445,9 +576,9 @@
         // --- Load Requesters Tickets ---
         async function loadMyTickets() {
             try {
-                let url = `${API_URL}/api/tickets`;
+                let url = `${API_URL}/api/tickets?raised_only=true`;
                 if (activeStatus) {
-                    url += `?status_filter=${encodeURIComponent(activeStatus)}`;
+                    url += `&status_filter=${encodeURIComponent(activeStatus)}`;
                 }
                 const res = await fetch(url, { headers: authHeaders() });
                 if (!res.ok) throw new Error('Failed to load tickets');
@@ -457,7 +588,7 @@
             } catch (err) {
                 console.error(err);
                 document.getElementById('tickets-table-body').innerHTML = `
-                    <tr><td colspan="6" style="text-align: center; color: var(--error-red); padding: 2.5rem;">Could not load tickets. Please try again.</td></tr>
+                    <tr><td colspan="8" style="text-align: center; color: var(--error-red); padding: 2.5rem;">Could not load tickets. Please try again.</td></tr>
                 `;
             }
         }
@@ -473,6 +604,7 @@
                     (t.ticket_code && t.ticket_code.toLowerCase().includes(searchVal)) ||
                     (t.title && t.title.toLowerCase().includes(searchVal)) ||
                     (t.department_name && t.department_name.toLowerCase().includes(searchVal)) ||
+                    (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal)) ||
                     (t.description && t.description.toLowerCase().includes(searchVal))
                 );
             });
@@ -482,7 +614,7 @@
             if (filtered.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" style="text-align: center; color: var(--text-secondary); padding: 3rem;">
+                        <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 3rem;">
                             No support tickets found. Click <strong>"Raise a Ticket"</strong> above to submit a technical issue.
                         </td>
                     </tr>
@@ -495,12 +627,19 @@
                     ? new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
                     : '-';
                 
+                const assigneeDisplay = t.assignee_name 
+                    ? `<div style="display: flex; align-items: center; gap: 0.45rem;">
+                        <span style="width: 22px; height: 22px; border-radius: 50%; background: rgba(96, 165, 250, 0.2); color: #60a5fa; display: inline-flex; align-items: center; justify-content: center; font-size: 0.65rem; font-weight: 700;">${escapeHtml(t.assignee_name.charAt(0).toUpperCase())}</span>
+                        <span style="font-size: 0.82rem; color: var(--text-primary);">${escapeHtml(t.assignee_name)}</span>
+                      </div>`
+                    : `<span style="color: var(--text-muted); font-size: 0.78rem; font-style: italic;">Pending assignment</span>`;
+
                 return `
-                    <tr onclick="viewTicketDetails(${t.id})">
+                    <tr onclick="viewTicketDetails(${t.id})" style="cursor: pointer;">
                         <td><span class="ticket-code-tag">${escapeHtml(t.ticket_code)}</span></td>
                         <td>
                             <div class="ticket-title-link" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
-                            <div class="ticket-requester-info" style="color: var(--text-muted);">${escapeHtml(t.description.substring(0, 70))}${t.description.length > 70 ? '...' : ''}</div>
+                            <div class="ticket-requester-info" style="color: var(--text-muted); font-size: 0.76rem; margin-top: 2px;">${escapeHtml((t.description || '').slice(0, 80))}${(t.description || '').length > 80 ? '...' : ''}</div>
                         </td>
                         <td>
                             <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 0.75rem; color: var(--text-primary); border: 1px solid var(--border-color);">
@@ -508,12 +647,30 @@
                             </span>
                         </td>
                         <td>
+                            ${assigneeDisplay}
+                        </td>
+                        <td>
                             <span class="priority-tag priority-${t.priority}">
                                 <span class="priority-dot"></span>${t.priority}
                             </span>
                         </td>
-                        <td><span class="badge badge-${t.status}">${formatStatusLabel(t.status)}</span></td>
-                        <td style="color: var(--text-muted); font-size: 0.85rem;">${dateStr}</td>
+                        <td onclick="event.stopPropagation()">
+                            <select class="portal-status-select badge badge-${t.status}" onchange="changeTicketStatus(${t.id}, this.value)" title="Change Ticket Status" aria-label="Change Ticket Status">
+                                <option value="open" ${t.status === 'open' ? 'selected' : ''}>Open</option>
+                                <option value="in_progress" ${t.status === 'in_progress' ? 'selected' : ''}>In Progress</option>
+                                <option value="waiting_on_us" ${t.status === 'waiting_on_us' ? 'selected' : ''}>Waiting on Us</option>
+                                <option value="waiting_contact" ${t.status === 'waiting_contact' ? 'selected' : ''}>Waiting on Contact</option>
+                                <option value="on_hold" ${t.status === 'on_hold' ? 'selected' : ''}>On Hold</option>
+                                <option value="resolved" ${t.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+                                <option value="closed" ${t.status === 'closed' ? 'selected' : ''}>Closed</option>
+                            </select>
+                        </td>
+                        <td style="color: var(--text-muted); font-size: 0.82rem;">${dateStr}</td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn-sm btn-secondary" onclick="event.stopPropagation(); viewTicketDetails(${t.id})" style="padding: 0.25rem 0.65rem; font-size: 0.75rem; border-radius: 6px;">
+                                View
+                            </button>
+                        </td>
                     </tr>
                 `;
             }).join('');
@@ -546,6 +703,11 @@
                 badge.className = `badge badge-${activeTicket.status}`;
                 badge.textContent = formatStatusLabel(activeTicket.status);
 
+                const statusSelect = document.getElementById('detail-status-select');
+                if (statusSelect) {
+                    statusSelect.value = activeTicket.status;
+                }
+
                 const deptBadge = document.getElementById('detail-dept-badge');
                 if (deptBadge) {
                     deptBadge.textContent = activeTicket.department_name || 'General';
@@ -557,11 +719,11 @@
                     if (activeTicket.status === 'closed') {
                         toggleStatusBtn.innerHTML = `<span>Reopen Ticket</span>`;
                         toggleStatusBtn.style.color = 'var(--accent-yellow)';
-                        toggleStatusBtn.onclick = () => toggleTicketStatus('open');
+                        toggleStatusBtn.onclick = () => changeTicketStatus(activeTicket.id, 'open');
                     } else {
                         toggleStatusBtn.innerHTML = `<span>Close Ticket</span>`;
                         toggleStatusBtn.style.color = 'var(--text-secondary)';
-                        toggleStatusBtn.onclick = () => toggleTicketStatus('closed');
+                        toggleStatusBtn.onclick = () => changeTicketStatus(activeTicket.id, 'closed');
                     }
                 }
 
@@ -582,33 +744,57 @@
             }
         };
 
-        // --- Employee Ticket Status Toggle (Close or Reopen) ---
-        async function toggleTicketStatus(newStatus) {
-            if (!activeTicket) return;
-            const btn = document.getElementById('btn-toggle-ticket-status');
+        // --- Employee Ticket Status Change (Dropdown or Toggle) ---
+        window.changeTicketStatus = async function(ticketId, newStatus) {
             try {
-                btn.disabled = true;
-                const res = await fetch(`${API_URL}/api/tickets/${activeTicket.id}`, {
+                const res = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
                     method: 'PATCH',
                     headers: authHeaders(),
                     body: JSON.stringify({ status: newStatus })
                 });
 
                 if (!res.ok) {
-                    const err = await res.json();
+                    const err = await res.json().catch(() => ({}));
                     throw new Error(err.detail || 'Failed to update ticket status');
                 }
 
-                showToast(`Ticket status changed to "${newStatus}".`, 'success');
+                showToast(`Ticket status changed to "${formatStatusLabel(newStatus)}".`, 'success');
                 await fetchMetrics();
                 await loadMyTickets();
-                await window.viewTicketDetails(activeTicket.id);
 
+                if (activeTicket && activeTicket.id === ticketId) {
+                    activeTicket.status = newStatus;
+                    const badge = document.getElementById('detail-status-badge');
+                    if (badge) {
+                        badge.className = `badge badge-${newStatus}`;
+                        badge.textContent = formatStatusLabel(newStatus);
+                    }
+                    const statusSelect = document.getElementById('detail-status-select');
+                    if (statusSelect) {
+                        statusSelect.value = newStatus;
+                    }
+                    const toggleStatusBtn = document.getElementById('btn-toggle-ticket-status');
+                    if (toggleStatusBtn) {
+                        if (newStatus === 'closed') {
+                            toggleStatusBtn.innerHTML = `<span>Reopen Ticket</span>`;
+                            toggleStatusBtn.style.color = 'var(--accent-yellow)';
+                            toggleStatusBtn.onclick = () => changeTicketStatus(activeTicket.id, 'open');
+                        } else {
+                            toggleStatusBtn.innerHTML = `<span>Close Ticket</span>`;
+                            toggleStatusBtn.style.color = 'var(--text-secondary)';
+                            toggleStatusBtn.onclick = () => changeTicketStatus(activeTicket.id, 'closed');
+                        }
+                    }
+                }
             } catch (err) {
                 showToast(err.message, 'error');
-            } finally {
-                btn.disabled = false;
+                await loadMyTickets();
             }
+        };
+
+        async function toggleTicketStatus(newStatus) {
+            if (!activeTicket) return;
+            await window.changeTicketStatus(activeTicket.id, newStatus);
         }
 
         function renderComments(comments) {
@@ -770,6 +956,28 @@
             window.location.href = 'index.html';
         });
 
+        // --- Sidebar Collapse/Expand Toggle ---
+        const btnSidebarToggle = document.getElementById('btn-sidebar-toggle');
+        const portalSidebar = document.getElementById('portal-sidebar');
+
+        function updateSidebarToggleBtn(isCollapsed) {
+            if (btnSidebarToggle) {
+                btnSidebarToggle.classList.toggle('collapsed', isCollapsed);
+                btnSidebarToggle.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            }
+        }
+
+        if (btnSidebarToggle && portalSidebar) {
+            btnSidebarToggle.addEventListener('click', () => {
+                const isCollapsed = portalSidebar.classList.toggle('collapsed');
+                localStorage.setItem('khin_portal_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+                updateSidebarToggleBtn(isCollapsed);
+            });
+
+            // Initialize button state from current sidebar class
+            updateSidebarToggleBtn(portalSidebar.classList.contains('collapsed'));
+        }
+
         // Auto-refresh metrics and tickets every 30 seconds
         setInterval(() => {
             if (currentUser) {
@@ -828,10 +1036,27 @@
                             roleBadge.textContent = 'Developer Team Member';
                         } else if (currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead') {
                             roleBadge.textContent = 'Department Admin Lead';
-                        } else if (currentUser.role === 'dept_agent' || currentUser.role === 'dept_member') {
-                            roleBadge.textContent = 'Department Staff';
+                        } else if (currentUser.role === 'external' || currentUser.role === 'externals' || currentUser.role === 'customer') {
+                            roleBadge.textContent = 'External';
+                            roleBadge.title = 'External: Serving clients and customers outside the company';
                         } else {
-                            roleBadge.textContent = 'Requester Portal';
+                            roleBadge.textContent = 'Internal';
+                            roleBadge.title = 'Internal: Serving company and its employees to maintain operations';
+                        }
+                    }
+
+                    const sidebarRole = document.getElementById('portal-sidebar-user-role');
+                    if (sidebarRole) {
+                        if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
+                            sidebarRole.textContent = 'Super Admin';
+                        } else if (currentUser.role === 'tech_member' || currentUser.role === 'agent') {
+                            sidebarRole.textContent = 'Developer Team Member';
+                        } else if (currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead') {
+                            sidebarRole.textContent = 'Department Admin Lead';
+                        } else if (currentUser.role === 'external' || currentUser.role === 'externals' || currentUser.role === 'customer') {
+                            sidebarRole.textContent = 'External Staff';
+                        } else {
+                            sidebarRole.textContent = 'Internal Staff';
                         }
                     }
                 }
