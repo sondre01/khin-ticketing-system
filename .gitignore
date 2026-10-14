@@ -1,33 +1,139 @@
-# Virtual environment
-.venv/
-env/
-venv/
-ENV/
+# ==============================================================================
+# KHIN TICKETING SYSTEM - GITIGNORE
+# Specifies intentionally untracked files that Git should ignore.
+# ==============================================================================
 
-# Environment variables (contains database passwords & secrets)
+# ------------------------------------------------------------------------------
+# 1. SECRETS, CREDENTIALS & ENVIRONMENT VARIABLES
+# ------------------------------------------------------------------------------
+# Never commit actual credentials, database connection strings, or API secrets.
 .env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+*.cert
+*.crt
 
-# Python cache files
+# ------------------------------------------------------------------------------
+# 2. PYTHON COMPILED BYTECODE & RUNTIME ARTIFACTS
+# ------------------------------------------------------------------------------
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.manifest
+*.spec
 
-# OS files
-.DS_Store
-Thumbs.db
+# ------------------------------------------------------------------------------
+# 3. PYTHON VIRTUAL ENVIRONMENTS
+# ------------------------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
 
-# IDE or editor settings
-.vscode/
-.idea/
+# ------------------------------------------------------------------------------
+# 4. TESTING, COVERAGE & CODE QUALITY CACHES
+# ------------------------------------------------------------------------------
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+.hypothesis/
 
-# Local gemini workspace artifacts
-.gemini/
-.system_generated/
-
-# Build and distribution artifacts
+# ------------------------------------------------------------------------------
+# 5. BUILD & DISTRIBUTION ARTIFACTS
+# ------------------------------------------------------------------------------
 build/
 dist/
 *.egg-info/
+develop-eggs/
+downloads/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
+*.egg
 *.whl
 
+# ------------------------------------------------------------------------------
+# 6. NODE / FRONTEND PACKAGES & LOGS
+# ------------------------------------------------------------------------------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ------------------------------------------------------------------------------
+# 7. LOCAL DATABASES & BACKUPS
+# ------------------------------------------------------------------------------
+# Keep schema.sql tracked, but ignore runtime database dumps and local sqlite files
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.dump
+*.sql.bak
+*.sql.gz
+
+# ------------------------------------------------------------------------------
+# 8. LOGS, RUNTIME PIDS & TEMPORARY DIRECTORIES
+# ------------------------------------------------------------------------------
+*.log
+logs/
+*.pid
+*.seed
+tmp/
+temp/
+scratch/
+
+# ------------------------------------------------------------------------------
+# 9. IDE & EDITOR SETTINGS
+# ------------------------------------------------------------------------------
+# Ignore personal editor state and JetBrains IDE files
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# For VS Code: ignore personal workspace caches, but track team-shared configs
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# ------------------------------------------------------------------------------
+# 10. OPERATING SYSTEM ARTIFACTS
+# ------------------------------------------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ------------------------------------------------------------------------------
+# 11. AI / ASSISTANT AGENT ARTIFACTS
+# ------------------------------------------------------------------------------
+.gemini/
+.system_generated/

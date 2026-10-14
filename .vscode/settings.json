@@ -1,0 +1,10 @@
+{
+    "liveServer.settings.port": 5502,
+    "liveServer.settings.root": "/",
+    "liveServer.settings.defaultFile": "index.html",
+    "liveServer.settings.proxy": {
+        "enable": true,
+        "baseUri": "/api",
+        "proxyUri": "http://127.0.0.1:5000/api"
+    }
+}
