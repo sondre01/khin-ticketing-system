@@ -74,13 +74,13 @@
                     </a>
                 </li>
                 <li>
-                    <a href="#" class="sidebar-item-link" id="menu-performance" data-tooltip="Support &amp; Performance">
+                    <a href="#" class="sidebar-item-link" id="menu-performance" data-tooltip="Performance">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                             <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
                             <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
                             <polyline points="8 13 10.5 10 12.5 15 14.5 11 16.5 13"/>
                         </svg>
-                        <span class="sidebar-item-label">Support &amp; Performance</span>
+                        <span class="sidebar-item-label">Performance</span>
                     </a>
                 </li>
                 <li id="nav-item-departments" style="display: none;">
@@ -667,72 +667,106 @@
                     </div>
                 </div>
 
-                <!-- Scrollable Body Container -->
-                <div class="perf-scroll-body table-scroll-container" style="flex: 1; overflow-y: auto; padding-right: 0.25rem;">
-                    <!-- Key KPI Metrics Grid (Minimized) -->
-                    <section class="stats-grid perf-compact-stats" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0.65rem; gap: 0.65rem; flex-shrink: 0;">
-                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
-                            <div class="stat-label" style="font-size: 0.7rem;">Tickets Handled</div>
-                            <div class="stat-value" id="stat-perf-handled" style="font-size: 1.35rem; margin-top: 0.1rem;">0</div>
-                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem;">Assigned specialist</div>
+                <!-- Tabs Navigation for Performance: Graphical Visuals & Support Tickets -->
+                <div class="perf-tabs-nav">
+                    <div class="perf-tabs">
+                        <button type="button" class="perf-tab active" id="tab-btn-perf-visuals" data-perf-tab="visuals">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Graphical Visuals</span>
+                        </button>
+                        <button type="button" class="perf-tab" id="tab-btn-perf-tickets" data-perf-tab="tickets">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Support Tickets</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB PANEL 1: Graphical Visuals (Fixated Viewport, No Vertical Scrolling) -->
+                <div id="panel-perf-visuals" class="perf-tab-panel" style="display: flex;">
+                    <!-- Key KPI Metrics Grid -->
+                    <section class="stats-grid perf-compact-stats" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0.75rem; gap: 0.75rem; flex-shrink: 0;">
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Tickets Handled</div>
+                            <div class="stat-value" id="stat-perf-handled" style="font-size: 1.5rem; margin-top: 0.15rem;">0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem;">Assigned specialist</div>
                         </div>
-                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
-                            <div class="stat-label" style="font-size: 0.7rem;">Resolved / Closed</div>
-                            <div class="stat-value" id="stat-perf-resolved" style="color: var(--success-green); font-size: 1.35rem; margin-top: 0.1rem;">0</div>
-                            <div id="stat-perf-rate" style="font-size: 0.68rem; color: var(--success-green); margin-top: 0.15rem; font-weight: 600;">0% Resolution Rate</div>
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Resolved / Closed</div>
+                            <div class="stat-value" id="stat-perf-resolved" style="color: var(--success-green); font-size: 1.5rem; margin-top: 0.15rem;">0</div>
+                            <div id="stat-perf-rate" style="font-size: 0.7rem; color: var(--success-green); margin-top: 0.15rem; font-weight: 600;">0% Resolution Rate</div>
                         </div>
-                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
-                            <div class="stat-label" style="font-size: 0.7rem;">Active in Queue</div>
-                            <div class="stat-value" id="stat-perf-active" style="color: #60a5fa; font-size: 1.35rem; margin-top: 0.1rem;">0</div>
-                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem;">Open or in progress</div>
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Active in Queue</div>
+                            <div class="stat-value" id="stat-perf-active" style="color: #60a5fa; font-size: 1.5rem; margin-top: 0.15rem;">0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem;">Open or in progress</div>
                         </div>
-                        <div class="stat-card" style="padding: 0.55rem 0.85rem;">
-                            <div class="stat-label" style="font-size: 0.7rem;">Avg. Resolution Speed</div>
-                            <div class="stat-value" id="stat-perf-speed" style="color: var(--accent-yellow); font-size: 1.35rem; margin-top: 0.1rem;">—</div>
-                            <div style="font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem;">Average completion</div>
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Avg. Resolution Speed</div>
+                            <div class="stat-value" id="stat-perf-speed" style="color: var(--accent-yellow); font-size: 1.5rem; margin-top: 0.15rem;">—</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem;">Average completion</div>
                         </div>
                     </section>
 
-                    <!-- Visual Graphs Grid (Compact) -->
-                    <div class="perf-charts-grid" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 0.65rem; margin-bottom: 0.65rem;">
+                    <!-- Visual Graphs Grid -->
+                    <div class="perf-charts-grid" style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 0.75rem; flex: 1; min-height: 0;">
                         <!-- Chart 1: 7-Day Day-by-Day Activity & Resolution Trend -->
-                        <div class="stat-card" style="padding: 0.65rem 1rem;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.45rem;">
+                        <div class="stat-card" style="padding: 1rem 1.25rem; display: flex; flex-direction: column; min-height: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-shrink: 0;">
                                 <div>
-                                    <h4 style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #ffffff;">7-Day Activity Trend</h4>
-                                    <span style="font-size: 0.68rem; color: var(--text-muted);">Handled &amp; resolved tickets</span>
+                                    <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #ffffff;">7-Day Activity Trend</h4>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted);">Handled &amp; resolved tickets</span>
                                 </div>
-                                <div style="display: flex; gap: 0.65rem; font-size: 0.68rem;">
-                                    <span style="display: flex; align-items: center; gap: 0.3rem; color: #60a5fa;"><span style="width: 7px; height: 7px; border-radius: 2px; background: #60a5fa;"></span>Handled</span>
-                                    <span style="display: flex; align-items: center; gap: 0.3rem; color: var(--accent-yellow);"><span style="width: 7px; height: 7px; border-radius: 2px; background: var(--accent-yellow);"></span>Resolved</span>
+                                <div style="display: flex; gap: 0.75rem; font-size: 0.72rem;">
+                                    <span style="display: flex; align-items: center; gap: 0.35rem; color: #60a5fa;"><span style="width: 8px; height: 8px; border-radius: 2px; background: #60a5fa;"></span>Handled</span>
+                                    <span style="display: flex; align-items: center; gap: 0.35rem; color: var(--accent-yellow);"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--accent-yellow);"></span>Resolved</span>
                                 </div>
                             </div>
-                            <div id="perf-trend-chart-container" style="height: 85px; display: flex; align-items: flex-end; gap: 0.65rem; padding-top: 3px;">
+                            <div id="perf-trend-chart-container" style="flex: 1; min-height: 140px; display: flex; align-items: flex-end; gap: 0.85rem; padding-top: 6px;">
                                 <!-- Rendered dynamically -->
                             </div>
                         </div>
 
                         <!-- Chart 2: Priority Breakdown & Efficiency Progress Meters -->
-                        <div class="stat-card" style="padding: 0.65rem 1rem;">
-                            <div style="margin-bottom: 0.45rem;">
-                                <h4 style="margin: 0; font-size: 0.85rem; font-weight: 600; color: #ffffff;">Priority Breakdown &amp; Efficiency</h4>
-                                <span style="font-size: 0.68rem; color: var(--text-muted);">Urgency distribution of tickets handled</span>
+                        <div class="stat-card" style="padding: 1rem 1.25rem; display: flex; flex-direction: column; min-height: 0;">
+                            <div style="margin-bottom: 0.75rem; flex-shrink: 0;">
+                                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #ffffff;">Priority Breakdown &amp; Efficiency</h4>
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Urgency distribution of tickets handled</span>
                             </div>
-                            <div id="perf-priority-bars-container" style="display: flex; flex-direction: column; gap: 0.4rem;">
+                            <div id="perf-priority-bars-container" style="display: flex; flex-direction: column; gap: 0.65rem; justify-content: space-around; flex: 1;">
                                 <!-- Rendered dynamically -->
                             </div>
                         </div>
                     </div>
+                </div>
 
-                    <!-- History of Ticketing Section: Tickets Assigned to Me (Expanded) -->
-                    <div class="tickets-card" style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column; min-height: 480px;">
+                <!-- TAB PANEL 2: Support Tickets (Full Height Table Card) -->
+                <div id="panel-perf-tickets" class="perf-tab-panel" style="display: none;">
+                    <div class="tickets-card" style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column; min-height: 0; height: 100%;">
                         <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-wrap: wrap; gap: 0.75rem; flex-shrink: 0;">
                             <div style="display: flex; align-items: center; gap: 0.65rem;">
-                                <h3 style="font-family: var(--font-heading); font-size: 1rem; margin: 0; color: #fff;">Tickets Assigned to Me</h3>
-                                <span class="count-pill" id="badge-handled-count" style="font-size: 0.78rem;">0</span>
+                                <div class="perf-subtabs" style="display: flex; gap: 0.3rem; background: var(--bg-pitch-black); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                    <button type="button" class="btn-subtab active" id="btn-tab-handled-tickets" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; border-radius: 4px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+                                        <span>Assigned to Me</span>
+                                        <span class="count-pill" id="badge-handled-count" style="font-size: 0.72rem;">0</span>
+                                    </button>
+                                    <button type="button" class="btn-subtab" id="btn-tab-raised-tickets" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; border-radius: 4px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+                                        <span>Raised by Me</span>
+                                        <span class="count-pill" id="badge-raised-count" style="font-size: 0.72rem;">0</span>
+                                    </button>
+                                </div>
                             </div>
                             <!-- Search & Status filter -->
-                            <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 420px; min-width: 240px; justify-content: flex-end;">
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 440px; min-width: 240px; justify-content: flex-end;">
                                 <select id="perf-status-filter" class="form-input" style="width: auto; background-color: var(--bg-pitch-black); padding: 0.35rem 0.65rem; font-size: 0.78rem;">
                                     <option value="">All Statuses</option>
                                     <option value="open">Open</option>
@@ -752,8 +786,8 @@
                             </div>
                         </div>
 
-                        <!-- Table Container (Expanded with ample height) -->
-                        <div class="perf-table-container table-scroll-container" style="flex: 1; min-height: 420px; overflow-y: auto;">
+                        <!-- Table Container (Expanded with full height) -->
+                        <div class="perf-table-container table-scroll-container" style="flex: 1; min-height: 0; overflow-y: auto;">
                             <table class="tickets-table">
                                 <thead>
                                     <tr>
@@ -821,9 +855,11 @@
     <div class="toast-container" id="toast-container"></div>
 
     <script>
-        const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000';
-        const API_URL = isLocalDev 
-            ? `${window.location.protocol}//${window.location.hostname}:5000` 
+        // Target Python backend (port 5000) when running under VS Code Go Live Server (e.g. port 5500/5502) or file:// protocol
+        const isFileProtocol = !window.location.protocol || window.location.protocol === 'file:' || !window.location.hostname;
+        const isGoLiveServer = isFileProtocol || (window.location.port && window.location.port !== '5000');
+        const API_URL = isGoLiveServer 
+            ? `http://${window.location.hostname || '127.0.0.1'}:5000` 
             : window.location.origin;
         
         let currentUser = null;
@@ -977,7 +1013,7 @@
             } catch (err) {
                 console.error('fetchUserProfile error:', err);
                 if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
-                    showToast(isLocalDev ? 'Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py).' : 'Cannot connect to backend server. Please verify service status.', 'error');
+                    showToast(isGoLiveServer ? 'Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py) so Go Live can connect.' : 'Cannot connect to backend server. Please verify service status.', 'error');
                 } else {
                     localStorage.removeItem('access_token');
                     window.location.href = 'index.html?expired=true';
@@ -2606,7 +2642,7 @@
             }
 
             const maxVal = Math.max(1, ...dailyActivity.map(d => Math.max(d.created || 0, d.resolved || 0)));
-            const maxBarPx = 76;
+            const maxBarPx = 110;
 
             container.innerHTML = dailyActivity.map(d => {
                 const handledHeight = d.created > 0 ? Math.max(6, Math.round((d.created / maxVal) * maxBarPx)) : 3;
@@ -2816,6 +2852,44 @@
                 e.preventDefault();
                 loadStaffPerformance();
                 showToast('Performance metrics refreshed', 'info');
+            });
+        }
+
+        // --- Performance View Main Tabs (Graphical Visuals vs Support Tickets) ---
+        const tabBtnPerfVisuals = document.getElementById('tab-btn-perf-visuals');
+        const tabBtnPerfTickets = document.getElementById('tab-btn-perf-tickets');
+        const panelPerfVisuals = document.getElementById('panel-perf-visuals');
+        const panelPerfTickets = document.getElementById('panel-perf-tickets');
+
+        function switchPerfMainTab(tab) {
+            if (tab === 'visuals') {
+                if (tabBtnPerfVisuals) tabBtnPerfVisuals.classList.add('active');
+                if (tabBtnPerfTickets) tabBtnPerfTickets.classList.remove('active');
+                if (panelPerfVisuals) panelPerfVisuals.style.display = 'flex';
+                if (panelPerfTickets) panelPerfTickets.style.display = 'none';
+                if (perfData) {
+                    renderPerfTrendChart(perfData.daily_activity || []);
+                }
+            } else if (tab === 'tickets') {
+                if (tabBtnPerfTickets) tabBtnPerfTickets.classList.add('active');
+                if (tabBtnPerfVisuals) tabBtnPerfVisuals.classList.remove('active');
+                if (panelPerfTickets) panelPerfTickets.style.display = 'flex';
+                if (panelPerfVisuals) panelPerfVisuals.style.display = 'none';
+                renderPerfTicketsTable();
+            }
+        }
+
+        if (tabBtnPerfVisuals) {
+            tabBtnPerfVisuals.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPerfMainTab('visuals');
+            });
+        }
+
+        if (tabBtnPerfTickets) {
+            tabBtnPerfTickets.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPerfMainTab('tickets');
             });
         }
 

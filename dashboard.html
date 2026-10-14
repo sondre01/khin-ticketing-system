@@ -1,0 +1,3081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Khin Ticket</title>
+    <meta name="description" content="Manage and view your active support and development tickets.">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/png" href="images/logo-box.png">
+    <script>
+        // Inline blocking script to prevent Flash of Unauthenticated Content (FOUC)
+        (function() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = 'index.html';
+            }
+        })();
+    </script>
+</head>
+<body class="dashboard-page">
+
+    <!-- Outer Panel Header (Pitch Black) -->
+    <header>
+        <a href="#" class="logo" id="logo-dashboard">
+            <img src="images/logo-box.png" alt="Khin Ticket Logo" class="brand-logo">
+            Khin <span>Ticket</span>
+        </a>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <a href="portal.html" class="btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.85rem; text-decoration: none;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                    <polyline points="15 3 21 3 21 9"/>
+                    <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                Employee Portal
+            </a>
+            <button id="btn-logout" class="btn-secondary">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                    <polyline points="16 17 21 12 16 7" />
+                    <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Sign Out
+            </button>
+        </div>
+    </header>
+
+    <!-- Dashboard Layout Wrapper -->
+    <div class="dashboard-wrapper">
+        
+        <!-- Sidebar (Deep Charcoal) -->
+        <aside class="sidebar" id="dashboard-sidebar">
+            <!-- Sidebar Edge Toggle Arrow in Middle of Left Nav Bar -->
+            <button type="button" id="btn-sidebar-toggle" class="sidebar-edge-toggle" title="Collapse sidebar" aria-label="Toggle sidebar">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <script>
+                if (localStorage.getItem('khin_sidebar_collapsed') === 'true') {
+                    document.getElementById('dashboard-sidebar').classList.add('collapsed');
+                }
+            </script>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="#" class="sidebar-item-link active" id="menu-overview" data-tooltip="Overview &amp; Tickets">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <rect x="3" y="3" width="7" height="9" />
+                            <rect x="14" y="3" width="7" height="5" />
+                            <rect x="14" y="12" width="7" height="9" />
+                            <rect x="3" y="16" width="7" height="5" />
+                        </svg>
+                        <span class="sidebar-item-label">Overview &amp; Tickets</span>
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="sidebar-item-link" id="menu-performance" data-tooltip="Performance">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 18v-6a9 9 0 0 1 18 0v6"/>
+                            <path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3z"/>
+                            <polyline points="8 13 10.5 10 12.5 15 14.5 11 16.5 13"/>
+                        </svg>
+                        <span class="sidebar-item-label">Performance</span>
+                    </a>
+                </li>
+                <li id="nav-item-departments" style="display: none;">
+                    <a href="#" class="sidebar-item-link" id="menu-departments" data-tooltip="Departments">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                            <polyline points="9 22 9 12 15 12 15 22"/>
+                        </svg>
+                        <span class="sidebar-item-label">Departments</span>
+                    </a>
+                </li>
+                <li id="nav-item-users" style="display: none;">
+                    <a href="#" class="sidebar-item-link" id="menu-users" data-tooltip="Users &amp; Hierarchy">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="9" cy="7" r="4"/>
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                        </svg>
+                        <span class="sidebar-item-label">Users &amp; Hierarchy</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- User Profile Section at Bottom of Sidebar -->
+            <div class="user-profile-section" id="profile-container" data-tooltip="User Profile">
+                <div class="user-avatar" id="user-avatar-initials" style="display: flex; align-items: center; justify-content: center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                </div>
+                <div class="user-info">
+                    <div class="user-name" id="display-user-name">Loading...</div>
+                    <div class="user-email" id="display-user-email">Loading...</div>
+                    <div style="font-size: 0.72rem; color: var(--text-muted); margin-top: 0.15rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" id="display-user-pos">Staff</div>
+                    <div id="display-user-role" class="role-badge user">Member</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Dashboard Body (Near Black) -->
+        <main class="dashboard-main">
+            
+            <!-- VIEW 1: OVERVIEW & TICKETS -->
+            <div id="view-overview" class="dashboard-section-view">
+                <!-- Stats Grid -->
+                <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Tickets</div>
+                        <div class="stat-value" id="stat-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Open</div>
+                        <div class="stat-value" id="stat-open" style="color: var(--accent-yellow);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">In Progress</div>
+                        <div class="stat-value" id="stat-in-progress" style="color: #60a5fa;">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Resolved / Closed</div>
+                        <div class="stat-value" id="stat-resolved" style="color: var(--success-green);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Unassigned</div>
+                        <div class="stat-value" id="stat-unassigned" style="color: var(--error-red);">0</div>
+                    </div>
+                </section>
+
+                <!-- Tickets Management Card (Kanban & List POV) -->
+                <div class="tickets-card">
+                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0; flex-wrap: wrap; gap: 0.75rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">Support &amp; Technical Tickets</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="tickets-count-badge">0 tickets</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap;">
+                            <div class="search-wrapper" style="width: 260px;">
+                                <svg class="search-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <input type="text" id="ticket-search" class="search-input" placeholder="Search tickets..." style="padding: 0.45rem 0.85rem 0.45rem 2.2rem; font-size: 0.85rem;">
+                            </div>
+                            <!-- View Mode Toggle (Preference Switcher) -->
+                            <div class="view-mode-toggle" id="tickets-view-mode-toggle" role="group" aria-label="Ticket view preference">
+                                <button type="button" class="view-mode-btn active" id="btn-view-kanban" data-view="kanban" title="Kanban Board View (Card based & align per column)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                                        <rect x="10" y="3" width="5" height="18" rx="1"></rect>
+                                        <rect x="17" y="3" width="5" height="18" rx="1"></rect>
+                                    </svg>
+                                    <span>Board</span>
+                                </button>
+                                <button type="button" class="view-mode-btn" id="btn-view-list" data-view="list" title="Standard List View (Table POV)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <line x1="8" y1="6" x2="21" y2="6"></line>
+                                        <line x1="8" y1="12" x2="21" y2="12"></line>
+                                        <line x1="8" y1="18" x2="21" y2="18"></line>
+                                        <circle cx="4" cy="6" r="1.5" fill="currentColor"></circle>
+                                        <circle cx="4" cy="12" r="1.5" fill="currentColor"></circle>
+                                        <circle cx="4" cy="18" r="1.5" fill="currentColor"></circle>
+                                    </svg>
+                                    <span>List</span>
+                                </button>
+                                <button type="button" class="view-mode-btn" id="btn-view-split" data-view="split" title="1:3 Split View (Column Tickets &amp; Ticket Info)">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <rect x="3" y="3" width="5" height="18" rx="1"></rect>
+                                        <rect x="10" y="3" width="11" height="18" rx="1"></rect>
+                                    </svg>
+                                    <span>1:3 Split</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KANBAN BOARD VIEW (Card-based per column) -->
+                    <div class="kanban-board-container" id="tickets-kanban-container">
+                        <!-- Open Column -->
+                        <div class="kanban-column" id="kanban-col-open">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-open"></span>
+                                    <h4 class="kanban-column-title">Open</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-open">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-open" data-status="open">
+                                <div class="kanban-empty-placeholder">No open tickets</div>
+                            </div>
+                        </div>
+
+                        <!-- Waiting on Us Column -->
+                        <div class="kanban-column" id="kanban-col-waiting_on_us">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-waiting_on_us"></span>
+                                    <h4 class="kanban-column-title">Waiting on Us</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-waiting_on_us">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-waiting_on_us" data-status="waiting_on_us">
+                                <div class="kanban-empty-placeholder">No tickets in progress</div>
+                            </div>
+                        </div>
+
+                        <!-- Waiting on Contact Column -->
+                        <div class="kanban-column" id="kanban-col-waiting_contact">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-waiting_contact"></span>
+                                    <h4 class="kanban-column-title">Waiting on Contact</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-waiting_contact">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-waiting_contact" data-status="waiting_contact">
+                                <div class="kanban-empty-placeholder">No tickets waiting on contact</div>
+                            </div>
+                        </div>
+
+                        <!-- On Hold Column -->
+                        <div class="kanban-column" id="kanban-col-on_hold">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-on_hold"></span>
+                                    <h4 class="kanban-column-title">On Hold</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-on_hold">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-on_hold" data-status="on_hold">
+                                <div class="kanban-empty-placeholder">No tickets on hold</div>
+                            </div>
+                        </div>
+
+                        <!-- Closed Column -->
+                        <div class="kanban-column" id="kanban-col-closed">
+                            <div class="kanban-column-header">
+                                <div class="kanban-column-title-group">
+                                    <span class="kanban-status-indicator indicator-closed"></span>
+                                    <h4 class="kanban-column-title">Closed</h4>
+                                </div>
+                                <span class="kanban-count-pill" id="col-count-closed">0</span>
+                            </div>
+                            <div class="kanban-column-body" id="col-body-closed" data-status="closed">
+                                <div class="kanban-empty-placeholder">No closed tickets</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TABLE LIST VIEW (Retained POV) -->
+                    <div class="tickets-table-container table-scroll-container" id="tickets-table-container" style="display: none;">
+                        <table class="tickets-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 100px;">Ticket</th>
+                                    <th>Subject &amp; Requester</th>
+                                    <th style="width: 160px;">Department</th>
+                                    <th style="width: 100px;">Source</th>
+                                    <th style="width: 140px;">Status</th>
+                                    <th style="width: 110px;">Priority</th>
+                                    <th style="width: 150px;">Assignee</th>
+                                    <th style="width: 130px;">Created</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tickets-table-body">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; color: var(--text-secondary); padding: 3rem;">
+                                        Loading tickets...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- 1:3 RATIO SPLIT VIEW (Left: Column Tickets / Right: Full Ticket Info) -->
+                    <div class="tickets-split-container" id="tickets-split-container" style="display: none;">
+                        <!-- Left Column (1 Part): Column Tickets List -->
+                        <div class="split-column-pane" id="split-column-pane">
+                            <div class="split-column-header">
+                                <div class="split-column-title-wrap">
+                                    <span class="kanban-status-indicator indicator-open" id="split-column-indicator"></span>
+                                    <select id="split-column-filter" class="split-column-select" aria-label="Select Column Tickets">
+                                        <option value="all">All Column Tickets</option>
+                                        <option value="open" selected>Open Tickets</option>
+                                        <option value="waiting_on_us">Waiting on Us</option>
+                                        <option value="waiting_contact">Waiting on Contact</option>
+                                        <option value="on_hold">On Hold</option>
+                                        <option value="closed">Closed</option>
+                                    </select>
+                                </div>
+                                <span class="kanban-count-pill" id="split-column-count">0</span>
+                            </div>
+                            <div class="split-column-tickets-list" id="split-column-tickets-list">
+                                <div class="kanban-empty-placeholder">No tickets in this column</div>
+                            </div>
+                        </div>
+
+                        <!-- Right Pane (3 Parts): Full Ticket Info -->
+                        <div class="split-info-pane" id="split-info-pane">
+                            <!-- Scrollable Ticket Details Body -->
+                            <div class="split-info-scroll-body" id="split-info-scroll-body">
+                                <!-- Ticket Title & Meta Row -->
+                                <div class="split-info-header">
+                                    <h2 id="detail-ticket-title" class="split-ticket-title">Select a ticket to view</h2>
+                                    <div class="split-meta-row">
+                                        <div class="split-meta-item">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                            <span id="detail-requester-info">-</span>
+                                        </div>
+                                        <div class="split-meta-item">
+                                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                                            <span id="detail-source-info">-</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Workflow Controls (Status, Priority, Assignee) -->
+                                <div class="split-workflow-card">
+                                    <div class="split-workflow-controls">
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" for="detail-status-select">Status</label>
+                                            <select id="detail-status-select" class="form-input">
+                                                <option value="open">Open</option>
+                                                <option value="waiting_on_us">Waiting on Us</option>
+                                                <option value="waiting_contact">Waiting on Contact</option>
+                                                <option value="on_hold">On Hold</option>
+                                                <option value="closed">Closed</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;">
+                                            <label class="form-label" for="detail-priority-select">Priority</label>
+                                            <select id="detail-priority-select" class="form-input">
+                                                <option value="low">Low</option>
+                                                <option value="medium">Medium</option>
+                                                <option value="high">High</option>
+                                                <option value="urgent">Urgent</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 0;" id="assignee-control-group">
+                                            <label class="form-label" for="detail-assignee-select">Assigned Member</label>
+                                            <select id="detail-assignee-select" class="form-input">
+                                                <option value="0">Unassigned</option>
+                                            </select>
+                                        </div>
+                                        <div style="display: flex; align-items: flex-end;">
+                                            <button type="button" class="btn-primary" id="btn-save-ticket-status" style="height: 40px; padding: 0 1.25rem;">
+                                                <span>Save Changes</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div id="assignee-permission-note" class="split-permission-note" style="display: none;">
+                                        🔒 Only the Super Admin or Department Admin Lead can assign tickets to team members.
+                                    </div>
+                                </div>
+
+                                <!-- Initial Request Details / Body -->
+                                <div class="split-content-section">
+                                    <div class="split-section-header">
+                                        <h4>Initial Request Details</h4>
+                                    </div>
+                                    <div id="detail-ticket-desc" class="split-ticket-desc">-</div>
+                                </div>
+
+                                <!-- Internal Notes & Discussion Thread -->
+                                <div class="split-comments-section">
+                                    <div class="split-section-header">
+                                        <h4>Internal Notes &amp; Discussion</h4>
+                                    </div>
+                                    <div id="comments-container" class="split-comments-container">
+                                        <p style="color: var(--text-muted); font-size: 0.85rem;">No notes logged yet.</p>
+                                    </div>
+                                    
+                                    <form id="add-comment-form" class="split-comment-form">
+                                        <div class="form-group" style="margin-bottom: 0.75rem;">
+                                            <textarea id="new-comment-text" class="form-input" rows="3" placeholder="Add an internal note or reply to requester..." required></textarea>
+                                        </div>
+                                        <div style="display: flex; justify-content: flex-end;">
+                                            <button type="submit" class="btn-secondary" style="width: auto; padding: 0.5rem 1.25rem;">
+                                                <span>Post Note</span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 2: DEPARTMENTS MANAGEMENT -->
+            <div id="view-departments" class="dashboard-section-view" style="display: none;">
+                <div class="dashboard-header compact-header">
+                    <div class="dashboard-title compact-title">
+                        <h1>Departments Management</h1>
+                        <span class="compact-header-sep">•</span>
+                        <p>Configure departments that need ticketing systems and manage access restrictions</p>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation for Active Departments & Department Access Restrictions -->
+                <div class="dept-tabs-nav">
+                    <div class="dept-tabs">
+                        <button type="button" class="dept-tab active" id="tab-btn-active-depts" data-dept-tab="active-departments">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <rect x="3" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="3" width="7" height="7"></rect>
+                                <rect x="14" y="14" width="7" height="7"></rect>
+                                <rect x="3" y="14" width="7" height="7"></rect>
+                            </svg>
+                            <span>Active Departments</span>
+                        </button>
+                        <button type="button" class="dept-tab" id="tab-btn-dept-restrictions" data-dept-tab="department-restrictions">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            <span>Department Access Restrictions</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB PANEL 1: Active Departments -->
+                <div id="panel-active-departments" class="dept-tab-panel">
+                    <div class="tickets-card" id="card-active-departments">
+                        <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem;">
+                                <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0; color: var(--text-primary); font-weight: 700;">Active Departments</h3>
+                                <span style="font-size: 0.75rem; color: var(--text-secondary); background: rgba(255, 255, 255, 0.05); padding: 0.2rem 0.55rem; border-radius: 20px; border: 1px solid var(--border-color);" id="dept-count-badge">0 departments</span>
+                            </div>
+                            <button type="button" class="btn-add-dept" id="btn-card-add-dept" title="Add a new department">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                </svg>
+                                <span>Add Department</span>
+                            </button>
+                        </div>
+                        <div class="departments-table-container table-scroll-container">
+                            <table class="tickets-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 70px;">ID</th>
+                                        <th style="width: 190px;">Department</th>
+                                        <th>Inbound Ticket Email</th>
+                                        <th>Description / Purpose</th>
+                                        <th style="width: 110px;">Total Tickets</th>
+                                        <th style="width: 130px;">Restricted Users</th>
+                                        <th style="width: 90px;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departments-table-body">
+                                    <tr><td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted);">Loading departments...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <div style="padding: 0.65rem 1.25rem; border-top: 1px solid var(--border-color); background-color: var(--bg-deep-charcoal); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); flex-shrink: 0;">
+                            <span><strong id="dept-display-count" style="color: var(--text-secondary);">0</strong> active company departments</span>
+                            <span>Dedicated inbound email queues active</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB PANEL 2: Department Access Checklist (Super Admin only) -->
+                <!-- TAB PANEL 2: Department Access Restrictions (Per-Employee Department Dropdown Checklist) -->
+                <div id="panel-department-restrictions" class="dept-tab-panel" style="display: none;">
+                    <div class="tickets-card" id="card-department-restrictions" style="padding: 1.25rem; display: flex; flex-direction: column; flex: 1; min-height: 0;">
+                        <!-- Header & Description -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.85rem; flex-shrink: 0;">
+                            <div>
+                                <h3 style="font-family: var(--font-heading); font-size: 1.15rem; margin-bottom: 0.25rem; color: var(--accent-yellow); display: flex; align-items: center; gap: 0.5rem;">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+                                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                    </svg>
+                                    Department Access Restrictions
+                                </h3>
+                                <p style="font-size: 0.82rem; color: var(--text-secondary); margin: 0;">
+                                    Configure department access for each employee. Open any employee's department dropdown to check or uncheck accessible departments.
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Filter Toolbar & Live Metrics -->
+                        <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.85rem; padding: 0.65rem 0.85rem; background-color: var(--bg-pitch-black); border: 1px solid var(--border-color); border-radius: 8px; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; flex: 1;">
+                                <div class="search-wrapper" style="width: 270px;">
+                                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="checklist-employee-search" class="search-input" placeholder="Search employees by name, email..." style="padding: 0.4rem 0.75rem 0.4rem 2rem; font-size: 0.82rem;">
+                                </div>
+
+                                <!-- Filter Buttons -->
+                                <div class="view-mode-toggle" id="checklist-filter-toggle">
+                                    <button type="button" class="view-mode-btn active" data-filter="all" id="btn-filter-all-emp">
+                                        <span>All Staff</span>
+                                    </button>
+                                    <button type="button" class="view-mode-btn" data-filter="full" id="btn-filter-full-emp">
+                                        <span>Full Access</span>
+                                    </button>
+                                    <button type="button" class="view-mode-btn" data-filter="restricted" id="btn-filter-restricted-emp">
+                                        <span>Restricted Access</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Summary Count Badges -->
+                            <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                <span class="badge" id="check-badge-total" style="background: rgba(255,255,255,0.06); font-size: 0.75rem;">0 Staff</span>
+                                <span class="badge badge-open" id="check-badge-allowed" style="font-size: 0.75rem;">0 Full Access</span>
+                                <span class="badge badge-urgent" id="check-badge-restricted" style="font-size: 0.75rem;">0 Restricted</span>
+                            </div>
+                        </div>
+
+                        <!-- Employees Access Checklist Table -->
+                        <div class="table-scroll-container" style="flex: 1; min-height: 220px; overflow-y: auto !important; overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px;">
+                            <table class="tickets-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 220px;">Employee</th>
+                                        <th style="width: 200px;">Department &amp; Position</th>
+                                        <th style="width: 140px;">System Role</th>
+                                        <th style="width: 320px;">Accessible Departments (Checklist Dropdown)</th>
+                                        <th style="width: 130px;">Access Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="restrictions-table-body">
+                                    <tr><td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">Loading employee access directory...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- VIEW 3: USERS & HIERARCHY (SUPER ADMIN ONLY) -->
+            <div id="view-users" class="dashboard-section-view" style="display: none;">
+                <div class="dashboard-header compact-header">
+                    <div class="dashboard-title compact-title">
+                        <h1>Users &amp; Hierarchy Access</h1>
+                        <span class="compact-header-sep">•</span>
+                        <p>Manage employee roles, promote tech team members to Super Admin, and delegate permissions</p>
+                    </div>
+                </div>
+
+                <!-- Stats Grid for Users & Roles -->
+                <section class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Accounts</div>
+                        <div class="stat-value" id="stat-users-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Super Admins</div>
+                        <div class="stat-value" id="stat-users-superadmin" style="color: var(--accent-yellow);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Dept Leads &amp; Tech</div>
+                        <div class="stat-value" id="stat-users-deptleads" style="color: #60a5fa;">0</div>
+                    </div>
+                    <div class="stat-card" title="Serving company &amp; internal operations (Non-ticketing)">
+                        <div class="stat-label">Internals (Company)</div>
+                        <div class="stat-value" id="stat-users-internals" style="color: var(--success-green);">0</div>
+                    </div>
+                    <div class="stat-card" title="Serving outside people, clients &amp; customers (Non-ticketing)">
+                        <div class="stat-label">Externals (Clients)</div>
+                        <div class="stat-value" id="stat-users-externals" style="color: #a78bfa;">0</div>
+                    </div>
+                </section>
+
+                <!-- Users Search & Filter Toolbar -->
+                <div class="user-toolbar">
+                    <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+                        <select id="user-role-filter-select" class="form-input" style="width: auto; max-width: 260px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                            <option value="">All Hierarchy Roles</option>
+                            <option value="super_admin">Super Admin (Dev Team Lead)</option>
+                            <option value="dept_lead">Department Admin Lead</option>
+                            <option value="tech_member">Developer Team</option>
+                            <option value="internal">Internals (Company Maintenance)</option>
+                            <option value="external">Externals (Clients &amp; Customers)</option>
+                        </select>
+                        <select id="user-dept-filter-select" class="form-input" style="width: auto; max-width: 200px; background-color: var(--bg-pitch-black); cursor: pointer; padding: 0.5rem 0.85rem;">
+                            <option value="">All Departments</option>
+                        </select>
+                    </div>
+                    <div class="search-wrapper" style="flex: 1; max-width: 320px; min-width: 220px;">
+                        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="user-search-input" class="search-input" placeholder="Search by name, email, department...">
+                    </div>
+                </div>
+
+                <div class="tickets-card">
+                    <div style="padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-shrink: 0;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                            <h3 style="font-family: var(--font-heading); font-size: 1.05rem; margin: 0;">All Registered Corporate Accounts</h3>
+                            <span style="font-size: 0.8rem; color: var(--text-secondary);" id="users-count-badge">0 users</span>
+                        </div>
+                    </div>
+                    <div class="users-table-container table-scroll-container">
+                        <table class="tickets-table">
+                            <thead>
+                                <tr>
+                                    <th style="width: 70px;">ID</th>
+                                    <th>Full Name &amp; Email</th>
+                                    <th style="width: 180px;">Department &amp; Title</th>
+                                    <th style="width: 210px;">Hierarchy Role</th>
+                                    <th style="width: 170px;">Can Add Depts?</th>
+                                    <th style="width: 130px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr><td colspan="6" style="text-align: center; padding: 3rem; color: var(--text-muted);">Loading user directory...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="padding: 0.65rem 1.25rem; border-top: 1px solid var(--border-color); background-color: var(--bg-deep-charcoal); display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted); flex-shrink: 0;">
+                        <span><strong id="users-display-count" style="color: var(--text-secondary);">0</strong> accounts visible</span>
+                        <span>Role updates are applied directly to system session tokens</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ======================================================== -->
+            <!-- SECTION 4: SUPPORT HISTORY & PERFORMANCE VIEW            -->
+            <!-- ======================================================== -->
+            <div id="view-performance" class="dashboard-section-view" style="display: none;">
+                <!-- Header -->
+                <div class="dashboard-header compact-header">
+                    <div class="dashboard-title compact-title">
+                        <h1>Support History &amp; Performance</h1>
+                        <span class="compact-header-sep">•</span>
+                        <p>Track personal support efficiency, resolution metrics, and review your historical tickets</p>
+                    </div>
+                    <div style="display: flex; gap: 0.65rem; align-items: center;">
+                        <button id="btn-refresh-performance" class="btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.85rem;" title="Refresh Performance Analytics">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="23 4 23 10 17 10"></polyline>
+                                <polyline points="1 20 1 14 7 14"></polyline>
+                                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                            </svg>
+                            <span>Refresh</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs Navigation for Performance: Graphical Visuals & Support Tickets -->
+                <div class="perf-tabs-nav">
+                    <div class="perf-tabs">
+                        <button type="button" class="perf-tab active" id="tab-btn-perf-visuals" data-perf-tab="visuals">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                            </svg>
+                            <span>Graphical Visuals</span>
+                        </button>
+                        <button type="button" class="perf-tab" id="tab-btn-perf-tickets" data-perf-tab="tickets">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                <polyline points="14 2 14 8 20 8"></polyline>
+                                <line x1="16" y1="13" x2="8" y2="13"></line>
+                                <line x1="16" y1="17" x2="8" y2="17"></line>
+                                <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Support Tickets</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- TAB PANEL 1: Graphical Visuals (Fixated Viewport, No Vertical Scrolling) -->
+                <div id="panel-perf-visuals" class="perf-tab-panel" style="display: flex;">
+                    <!-- Key KPI Metrics Grid -->
+                    <section class="stats-grid perf-compact-stats" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 0.75rem; gap: 0.75rem; flex-shrink: 0;">
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Tickets Handled</div>
+                            <div class="stat-value" id="stat-perf-handled" style="font-size: 1.5rem; margin-top: 0.15rem;">0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem;">Assigned specialist</div>
+                        </div>
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Resolved / Closed</div>
+                            <div class="stat-value" id="stat-perf-resolved" style="color: var(--success-green); font-size: 1.5rem; margin-top: 0.15rem;">0</div>
+                            <div id="stat-perf-rate" style="font-size: 0.7rem; color: var(--success-green); margin-top: 0.15rem; font-weight: 600;">0% Resolution Rate</div>
+                        </div>
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Active in Queue</div>
+                            <div class="stat-value" id="stat-perf-active" style="color: #60a5fa; font-size: 1.5rem; margin-top: 0.15rem;">0</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem;">Open or in progress</div>
+                        </div>
+                        <div class="stat-card" style="padding: 0.75rem 1rem;">
+                            <div class="stat-label" style="font-size: 0.72rem;">Avg. Resolution Speed</div>
+                            <div class="stat-value" id="stat-perf-speed" style="color: var(--accent-yellow); font-size: 1.5rem; margin-top: 0.15rem;">—</div>
+                            <div style="font-size: 0.7rem; color: var(--text-muted); margin-top: 0.15rem;">Average completion</div>
+                        </div>
+                    </section>
+
+                    <!-- Visual Graphs Grid -->
+                    <div class="perf-charts-grid" style="display: grid; grid-template-columns: 1.3fr 1fr; gap: 0.75rem; flex: 1; min-height: 0;">
+                        <!-- Chart 1: 7-Day Day-by-Day Activity & Resolution Trend -->
+                        <div class="stat-card" style="padding: 1rem 1.25rem; display: flex; flex-direction: column; min-height: 0;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-shrink: 0;">
+                                <div>
+                                    <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #ffffff;">7-Day Activity Trend</h4>
+                                    <span style="font-size: 0.72rem; color: var(--text-muted);">Handled &amp; resolved tickets</span>
+                                </div>
+                                <div style="display: flex; gap: 0.75rem; font-size: 0.72rem;">
+                                    <span style="display: flex; align-items: center; gap: 0.35rem; color: #60a5fa;"><span style="width: 8px; height: 8px; border-radius: 2px; background: #60a5fa;"></span>Handled</span>
+                                    <span style="display: flex; align-items: center; gap: 0.35rem; color: var(--accent-yellow);"><span style="width: 8px; height: 8px; border-radius: 2px; background: var(--accent-yellow);"></span>Resolved</span>
+                                </div>
+                            </div>
+                            <div id="perf-trend-chart-container" style="flex: 1; min-height: 140px; display: flex; align-items: flex-end; gap: 0.85rem; padding-top: 6px;">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- Chart 2: Priority Breakdown & Efficiency Progress Meters -->
+                        <div class="stat-card" style="padding: 1rem 1.25rem; display: flex; flex-direction: column; min-height: 0;">
+                            <div style="margin-bottom: 0.75rem; flex-shrink: 0;">
+                                <h4 style="margin: 0; font-size: 0.9rem; font-weight: 600; color: #ffffff;">Priority Breakdown &amp; Efficiency</h4>
+                                <span style="font-size: 0.72rem; color: var(--text-muted);">Urgency distribution of tickets handled</span>
+                            </div>
+                            <div id="perf-priority-bars-container" style="display: flex; flex-direction: column; gap: 0.65rem; justify-content: space-around; flex: 1;">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB PANEL 2: Support Tickets (Full Height Table Card) -->
+                <div id="panel-perf-tickets" class="perf-tab-panel" style="display: none;">
+                    <div class="tickets-card" style="margin-bottom: 0; flex: 1; display: flex; flex-direction: column; min-height: 0; height: 100%;">
+                        <div style="padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background-color: var(--bg-deep-charcoal); flex-wrap: wrap; gap: 0.75rem; flex-shrink: 0;">
+                            <div style="display: flex; align-items: center; gap: 0.65rem;">
+                                <div class="perf-subtabs" style="display: flex; gap: 0.3rem; background: var(--bg-pitch-black); padding: 3px; border-radius: 6px; border: 1px solid var(--border-color);">
+                                    <button type="button" class="btn-subtab active" id="btn-tab-handled-tickets" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; border-radius: 4px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+                                        <span>Assigned to Me</span>
+                                        <span class="count-pill" id="badge-handled-count" style="font-size: 0.72rem;">0</span>
+                                    </button>
+                                    <button type="button" class="btn-subtab" id="btn-tab-raised-tickets" style="padding: 0.3rem 0.75rem; font-size: 0.78rem; border-radius: 4px; border: none; background: transparent; color: var(--text-secondary); cursor: pointer; display: flex; align-items: center; gap: 0.4rem; font-weight: 500;">
+                                        <span>Raised by Me</span>
+                                        <span class="count-pill" id="badge-raised-count" style="font-size: 0.72rem;">0</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <!-- Search & Status filter -->
+                            <div style="display: flex; gap: 0.5rem; align-items: center; flex: 1; max-width: 440px; min-width: 240px; justify-content: flex-end;">
+                                <select id="perf-status-filter" class="form-input" style="width: auto; background-color: var(--bg-pitch-black); padding: 0.35rem 0.65rem; font-size: 0.78rem;">
+                                    <option value="">All Statuses</option>
+                                    <option value="open">Open</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="waiting_on_us">Waiting on Us</option>
+                                    <option value="waiting_contact">Waiting on Contact</option>
+                                    <option value="on_hold">On Hold</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                                <div class="search-wrapper" style="flex: 1; margin: 0;">
+                                    <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    </svg>
+                                    <input type="text" id="perf-search-input" class="search-input" placeholder="Search ticket code, title..." style="padding-top: 0.35rem; padding-bottom: 0.35rem; font-size: 0.78rem;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Table Container (Expanded with full height) -->
+                        <div class="perf-table-container table-scroll-container" style="flex: 1; min-height: 0; overflow-y: auto;">
+                            <table class="tickets-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 110px;">Ticket ID</th>
+                                        <th>Subject</th>
+                                        <th style="width: 170px;" id="col-perf-person">Requester</th>
+                                        <th style="width: 170px;">Department</th>
+                                        <th style="width: 100px;">Priority</th>
+                                        <th style="width: 120px;">Status</th>
+                                        <th style="width: 140px;">Date</th>
+                                        <th style="width: 85px; text-align: center;">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="perf-tickets-table-body">
+                                    <tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Loading support history...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+
+    <!-- --- ADD DEPARTMENT MODAL (OVERLAY ABOVE WEBSITE) --- -->
+    <div class="modal-overlay" id="modal-add-dept">
+        <div class="modal-box" style="max-width: 520px;">
+            <div class="modal-header">
+                <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1.2rem; color: var(--accent-yellow); margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        Add New Department
+                    </h3>
+                    <p style="font-size: 0.85rem; color: var(--text-secondary); margin: 0.35rem 0 0 0;">
+                        Add a department to provide its own dedicated ticketing queue for employee requests.
+                    </p>
+                </div>
+                <button type="button" class="btn-close" id="btn-close-add-dept-modal" title="Close">&times;</button>
+            </div>
+            
+            <form id="form-create-dept" style="margin-top: 1.25rem;">
+                <div class="form-group" style="margin-bottom: 1.15rem;">
+                    <label class="form-label" for="new-dept-name">Department Name *</label>
+                    <input type="text" id="new-dept-name" class="form-input" placeholder="e.g. Legal &amp; Compliance" required minlength="2">
+                </div>
+                <div class="form-group" style="margin-bottom: 1.5rem;">
+                    <label class="form-label" for="new-dept-desc">Description / Scope</label>
+                    <input type="text" id="new-dept-desc" class="form-input" placeholder="e.g. Handles contract reviews and legal inquiries">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                    <button type="button" class="btn-secondary" id="btn-cancel-add-dept" style="height: 42px; padding: 0 1.25rem;">
+                        Cancel
+                    </button>
+                    <button type="submit" class="btn-primary" id="btn-create-dept" style="height: 42px; padding: 0 1.5rem; width: auto; white-space: nowrap;">
+                        <span>Create Department</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Target Python backend (port 5000) when running under VS Code Go Live Server (e.g. port 5500/5502) or file:// protocol
+        const isFileProtocol = !window.location.protocol || window.location.protocol === 'file:' || !window.location.hostname;
+        const isGoLiveServer = isFileProtocol || (window.location.port && window.location.port !== '5000');
+        const API_URL = isGoLiveServer 
+            ? `http://${window.location.hostname || '127.0.0.1'}:5000` 
+            : window.location.origin;
+        
+        let currentUser = null;
+        let allTickets = [];
+        let allDepartments = [];
+        let allUsers = [];
+        let teamMembers = [];
+        let activeStatus = '';
+        let activeDepartmentId = '';
+        let activeTicket = null;
+        let activeSection = 'overview';
+
+        function authHeaders() {
+            const token = localStorage.getItem('access_token');
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            };
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            
+            let iconSvg = type === 'success' 
+                ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>`
+                : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`;
+
+            toast.innerHTML = `${iconSvg} <span>${escapeHtml(message)}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+
+        // --- Fetch User Profile & Permissions ---
+        async function fetchUserProfile() {
+            const token = localStorage.getItem('access_token');
+            if (!token) {
+                window.location.href = 'index.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_URL}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (response.status === 401 || response.status === 403) {
+                    localStorage.removeItem('access_token');
+                    window.location.href = 'index.html?expired=true';
+                    return;
+                }
+                if (!response.ok) throw new Error('Failed to load profile');
+                const data = await response.json();
+                currentUser = data.user;
+
+                // Sync latest authoritative role to localStorage
+                localStorage.setItem('user_role', currentUser.role || 'employee');
+                localStorage.setItem('can_manage_departments', currentUser.can_manage_departments ? 'true' : 'false');
+                localStorage.setItem('user_name', currentUser.full_name || '');
+                localStorage.setItem('user_email', currentUser.email || '');
+
+                const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+                const isDeptLead = currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
+                const isTechMember = currentUser.role === 'tech_member' || currentUser.role === 'agent';
+                const isDeptAgent = currentUser.role === 'dept_agent' || currentUser.role === 'dept_member';
+                const canAccessDashboard = isSuperAdmin || isDeptLead || isTechMember || isDeptAgent || Boolean(currentUser.can_manage_departments);
+
+                // Non-staff employees are routed to employee portal
+                if (!canAccessDashboard) {
+                    window.location.href = 'portal.html';
+                    return;
+                }
+
+                // Update UI Profile
+                document.getElementById('display-user-name').textContent = currentUser.full_name;
+                document.getElementById('display-user-email').textContent = currentUser.email;
+
+                const canManageDepts = isSuperAdmin || isDeptLead;
+
+                const dept = currentUser.department || 'Software Development / Engineering';
+                const pos = currentUser.position || (isSuperAdmin ? 'Developer Team Lead' : 'Specialist');
+                const posEl = document.getElementById('display-user-pos');
+                if (posEl) {
+                    posEl.textContent = `${pos} (${dept})`;
+                    posEl.title = `${pos} (${dept})`;
+                }
+                const nameEl = document.getElementById('display-user-name');
+                if (nameEl) nameEl.title = currentUser.full_name;
+                const emailEl = document.getElementById('display-user-email');
+                if (emailEl) emailEl.title = currentUser.email;
+                
+                const roleBadge = document.getElementById('display-user-role');
+                const welcomeSub = document.getElementById('welcome-subtitle');
+
+                if (isSuperAdmin) {
+                    roleBadge.textContent = 'Super Admin (Developer Team Lead)';
+                    roleBadge.className = 'role-badge admin';
+                    if (welcomeSub) welcomeSub.textContent = 'Developer Team Lead Control Center: Global Tickets, Departments & User Hierarchy';
+                } else if (isDeptLead) {
+                    roleBadge.textContent = 'Department Admin Lead';
+                    roleBadge.className = 'role-badge admin';
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Admin Lead Workspace: Department Tickets & Member Assignment`;
+                } else if (isTechMember) {
+                    roleBadge.textContent = 'Developer Team Member';
+                    roleBadge.className = 'role-badge user';
+                    if (welcomeSub) welcomeSub.textContent = 'Developer Team Workspace: Technical Tickets & System Tasks';
+                } else if (currentUser.role === 'internal' || currentUser.role === 'internals' || currentUser.role === 'dept_agent' || currentUser.role === 'dept_member') {
+                    roleBadge.textContent = 'Internal Staff';
+                    roleBadge.className = 'role-badge user';
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Internal Workspace: Company Maintenance & Department Operations`;
+                } else {
+                    roleBadge.textContent = 'External';
+                    roleBadge.className = 'role-badge user';
+                    if (welcomeSub) welcomeSub.textContent = `${dept} Workspace: Client & Customer Services`;
+                }
+
+                // Show conditional navigation items based on user role & permissions
+                if (canManageDepts) {
+                    document.getElementById('nav-item-departments').style.display = 'block';
+                }
+                if (isSuperAdmin || isDeptLead) {
+                    document.getElementById('nav-item-users').style.display = 'block';
+                }
+                const tabDeptRestrictionsBtn = document.getElementById('tab-btn-dept-restrictions');
+                if (tabDeptRestrictionsBtn) {
+                    tabDeptRestrictionsBtn.style.display = isSuperAdmin ? 'inline-flex' : 'none';
+                }
+
+                const profileContainer = document.getElementById('profile-container');
+                if (profileContainer) {
+                    profileContainer.setAttribute('data-tooltip', `${currentUser.full_name} (${roleBadge.textContent})`);
+                    profileContainer.title = `${currentUser.full_name} (${roleBadge.textContent})`;
+                }
+
+                // Load initial dashboard data
+                await fetchDashboardStats();
+                await fetchDepartments();
+                await fetchTeamMembers();
+                await loadTickets();
+
+            } catch (err) {
+                console.error('fetchUserProfile error:', err);
+                if (err.message === 'Failed to fetch' || err.name === 'TypeError') {
+                    showToast(isGoLiveServer ? 'Cannot connect to backend server. Make sure Python backend is running on port 5000 (run: python run.py) so Go Live can connect.' : 'Cannot connect to backend server. Please verify service status.', 'error');
+                } else {
+                    localStorage.removeItem('access_token');
+                    window.location.href = 'index.html?expired=true';
+                }
+            }
+        }
+
+        // --- Fetch Dashboard Live Metrics ---
+        async function fetchDashboardStats() {
+            try {
+                const res = await fetch(`${API_URL}/api/dashboard/stats`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const stats = await res.json();
+                document.getElementById('stat-total').textContent = stats.total || 0;
+                document.getElementById('stat-open').textContent = stats.open || 0;
+                document.getElementById('stat-in-progress').textContent = stats.in_progress || 0;
+                document.getElementById('stat-resolved').textContent = stats.resolved || 0;
+                document.getElementById('stat-unassigned').textContent = stats.unassigned || 0;
+            } catch (err) {
+                console.error('Failed to load stats:', err);
+            }
+        }
+
+        // --- Fetch Departments ---
+        async function fetchDepartments() {
+            try {
+                const res = await fetch(`${API_URL}/api/departments`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const data = await res.json();
+                allDepartments = data.departments || [];
+
+                // Populate Toolbar Department Filter if present
+                const deptFilter = document.getElementById('dept-filter-select');
+                if (deptFilter) {
+                    deptFilter.innerHTML = '<option value="">All Departments</option>' + allDepartments.map(d => 
+                        `<option value="${d.id}">${escapeHtml(d.name)}</option>`
+                    ).join('');
+                }
+
+                // Render Departments table
+                renderDepartmentsTable();
+
+            } catch (err) {
+                console.error('Failed to load departments:', err);
+            }
+        }
+
+        function renderDepartmentsTable() {
+            const tbody = document.getElementById('departments-table-body');
+            const badge = document.getElementById('dept-count-badge');
+            const displayCount = document.getElementById('dept-display-count');
+            if (badge) badge.textContent = `${allDepartments.length} department${allDepartments.length === 1 ? '' : 's'}`;
+            if (displayCount) displayCount.textContent = allDepartments.length;
+
+            if (!tbody) return;
+            if (allDepartments.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No departments configured.</td></tr>`;
+                return;
+            }
+
+            function getDeptEmail(name) {
+                const n = (name || '').toLowerCase();
+                if (n.includes('software development') || n.includes('engineering') || n.includes('software')) return 'gamboa.khinandrei+dev@gmail.com';
+                if (n.includes('information technology') || n.includes('(it)') || n === 'it') return 'gamboa.khinandrei+it@gmail.com';
+                if (n.includes('product management') || n.includes('product')) return 'gamboa.khinandrei+pm@gmail.com';
+                if (n.includes('data') || n.includes('analytics')) return 'gamboa.khinandrei+data@gmail.com';
+                if (n.includes('marketing')) return 'gamboa.khinandrei+marketing@gmail.com';
+                if (n.includes('sales')) return 'gamboa.khinandrei+sales@gmail.com';
+                if (n.includes('customer success') || n.includes('support')) return 'gamboa.khinandrei+support@gmail.com';
+                if (n.includes('human resources') || n.includes('hr')) return 'gamboa.khinandrei+hr@gmail.com';
+                if (n.includes('finance') || n.includes('accounting')) return 'gamboa.khinandrei+finance@gmail.com';
+                if (n.includes('legal') || n.includes('compliance')) return 'gamboa.khinandrei+legal@gmail.com';
+                if (n.includes('procurement')) return 'gamboa.khinandrei+procurement@gmail.com';
+                if (n.includes('research') || n.includes('r&d') || n.includes('development (r&d)')) return 'gamboa.khinandrei+rd@gmail.com';
+                if (n.includes('strategy')) return 'gamboa.khinandrei+strategy@gmail.com';
+                if (n.includes('operations')) return 'gamboa.khinandrei+ops@gmail.com';
+                const cleanSlug = n.replace(/[^a-z0-9]/g, '');
+                return cleanSlug ? `gamboa.khinandrei+${cleanSlug}@gmail.com` : 'gamboa.khinandrei@gmail.com';
+            }
+
+            tbody.innerHTML = allDepartments.map(d => `
+                <tr>
+                    <td style="color: var(--text-muted); font-size: 0.8rem;">#${d.id}</td>
+                    <td style="font-weight: 600; color: var(--accent-yellow);">${escapeHtml(d.name)}</td>
+                    <td>
+                        <span style="display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(250,204,21,0.08); border: 1px solid rgba(250,204,21,0.2); padding: 4px 10px; border-radius: 6px; font-family: monospace; font-size: 0.8rem; color: var(--accent-yellow);">
+                            <i class="icon-mail" style="font-size: 0.75rem;"></i> ${getDeptEmail(d.name)}
+                        </span>
+                    </td>
+                    <td style="color: var(--text-secondary); font-size: 0.85rem;">${escapeHtml(d.description || '—')}</td>
+                    <td><span class="badge" style="background: rgba(255,255,255,0.06); font-weight: 600;">${d.ticket_count || 0}</span></td>
+                    <td><span class="badge" style="color: var(--error-red); background: rgba(248,113,113,0.1);">${d.restricted_count || 0} restricted</span></td>
+                    <td><span class="badge badge-open">Active</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- Fetch Team Members for Assignment ---
+        async function fetchTeamMembers(deptId = null) {
+            try {
+                let url = `${API_URL}/api/team`;
+                if (deptId) {
+                    url += `?dept_id=${deptId}`;
+                }
+                const res = await fetch(url, { headers: authHeaders() });
+                if (!res.ok) return;
+                const data = await res.json();
+                teamMembers = data.members || [];
+                
+                const select = document.getElementById('detail-assignee-select');
+                const currentVal = select.value;
+                select.innerHTML = '<option value="0">Unassigned</option>';
+                teamMembers.forEach(member => {
+                    const opt = document.createElement('option');
+                    opt.value = member.id;
+                    const roleLabel = member.role ? member.role.replace('_', ' ') : 'staff';
+                    const deptLabel = member.department ? ` - ${member.department}` : '';
+                    opt.textContent = `${member.full_name} (${roleLabel}${deptLabel})`;
+                    select.appendChild(opt);
+                });
+                if (currentVal) {
+                    select.value = currentVal;
+                }
+            } catch (err) {
+                console.error('Failed to load team:', err);
+            }
+        }
+
+        // --- View Mode Preference & Normalization Helpers ---
+        const VIEW_PREF_KEY = 'khin_ticket_view_pref';
+        let currentViewMode = localStorage.getItem(VIEW_PREF_KEY) || 'kanban';
+        let previousViewMode = (currentViewMode === 'split') ? 'kanban' : currentViewMode;
+        if (currentViewMode === 'split') currentViewMode = 'kanban';
+
+        let splitColumnFilter = 'all';
+
+        function setViewMode(mode) {
+            if (currentViewMode !== 'split') {
+                previousViewMode = currentViewMode;
+            }
+            currentViewMode = mode;
+            if (mode !== 'split') {
+                localStorage.setItem(VIEW_PREF_KEY, mode);
+            }
+            applyViewMode();
+        }
+
+        function closeSplitView() {
+            setViewMode(previousViewMode === 'list' ? 'list' : 'kanban');
+        }
+
+        function applyViewMode() {
+            const btnKanban = document.getElementById('btn-view-kanban');
+            const btnList = document.getElementById('btn-view-list');
+            const btnSplit = document.getElementById('btn-view-split');
+            const kanbanContainer = document.getElementById('tickets-kanban-container');
+            const tableContainer = document.getElementById('tickets-table-container');
+            const splitContainer = document.getElementById('tickets-split-container');
+
+
+            if (currentViewMode === 'split') {
+                if (btnSplit) btnSplit.classList.add('active');
+                if (btnKanban) btnKanban.classList.remove('active');
+                if (btnList) btnList.classList.remove('active');
+                if (kanbanContainer) kanbanContainer.style.display = 'none';
+                if (tableContainer) tableContainer.style.display = 'none';
+                if (splitContainer) splitContainer.style.display = 'grid';
+                renderSplitTicketsColumn();
+            } else if (currentViewMode === 'list') {
+                if (btnList) btnList.classList.add('active');
+                if (btnKanban) btnKanban.classList.remove('active');
+                if (btnSplit) btnSplit.classList.remove('active');
+                if (kanbanContainer) kanbanContainer.style.display = 'none';
+                if (tableContainer) tableContainer.style.display = 'block';
+                if (splitContainer) splitContainer.style.display = 'none';
+            } else {
+                if (btnKanban) btnKanban.classList.add('active');
+                if (btnList) btnList.classList.remove('active');
+                if (btnSplit) btnSplit.classList.remove('active');
+                if (tableContainer) tableContainer.style.display = 'none';
+                if (kanbanContainer) kanbanContainer.style.display = 'flex';
+                if (splitContainer) splitContainer.style.display = 'none';
+            }
+        }
+
+        const KANBAN_STAGES = [
+            { key: 'open', label: 'Open', emptyMsg: 'No open tickets' },
+            { key: 'waiting_on_us', label: 'Waiting on Us', emptyMsg: 'No tickets in progress' },
+            { key: 'waiting_contact', label: 'Waiting on Contact', emptyMsg: 'No tickets waiting on contact' },
+            { key: 'on_hold', label: 'On Hold', emptyMsg: 'No tickets on hold' },
+            { key: 'closed', label: 'Closed', emptyMsg: 'No closed tickets' }
+        ];
+
+        function normalizeTicketStatus(status) {
+            if (!status) return 'open';
+            const s = String(status).toLowerCase().trim();
+            if (s === 'in_progress' || s === 'waiting_on_us') return 'waiting_on_us';
+            if (s === 'waiting_contact' || s === 'waiting_on_them' || s === 'waiting_client') return 'waiting_contact';
+            if (s === 'on_hold' || s === 'onhold') return 'on_hold';
+            if (s === 'resolved' || s === 'closed') return 'closed';
+            return 'open';
+        }
+
+        function formatStatusLabel(status) {
+            switch(normalizeTicketStatus(status)) {
+                case 'waiting_on_us': return 'Waiting on Us';
+                case 'waiting_contact': return 'Waiting on Contact';
+                case 'on_hold': return 'On Hold';
+                case 'closed': return 'Closed';
+                case 'open':
+                default: return 'Open';
+            }
+        }
+
+        // --- Load & Render Tickets ---
+        async function loadTickets() {
+            try {
+                const res = await fetch(`${API_URL}/api/tickets`, { headers: authHeaders() });
+                if (!res.ok) throw new Error('Could not load tickets');
+                const data = await res.json();
+                allTickets = data.tickets || [];
+                renderTickets();
+            } catch (err) {
+                console.error(err);
+                document.getElementById('tickets-table-body').innerHTML = `
+                    <tr><td colspan="8" style="text-align:center; color: var(--error-red); padding: 2rem;">Failed to load tickets.</td></tr>
+                `;
+            }
+        }
+
+        function getFilteredTickets() {
+            const searchVal = document.getElementById('ticket-search').value.toLowerCase().trim();
+            return allTickets.filter(t => {
+                if (!searchVal) return true;
+                return (
+                    (t.ticket_code && t.ticket_code.toLowerCase().includes(searchVal)) ||
+                    (t.title && t.title.toLowerCase().includes(searchVal)) ||
+                    (t.department_name && t.department_name.toLowerCase().includes(searchVal)) ||
+                    (t.requester_email && t.requester_email.toLowerCase().includes(searchVal)) ||
+                    (t.requester_name && t.requester_name.toLowerCase().includes(searchVal)) ||
+                    (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal))
+                );
+            });
+        }
+
+        function getSplitColumnTickets() {
+            const filtered = getFilteredTickets();
+            if (!splitColumnFilter || splitColumnFilter === 'all') {
+                return filtered;
+            }
+            return filtered.filter(t => normalizeTicketStatus(t.status) === splitColumnFilter);
+        }
+
+        function renderSplitTicketsColumn() {
+            const listEl = document.getElementById('split-column-tickets-list');
+            const countEl = document.getElementById('split-column-count');
+            const indicatorEl = document.getElementById('split-column-indicator');
+            const selectFilter = document.getElementById('split-column-filter');
+
+            if (!listEl) return;
+
+            if (selectFilter && selectFilter.value !== splitColumnFilter) {
+                selectFilter.value = splitColumnFilter;
+            }
+
+            if (indicatorEl) {
+                indicatorEl.className = `kanban-status-indicator indicator-${splitColumnFilter === 'all' ? 'open' : splitColumnFilter}`;
+            }
+
+            const tickets = getSplitColumnTickets();
+            if (countEl) countEl.textContent = tickets.length;
+
+            if (tickets.length === 0) {
+                listEl.innerHTML = `
+                    <div class="kanban-empty-placeholder" style="padding: 2.5rem 1rem;">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity: 0.35;">
+                            <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                            <line x1="9" y1="12" x2="15" y2="12"></line>
+                        </svg>
+                        <span>No tickets in this column</span>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = tickets.map(t => {
+                const isActive = activeTicket && String(activeTicket.id) === String(t.id);
+                const normStatus = normalizeTicketStatus(t.status);
+                const statusLabel = formatStatusLabel(t.status);
+                const dateStr = t.created_at ? new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+                
+                return `
+                    <div class="split-ticket-card ${isActive ? 'active-split-card' : ''}" 
+                         data-ticket-id="${t.id}"
+                         onclick="selectSplitTicket(${t.id})">
+                        <div class="split-card-header">
+                            <span class="kanban-card-code">${escapeHtml(t.ticket_code)}</span>
+                            <span class="badge badge-${normStatus}" style="font-size: 0.68rem; padding: 0.15rem 0.45rem;">${statusLabel}</span>
+                        </div>
+                        <div class="split-card-title" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                        <div class="split-card-footer">
+                            <span class="kanban-card-dept" style="max-width: 130px;" title="${escapeHtml(t.department_name || 'General')}">${escapeHtml(t.department_name || 'General')}</span>
+                            <div style="display: flex; align-items: center; gap: 0.35rem;">
+                                <span class="priority-tag priority-${t.priority || 'medium'}" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">
+                                    <span class="priority-dot"></span>${t.priority || 'medium'}
+                                </span>
+                                <span>${dateStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        window.selectSplitTicket = function(ticketId) {
+            viewTicketDetails(ticketId);
+        };
+
+        function renderTickets() {
+            const filtered = getFilteredTickets();
+            const ticketsBadge = document.getElementById('tickets-count-badge');
+            if (ticketsBadge) ticketsBadge.textContent = `${filtered.length} ticket${filtered.length === 1 ? '' : 's'}`;
+
+            renderTicketsTable(filtered);
+            renderTicketsKanban(filtered);
+            if (currentViewMode === 'split') {
+                renderSplitTicketsColumn();
+            }
+        }
+
+        function renderTicketsTable(filtered) {
+            const tbody = document.getElementById('tickets-table-body');
+            if (!tbody) return;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align:center; color: var(--text-muted); padding: 4rem 1rem;">
+                            <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.5rem;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity: 0.4;">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                </svg>
+                                <span style="font-size: 0.9rem; font-weight: 500;">No matching tickets found</span>
+                                <span style="font-size: 0.78rem; color: var(--text-muted);">Try adjusting your search query or filters</span>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(t => {
+                const dateStr = t.created_at ? new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-';
+                const sourceIcon = t.source === 'email' 
+                    ? `<span class="source-badge"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Gmail</span>`
+                    : `<span class="source-badge">Portal</span>`;
+                
+                const assigneeDisplay = t.assignee_name 
+                    ? `<span style="font-weight: 500; color: var(--text-primary);">${escapeHtml(t.assignee_name)}</span>` 
+                    : `<span style="color: var(--text-muted);">Unassigned</span>`;
+
+                const normStatus = normalizeTicketStatus(t.status);
+                const statusLabel = formatStatusLabel(t.status);
+
+                return `
+                    <tr onclick="viewTicketDetails(${t.id})">
+                        <td><span class="ticket-code-tag">${escapeHtml(t.ticket_code)}</span></td>
+                        <td>
+                            <div class="ticket-title-link" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                            <div class="ticket-requester-info">${escapeHtml(t.requester_name || t.requester_email)} &lt;${escapeHtml(t.requester_email)}&gt;</div>
+                        </td>
+                        <td>
+                            <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 0.75rem; color: var(--text-primary); border: 1px solid var(--border-color);">
+                                ${escapeHtml(t.department_name || 'General')}
+                            </span>
+                        </td>
+                        <td>${sourceIcon}</td>
+                        <td><span class="badge badge-${normStatus}">${statusLabel}</span></td>
+                        <td>
+                            <span class="priority-tag priority-${t.priority || 'medium'}">
+                                <span class="priority-dot"></span>${t.priority || 'medium'}
+                            </span>
+                        </td>
+                        <td>${assigneeDisplay}</td>
+                        <td style="color: var(--text-muted); font-size: 0.8rem;">${dateStr}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        let draggedTicketId = null;
+
+        function renderTicketsKanban(filtered) {
+            KANBAN_STAGES.forEach(stage => {
+                const colBody = document.getElementById(`col-body-${stage.key}`);
+                const colCount = document.getElementById(`col-count-${stage.key}`);
+                if (!colBody) return;
+
+                const stageTickets = filtered.filter(t => normalizeTicketStatus(t.status) === stage.key);
+                if (colCount) colCount.textContent = stageTickets.length;
+
+                if (stageTickets.length === 0) {
+                    colBody.innerHTML = `
+                        <div class="kanban-empty-placeholder">
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" style="opacity: 0.35;">
+                                <rect x="3" y="3" width="18" height="18" rx="2"></rect>
+                                <line x1="9" y1="12" x2="15" y2="12"></line>
+                            </svg>
+                            <span>${stage.emptyMsg}</span>
+                        </div>
+                    `;
+                    return;
+                }
+
+                colBody.innerHTML = stageTickets.map(t => {
+                    const sourceIcon = t.source === 'email' 
+                        ? `<span class="source-badge" title="Inbound Gmail"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Gmail</span>`
+                        : `<span class="source-badge" title="Web Portal">Portal</span>`;
+
+                    const assigneeText = t.assignee_name ? escapeHtml(t.assignee_name) : 'Unassigned';
+                    const assigneeClass = t.assignee_name ? '' : 'unassigned';
+
+                    return `
+                        <div class="kanban-card" 
+                             draggable="true" 
+                             data-ticket-id="${t.id}"
+                             onclick="handleKanbanCardClick(${t.id})">
+                            <div class="kanban-card-top">
+                                <span class="kanban-card-code">${escapeHtml(t.ticket_code)}</span>
+                                <span class="priority-tag priority-${t.priority || 'medium'}">
+                                    <span class="priority-dot"></span>${t.priority || 'medium'}
+                                </span>
+                            </div>
+                            <div class="kanban-card-title" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                            <div class="kanban-card-requester" title="${escapeHtml(t.requester_name || t.requester_email)} &lt;${escapeHtml(t.requester_email)}&gt;">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="opacity: 0.7; flex-shrink: 0;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                <span>${escapeHtml(t.requester_name || t.requester_email)}</span>
+                            </div>
+                            <div class="kanban-card-bottom">
+                                <span class="kanban-card-dept" title="${escapeHtml(t.department_name || 'General')}">${escapeHtml(t.department_name || 'General')}</span>
+                                <div style="display: flex; align-items: center; gap: 0.45rem;">
+                                    ${sourceIcon}
+                                    <span class="kanban-card-assignee ${assigneeClass}" title="Assignee: ${assigneeText}">
+                                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink: 0;"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                        <span>${assigneeText}</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            });
+
+            setupKanbanCardDragListeners();
+        }
+
+        let isCardDragging = false;
+        window.handleKanbanCardClick = function(ticketId) {
+            if (isCardDragging) return;
+            viewTicketDetails(ticketId);
+        };
+
+        function setupKanbanCardDragListeners() {
+            document.querySelectorAll('.kanban-card').forEach(card => {
+                card.addEventListener('dragstart', (e) => {
+                    const ticketId = card.getAttribute('data-ticket-id');
+                    draggedTicketId = ticketId;
+                    isCardDragging = true;
+                    card.classList.add('is-dragging');
+                    e.dataTransfer.setData('text/plain', String(ticketId));
+                    e.dataTransfer.effectAllowed = 'move';
+                });
+
+                card.addEventListener('dragend', () => {
+                    card.classList.remove('is-dragging');
+                    draggedTicketId = null;
+                    document.querySelectorAll('.kanban-column').forEach(c => c.classList.remove('drag-over'));
+                    setTimeout(() => { isCardDragging = false; }, 150);
+                });
+            });
+        }
+
+        function setupKanbanColumnDropzones() {
+            document.querySelectorAll('.kanban-column-body').forEach(zone => {
+                const col = zone.closest('.kanban-column');
+
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    if (col && !col.classList.contains('drag-over')) {
+                        col.classList.add('drag-over');
+                    }
+                });
+
+                zone.addEventListener('dragleave', (e) => {
+                    if (col && !col.contains(e.relatedTarget)) {
+                        col.classList.remove('drag-over');
+                    }
+                });
+
+                zone.addEventListener('drop', async (e) => {
+                    e.preventDefault();
+                    if (col) col.classList.remove('drag-over');
+
+                    const idStr = e.dataTransfer.getData('text/plain') || draggedTicketId;
+                    const ticketId = parseInt(idStr, 10);
+                    const targetStatus = zone.getAttribute('data-status');
+
+                    if (!ticketId || !targetStatus) return;
+
+                    const ticket = allTickets.find(item => item.id === ticketId);
+                    if (!ticket) return;
+
+                    const currentNorm = normalizeTicketStatus(ticket.status);
+                    if (currentNorm === targetStatus) return;
+
+                    await moveTicketStatus(ticketId, targetStatus);
+                });
+            });
+        }
+
+        async function moveTicketStatus(ticketId, newStatus) {
+            const ticket = allTickets.find(t => t.id === ticketId);
+            if (!ticket) return;
+
+            const previousStatus = ticket.status;
+            // Optimistic update
+            ticket.status = newStatus;
+            renderTickets();
+
+            try {
+                const res = await fetch(`${API_URL}/api/tickets/${ticketId}`, {
+                    method: 'PATCH',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Failed to update ticket status');
+                }
+
+                const data = await res.json();
+                if (data.ticket) {
+                    Object.assign(ticket, data.ticket);
+                }
+
+                showToast(`Ticket ${ticket.ticket_code} moved to ${formatStatusLabel(newStatus)}`, 'success');
+                if (typeof fetchDashboardStats === 'function') {
+                    fetchDashboardStats();
+                }
+            } catch (err) {
+                console.error('Error moving ticket status:', err);
+                ticket.status = previousStatus;
+                renderTickets();
+                showToast(err.message || 'Failed to move ticket. Check permissions.', 'error');
+            }
+        }
+
+        // --- 1:3 Split View Ticket Details Loader ---
+        window.viewTicketDetails = async function(ticketId) {
+            try {
+                if (typeof activeSection !== 'undefined' && activeSection !== 'overview') {
+                    switchSection('overview');
+                }
+                const res = await fetch(`${API_URL}/api/tickets/${ticketId}`, { headers: authHeaders() });
+                if (!res.ok) throw new Error('Failed to fetch ticket');
+                const data = await res.json();
+                activeTicket = data.ticket;
+
+                // Sync Split Column Filter to active ticket's column if currently single column
+                const normStatus = normalizeTicketStatus(activeTicket.status);
+                if (splitColumnFilter !== 'all' && splitColumnFilter !== normStatus) {
+                    splitColumnFilter = normStatus;
+                }
+
+                // Switch to 1:3 ratio split view
+                setViewMode('split');
+
+                // Populate Right Pane Details
+                const codeEl = document.getElementById('detail-ticket-code');
+                if (codeEl) codeEl.textContent = activeTicket.ticket_code;
+
+                const titleEl = document.getElementById('detail-ticket-title');
+                if (titleEl) titleEl.textContent = activeTicket.ticket_code ? `[${activeTicket.ticket_code}] ${activeTicket.title}` : activeTicket.title;
+
+                const reqEl = document.getElementById('detail-requester-info');
+                if (reqEl) reqEl.textContent = `${activeTicket.requester_name || 'Anonymous'} (${activeTicket.requester_email})`;
+
+                const srcEl = document.getElementById('detail-source-info');
+                if (srcEl) srcEl.textContent = `${activeTicket.source === 'email' ? 'Inbound Gmail' : 'Web Portal'} • Submitted ${new Date(activeTicket.created_at).toLocaleString()}`;
+
+                const descEl = document.getElementById('detail-ticket-desc');
+                if (descEl) descEl.textContent = activeTicket.description || '(No message content)';
+
+                const statusBadge = document.getElementById('detail-status-badge');
+                if (statusBadge) {
+                    statusBadge.className = `badge badge-${normStatus}`;
+                    statusBadge.textContent = formatStatusLabel(activeTicket.status);
+                }
+
+                const priorityBadge = document.getElementById('detail-priority-badge');
+                if (priorityBadge) {
+                    const prio = activeTicket.priority || 'medium';
+                    priorityBadge.className = `priority-tag priority-${prio}`;
+                    priorityBadge.innerHTML = `<span class="priority-dot"></span><span style="text-transform: capitalize;">${prio}</span>`;
+                }
+
+                const deptBadge = document.getElementById('detail-dept-badge');
+                if (deptBadge) deptBadge.textContent = activeTicket.department_name || 'General';
+
+                const sourceBadge = document.getElementById('detail-source-badge');
+                if (sourceBadge) {
+                    sourceBadge.innerHTML = activeTicket.source === 'email' 
+                        ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg> Gmail`
+                        : `Portal`;
+                }
+
+                const statusSelect = document.getElementById('detail-status-select');
+                if (statusSelect) statusSelect.value = normStatus;
+
+                const prioSelect = document.getElementById('detail-priority-select');
+                if (prioSelect) prioSelect.value = activeTicket.priority || 'medium';
+
+                // Team members fetch
+                if (currentUser.role === 'super_admin' || currentUser.role === 'admin') {
+                    await fetchTeamMembers(activeTicket.department_id);
+                } else {
+                    await fetchTeamMembers();
+                }
+
+                const assigneeSelect = document.getElementById('detail-assignee-select');
+                if (assigneeSelect) assigneeSelect.value = activeTicket.assigned_to || 0;
+
+                // Enforce Assignee permissions
+                const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+                const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
+                const noteEl = document.getElementById('assignee-permission-note');
+
+                if (assigneeSelect) {
+                    if (isDeptLead) {
+                        assigneeSelect.disabled = false;
+                        if (noteEl) noteEl.style.display = 'none';
+                    } else {
+                        assigneeSelect.disabled = true;
+                        if (noteEl) {
+                            noteEl.textContent = '🔒 Only the Super Admin or Department Admin Lead can assign tickets.';
+                            noteEl.style.display = 'block';
+                        }
+                    }
+                }
+
+                renderComments(activeTicket.comments || []);
+                renderSplitTicketsColumn();
+
+                // Smooth scroll active card into view in left column
+                setTimeout(() => {
+                    const activeCard = document.querySelector(`.split-ticket-card[data-ticket-id="${activeTicket.id}"]`);
+                    if (activeCard) {
+                        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    }
+                }, 50);
+
+            } catch (err) {
+                console.error(err);
+                showToast(err.message, 'error');
+            }
+        };
+
+        function renderComments(comments) {
+            const container = document.getElementById('comments-container');
+            if (!comments || comments.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-muted); font-size: 0.85rem;">No notes logged yet.</p>';
+                return;
+            }
+
+            container.innerHTML = comments.map(c => {
+                const isInternal = c.is_internal ? '<span class="role-badge user" style="font-size: 0.65rem; margin-left: 0.4rem;">Internal</span>' : '';
+                const timeStr = c.created_at ? new Date(c.created_at).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
+                return `
+                    <div class="comment-card">
+                        <div class="comment-author">
+                            <span>${escapeHtml(c.author_name || c.author_email)} ${isInternal}</span>
+                            <span style="color: var(--text-muted); font-size: 0.75rem;">${timeStr}</span>
+                        </div>
+                        <div class="comment-text">${escapeHtml(c.comment_text)}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- Save Ticket Changes ---
+        const btnSaveStatus = document.getElementById('btn-save-ticket-status');
+        if (btnSaveStatus) {
+            btnSaveStatus.addEventListener('click', async () => {
+                if (!activeTicket) return;
+                const status = document.getElementById('detail-status-select').value;
+                const priority = document.getElementById('detail-priority-select').value;
+                
+                const isSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+                const isDeptLead = isSuperAdmin || currentUser.role === 'dept_lead' || currentUser.role === 'admin_lead' || Boolean(currentUser.can_manage_departments);
+                const payload = { status, priority };
+
+                if (isDeptLead) {
+                    payload.assigned_to = parseInt(document.getElementById('detail-assignee-select').value, 10);
+                }
+
+                try {
+                    const res = await fetch(`${API_URL}/api/tickets/${activeTicket.id}`, {
+                        method: 'PATCH',
+                        headers: authHeaders(),
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const errData = await res.json();
+                        throw new Error(errData.detail || 'Failed to update ticket');
+                    }
+
+                    showToast('Ticket updated successfully!', 'success');
+                    await fetchDashboardStats();
+                    await loadTickets();
+                    // Keep split view active and update with fresh ticket
+                    window.viewTicketDetails(activeTicket.id);
+
+                } catch (err) {
+                    showToast(err.message, 'error');
+                }
+            });
+        }
+
+        // --- Add Comment Handler ---
+        document.getElementById('add-comment-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!activeTicket) return;
+            const textarea = document.getElementById('new-comment-text');
+            const text = textarea.value.trim();
+            if (!text) return;
+
+            try {
+                const res = await fetch(`${API_URL}/api/tickets/${activeTicket.id}/comments`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ comment_text: text, is_internal: true })
+                });
+
+                if (!res.ok) throw new Error('Failed to post note');
+                textarea.value = '';
+                
+                window.viewTicketDetails(activeTicket.id);
+                showToast('Internal note logged.', 'success');
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        });
+
+        // --- Add Department Modal Logic ---
+        const modalAddDept = document.getElementById('modal-add-dept');
+        const btnCardAddDept = document.getElementById('btn-card-add-dept');
+        const btnCloseAddDeptModal = document.getElementById('btn-close-add-dept-modal');
+        const btnCancelAddDept = document.getElementById('btn-cancel-add-dept');
+        const deptNameInput = document.getElementById('new-dept-name');
+        const deptDescInput = document.getElementById('new-dept-desc');
+
+        function openAddDeptModal() {
+            if (!modalAddDept) return;
+            modalAddDept.classList.add('active');
+            if (deptNameInput) setTimeout(() => deptNameInput.focus(), 80);
+        }
+
+        function closeAddDeptModal() {
+            if (!modalAddDept) return;
+            modalAddDept.classList.remove('active');
+            if (deptNameInput) deptNameInput.value = '';
+            if (deptDescInput) deptDescInput.value = '';
+        }
+
+        if (btnCardAddDept) {
+            btnCardAddDept.addEventListener('click', (e) => {
+                e.preventDefault();
+                openAddDeptModal();
+            });
+        }
+
+        if (btnCloseAddDeptModal) {
+            btnCloseAddDeptModal.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeAddDeptModal();
+            });
+        }
+
+        if (btnCancelAddDept) {
+            btnCancelAddDept.addEventListener('click', (e) => {
+                e.preventDefault();
+                closeAddDeptModal();
+            });
+        }
+
+        if (modalAddDept) {
+            modalAddDept.addEventListener('click', (e) => {
+                if (e.target === modalAddDept) closeAddDeptModal();
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && modalAddDept && modalAddDept.classList.contains('active')) {
+                closeAddDeptModal();
+            }
+        });
+
+        // --- Create Department Handler ---
+        document.getElementById('form-create-dept').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-create-dept');
+            const name = deptNameInput ? deptNameInput.value.trim() : '';
+            const desc = deptDescInput ? deptDescInput.value.trim() : '';
+            if (!name) return;
+
+            try {
+                btn.disabled = true;
+                const res = await fetch(`${API_URL}/api/departments`, {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ name, description: desc })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed to create department');
+                }
+
+                showToast(`Department "${name}" created successfully!`, 'success');
+                closeAddDeptModal();
+                await fetchDepartments();
+                await fetchDashboardStats();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        // --- Department Section Tabs Switching ---
+        const tabBtnActiveDepts = document.getElementById('tab-btn-active-depts');
+        const tabBtnDeptRestrictions = document.getElementById('tab-btn-dept-restrictions');
+        const panelActiveDepts = document.getElementById('panel-active-departments');
+        const panelDeptRestrictions = document.getElementById('panel-department-restrictions');
+
+        function switchDeptTab(tabKey) {
+            if (tabKey === 'active-departments') {
+                if (tabBtnActiveDepts) tabBtnActiveDepts.classList.add('active');
+                if (tabBtnDeptRestrictions) tabBtnDeptRestrictions.classList.remove('active');
+                if (panelActiveDepts) panelActiveDepts.style.display = 'flex';
+                if (panelDeptRestrictions) panelDeptRestrictions.style.display = 'none';
+            } else if (tabKey === 'department-restrictions') {
+                if (tabBtnDeptRestrictions) tabBtnDeptRestrictions.classList.add('active');
+                if (tabBtnActiveDepts) tabBtnActiveDepts.classList.remove('active');
+                if (panelDeptRestrictions) panelDeptRestrictions.style.display = 'flex';
+                if (panelActiveDepts) panelActiveDepts.style.display = 'none';
+
+                loadDepartmentAccessRestrictionsView();
+            }
+        }
+
+        if (tabBtnActiveDepts) {
+            tabBtnActiveDepts.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchDeptTab('active-departments');
+            });
+        }
+
+        if (tabBtnDeptRestrictions) {
+            tabBtnDeptRestrictions.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchDeptTab('department-restrictions');
+            });
+        }
+
+        // --- Department Access Restrictions (Per-Employee Department Dropdown Checklist) ---
+        let userRestrictionsMap = new Map(); // userId -> Set of restricted deptId
+        let currentChecklistFilter = 'all';
+        let checklistSearchQuery = '';
+
+        // Search Input Handler
+        const checklistSearchInput = document.getElementById('checklist-employee-search');
+        if (checklistSearchInput) {
+            checklistSearchInput.addEventListener('input', (e) => {
+                checklistSearchQuery = e.target.value.toLowerCase().trim();
+                renderEmployeeDepartmentAccessTable();
+            });
+        }
+
+        // Filter Toggle Handler (All Staff / Full Access / Restricted Access)
+        const filterToggleContainer = document.getElementById('checklist-filter-toggle');
+        if (filterToggleContainer) {
+            filterToggleContainer.querySelectorAll('.view-mode-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    filterToggleContainer.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentChecklistFilter = btn.dataset.filter || 'all';
+                    renderEmployeeDepartmentAccessTable();
+                });
+            });
+        }
+
+        async function loadDepartmentAccessRestrictionsView() {
+            const tbody = document.getElementById('restrictions-table-body');
+            try {
+                if (!allDepartments || allDepartments.length === 0) {
+                    await fetchDepartments();
+                }
+                if (!allUsers || allUsers.length === 0) {
+                    await loadUsersDirectory();
+                }
+
+                const res = await fetch(`${API_URL}/api/department-restrictions`, { headers: authHeaders() });
+                if (!res.ok) throw new Error('Failed to load department restrictions');
+                const data = await res.json();
+                const restrictions = data.restrictions || [];
+
+                userRestrictionsMap = new Map();
+                allUsers.forEach(u => userRestrictionsMap.set(Number(u.id), new Set()));
+                restrictions.forEach(r => {
+                    const uid = Number(r.user_id);
+                    if (!userRestrictionsMap.has(uid)) {
+                        userRestrictionsMap.set(uid, new Set());
+                    }
+                    userRestrictionsMap.get(uid).add(Number(r.department_id));
+                });
+
+                renderEmployeeDepartmentAccessTable();
+            } catch (err) {
+                console.error('Error loading department access restrictions:', err);
+                if (tbody) {
+                    tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--error-red);">${escapeHtml(err.message)}</td></tr>`;
+                }
+            }
+        }
+
+        function getEmployeeAccessStats(userId) {
+            const restrictedSet = userRestrictionsMap.get(Number(userId)) || new Set();
+            const totalDepts = allDepartments.length;
+            const restrictedCount = restrictedSet.size;
+            const allowedCount = Math.max(0, totalDepts - restrictedCount);
+            return { restrictedSet, totalDepts, restrictedCount, allowedCount };
+        }
+
+        function renderEmployeeDepartmentAccessTable() {
+            const tbody = document.getElementById('restrictions-table-body');
+            const badgeTotal = document.getElementById('check-badge-total');
+            const badgeAllowed = document.getElementById('check-badge-allowed');
+            const badgeRestricted = document.getElementById('check-badge-restricted');
+
+            const totalEmployees = allUsers.length;
+            let totalFullAccess = 0;
+            let totalRestrictedEmployees = 0;
+
+            allUsers.forEach(u => {
+                const { restrictedCount } = getEmployeeAccessStats(u.id);
+                if (restrictedCount === 0) {
+                    totalFullAccess++;
+                } else {
+                    totalRestrictedEmployees++;
+                }
+            });
+
+            if (badgeTotal) badgeTotal.textContent = `${totalEmployees} Staff`;
+            if (badgeAllowed) badgeAllowed.textContent = `${totalFullAccess} Full Access`;
+            if (badgeRestricted) badgeRestricted.textContent = `${totalRestrictedEmployees} Restricted`;
+
+            if (!tbody) return;
+
+            let filteredUsers = allUsers.filter(u => {
+                const { restrictedCount } = getEmployeeAccessStats(u.id);
+                if (currentChecklistFilter === 'full' && restrictedCount > 0) return false;
+                if (currentChecklistFilter === 'restricted' && restrictedCount === 0) return false;
+
+                if (checklistSearchQuery) {
+                    const matchName = (u.full_name || '').toLowerCase().includes(checklistSearchQuery);
+                    const matchEmail = (u.email || '').toLowerCase().includes(checklistSearchQuery);
+                    const matchDept = (u.department || '').toLowerCase().includes(checklistSearchQuery);
+                    const matchPos = (u.position || '').toLowerCase().includes(checklistSearchQuery);
+                    if (!matchName && !matchEmail && !matchDept && !matchPos) return false;
+                }
+                return true;
+            });
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2.5rem; color: var(--text-muted);">No employees match the selected criteria.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = filteredUsers.map(u => {
+                const { restrictedSet, totalDepts, restrictedCount, allowedCount } = getEmployeeAccessStats(u.id);
+
+                const roleBadgeClass = (u.role === 'super_admin' || u.role === 'admin') ? 'badge-urgent' 
+                    : (u.role === 'dept_lead' || u.role === 'admin_lead') ? 'badge-waiting' 
+                    : (u.role === 'tech_member' || u.role === 'agent') ? 'badge-in-progress'
+                    : 'badge-open';
+                const roleLabel = (u.role === 'super_admin' || u.role === 'admin') ? 'Super Admin'
+                    : (u.role === 'dept_lead' || u.role === 'admin_lead') ? 'Dept Lead'
+                    : (u.role === 'tech_member' || u.role === 'agent') ? 'Developer Team'
+                    : 'Staff / Member';
+
+                let dropdownBtnClass = 'access-full';
+                let dropdownSummaryText = `All ${totalDepts} Departments`;
+                let accessLevelBadge = `<span class="badge badge-open" style="font-size: 0.75rem;">Full Access</span>`;
+
+                if (restrictedCount > 0 && restrictedCount < totalDepts) {
+                    dropdownBtnClass = 'access-partial';
+                    dropdownSummaryText = `${allowedCount} of ${totalDepts} Allowed (${restrictedCount} Restricted)`;
+                    accessLevelBadge = `<span class="badge badge-waiting" style="font-size: 0.75rem;">${restrictedCount} Restricted</span>`;
+                } else if (restrictedCount >= totalDepts && totalDepts > 0) {
+                    dropdownBtnClass = 'access-none';
+                    dropdownSummaryText = `No Access (0 of ${totalDepts})`;
+                    accessLevelBadge = `<span class="badge badge-urgent" style="font-size: 0.75rem;">No Access</span>`;
+                }
+
+                const initials = (u.full_name || 'U').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+
+                const deptItemsHtml = allDepartments.map(d => {
+                    const isRestricted = restrictedSet.has(Number(d.id));
+                    const isAllowed = !isRestricted;
+                    return `
+                        <label class="dept-checklist-item" onclick="event.stopPropagation();">
+                            <input type="checkbox" 
+                                   id="chk-dept-${u.id}-${d.id}"
+                                   ${isAllowed ? 'checked' : ''} 
+                                   onchange="handleDeptCheckboxChange(${u.id}, ${d.id}, this.checked)">
+                            <span class="dept-checklist-label" title="${escapeHtml(d.name)}">${escapeHtml(d.name)}</span>
+                            <span class="dept-badge-pill ${isAllowed ? 'pill-allowed' : 'pill-restricted'}" id="pill-dept-${u.id}-${d.id}">
+                                ${isAllowed ? 'Allowed' : 'Restricted'}
+                            </span>
+                        </label>
+                    `;
+                }).join('');
+
+                return `
+                    <tr id="employee-access-row-${u.id}">
+                        <td>
+                            <div class="user-cell-wrap">
+                                <div class="user-mini-avatar">${initials}</div>
+                                <div class="user-cell-info">
+                                    <span class="user-cell-name">${escapeHtml(u.full_name || 'Unnamed')}</span>
+                                    <span class="user-cell-email">${escapeHtml(u.email || '-')}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-size: 0.85rem; color: var(--text-primary); font-weight: 500;">
+                                ${escapeHtml(u.department || 'General')}
+                            </div>
+                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                ${escapeHtml(u.position || 'Employee')}
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge ${roleBadgeClass}" style="font-size: 0.72rem;">${roleLabel}</span>
+                        </td>
+                        <td>
+                            <div class="dept-dropdown-wrapper" id="dept-dropdown-wrap-${u.id}">
+                                <button type="button" 
+                                        class="btn-dept-access-dropdown ${dropdownBtnClass}" 
+                                        id="btn-dept-access-${u.id}"
+                                        onclick="toggleDeptAccessDropdown(event, ${u.id})"
+                                        title="Click to configure accessible departments">
+                                    <span class="dept-access-indicator"></span>
+                                    <span class="dept-access-text" id="text-dept-access-${u.id}">${dropdownSummaryText}</span>
+                                    <svg class="chevron-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                                        <polyline points="6 9 12 15 18 9"></polyline>
+                                    </svg>
+                                </button>
+                                <div class="dept-access-popover" id="popover-dept-access-${u.id}" style="display: none;" onclick="event.stopPropagation();">
+                                    <div class="dept-popover-header">
+                                        <span class="dept-popover-title">Accessible Departments</span>
+                                        <div class="dept-popover-actions">
+                                            <button type="button" class="btn-mini-action" onclick="setEmployeeAllDeptAccess(${u.id}, true); event.stopPropagation();">Allow All</button>
+                                            <button type="button" class="btn-mini-action" onclick="setEmployeeAllDeptAccess(${u.id}, false); event.stopPropagation();">Restrict All</button>
+                                        </div>
+                                    </div>
+                                    <div class="dept-popover-list">
+                                        ${deptItemsHtml}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td id="cell-access-level-${u.id}">
+                            ${accessLevelBadge}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        window.toggleDeptAccessDropdown = function(event, userId) {
+            event.stopPropagation();
+            const targetPopover = document.getElementById(`popover-dept-access-${userId}`);
+            const targetBtn = document.getElementById(`btn-dept-access-${userId}`);
+            if (!targetPopover || !targetBtn) return;
+
+            const isCurrentlyOpen = targetPopover.style.display === 'block';
+
+            // Close all open popovers first
+            closeAllDeptAccessPopovers();
+
+            if (!isCurrentlyOpen) {
+                // Check if button is near the bottom of viewport to flip popover upwards
+                const rect = targetBtn.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                if (spaceBelow < 280) {
+                    targetPopover.classList.add('open-up');
+                } else {
+                    targetPopover.classList.remove('open-up');
+                }
+
+                targetPopover.style.display = 'block';
+                targetBtn.classList.add('is-open');
+            }
+        };
+
+        function closeAllDeptAccessPopovers() {
+            document.querySelectorAll('.dept-access-popover').forEach(pop => {
+                pop.style.display = 'none';
+            });
+            document.querySelectorAll('.btn-dept-access-dropdown').forEach(btn => {
+                btn.classList.remove('is-open');
+            });
+        }
+
+        // Global click listener to close popovers when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.dept-dropdown-wrapper')) {
+                closeAllDeptAccessPopovers();
+            }
+        });
+
+        window.handleDeptCheckboxChange = async function(userId, deptId, isAllowed) {
+            userId = Number(userId);
+            deptId = Number(deptId);
+            
+            let restrictedSet = userRestrictionsMap.get(userId);
+            if (!restrictedSet) {
+                restrictedSet = new Set();
+                userRestrictionsMap.set(userId, restrictedSet);
+            }
+
+            // Optimistic update
+            if (isAllowed) {
+                restrictedSet.delete(deptId);
+            } else {
+                restrictedSet.add(deptId);
+            }
+
+            // Update UI elements in place immediately
+            updateEmployeeRowAccessUI(userId);
+
+            try {
+                if (isAllowed) {
+                    const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions/${userId}`, {
+                        method: 'DELETE',
+                        headers: authHeaders()
+                    });
+                    if (!res.ok && res.status !== 404) {
+                        throw new Error('Failed to update department access');
+                    }
+                } else {
+                    const res = await fetch(`${API_URL}/api/departments/${deptId}/restrictions`, {
+                        method: 'POST',
+                        headers: authHeaders(),
+                        body: JSON.stringify({
+                            user_id: userId,
+                            reason: 'Restricted by Admin'
+                        })
+                    });
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.detail || 'Failed to update department access');
+                    }
+                }
+            } catch (err) {
+                // Rollback on failure
+                if (isAllowed) {
+                    restrictedSet.add(deptId);
+                } else {
+                    restrictedSet.delete(deptId);
+                }
+                const chk = document.getElementById(`chk-dept-${userId}-${deptId}`);
+                if (chk) chk.checked = !isAllowed;
+                updateEmployeeRowAccessUI(userId);
+                showToast(err.message, 'error');
+            }
+        };
+
+        window.setEmployeeAllDeptAccess = async function(userId, allowAll) {
+            userId = Number(userId);
+            const restrictedIds = allowAll ? [] : allDepartments.map(d => Number(d.id));
+
+            try {
+                const res = await fetch(`${API_URL}/api/users/${userId}/department-access`, {
+                    method: 'PUT',
+                    headers: authHeaders(),
+                    body: JSON.stringify({
+                        restricted_department_ids: restrictedIds,
+                        reason: allowAll ? null : 'Restricted from all departments'
+                    })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed to batch update department access');
+                }
+
+                userRestrictionsMap.set(userId, new Set(restrictedIds));
+                
+                // Update all checkboxes for this user
+                allDepartments.forEach(d => {
+                    const chk = document.getElementById(`chk-dept-${userId}-${d.id}`);
+                    if (chk) chk.checked = allowAll;
+                });
+
+                updateEmployeeRowAccessUI(userId);
+                showToast(allowAll ? 'All departments allowed for employee' : 'All departments restricted for employee', 'success');
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        };
+
+        function updateEmployeeRowAccessUI(userId) {
+            const { restrictedSet, totalDepts, restrictedCount, allowedCount } = getEmployeeAccessStats(userId);
+
+            // Update badge pills in popover checklist
+            allDepartments.forEach(d => {
+                const isRestricted = restrictedSet.has(Number(d.id));
+                const pill = document.getElementById(`pill-dept-${userId}-${d.id}`);
+                if (pill) {
+                    pill.className = `dept-badge-pill ${isRestricted ? 'pill-restricted' : 'pill-allowed'}`;
+                    pill.textContent = isRestricted ? 'Restricted' : 'Allowed';
+                }
+            });
+
+            // Update dropdown button classes & text
+            const btn = document.getElementById(`btn-dept-access-${userId}`);
+            const textSpan = document.getElementById(`text-dept-access-${userId}`);
+            const levelCell = document.getElementById(`cell-access-level-${userId}`);
+
+            let dropdownBtnClass = 'access-full';
+            let dropdownSummaryText = `All ${totalDepts} Departments`;
+            let accessLevelBadge = `<span class="badge badge-open" style="font-size: 0.75rem;">Full Access</span>`;
+
+            if (restrictedCount > 0 && restrictedCount < totalDepts) {
+                dropdownBtnClass = 'access-partial';
+                dropdownSummaryText = `${allowedCount} of ${totalDepts} Allowed (${restrictedCount} Restricted)`;
+                accessLevelBadge = `<span class="badge badge-waiting" style="font-size: 0.75rem;">${restrictedCount} Restricted</span>`;
+            } else if (restrictedCount >= totalDepts && totalDepts > 0) {
+                dropdownBtnClass = 'access-none';
+                dropdownSummaryText = `No Access (0 of ${totalDepts})`;
+                accessLevelBadge = `<span class="badge badge-urgent" style="font-size: 0.75rem;">No Access</span>`;
+            }
+
+            if (btn) {
+                btn.classList.remove('access-full', 'access-partial', 'access-none');
+                btn.classList.add(dropdownBtnClass);
+            }
+            if (textSpan) {
+                textSpan.textContent = dropdownSummaryText;
+            }
+            if (levelCell) {
+                levelCell.innerHTML = accessLevelBadge;
+            }
+
+            // Update header live counters
+            let totalFullAccess = 0;
+            let totalRestrictedEmployees = 0;
+            allUsers.forEach(u => {
+                const stats = getEmployeeAccessStats(u.id);
+                if (stats.restrictedCount === 0) totalFullAccess++;
+                else totalRestrictedEmployees++;
+            });
+            const badgeTotal = document.getElementById('check-badge-total');
+            const badgeAllowed = document.getElementById('check-badge-allowed');
+            const badgeRestricted = document.getElementById('check-badge-restricted');
+            if (badgeTotal) badgeTotal.textContent = `${allUsers.length} Staff`;
+            if (badgeAllowed) badgeAllowed.textContent = `${totalFullAccess} Full Access`;
+            if (badgeRestricted) badgeRestricted.textContent = `${totalRestrictedEmployees} Restricted`;
+        }
+
+        // --- Users & Hierarchy Management Handlers (Super Admin Only) ---
+        async function loadUsersDirectory() {
+            try {
+                const res = await fetch(`${API_URL}/api/users`, { headers: authHeaders() });
+                if (!res.ok) return;
+                const data = await res.json();
+                allUsers = data.users || [];
+
+                // Populate restrict user select
+                const restrictUserSelect = document.getElementById('restrict-user-select');
+                if (restrictUserSelect) {
+                    restrictUserSelect.innerHTML = '<option value="">Select employee...</option>' + allUsers.map(u => 
+                        `<option value="${u.id}">${escapeHtml(u.full_name)} (${escapeHtml(u.email)})</option>`
+                    ).join('');
+                }
+
+                // Populate user department filter select
+                const userDeptFilter = document.getElementById('user-dept-filter-select');
+                if (userDeptFilter) {
+                    const currentVal = userDeptFilter.value;
+                    const depts = Array.from(new Set(allUsers.map(u => u.department).filter(Boolean))).sort();
+                    userDeptFilter.innerHTML = '<option value="">All Departments</option>' + depts.map(d => 
+                        `<option value="${escapeHtml(d)}" ${currentVal === d ? 'selected' : ''}>${escapeHtml(d)}</option>`
+                    ).join('');
+                }
+
+                // Render Users Table
+                renderUsersTable();
+            } catch (err) {
+                console.error('Failed to load users directory:', err);
+            }
+        }
+
+        function renderUsersTable() {
+            const tbody = document.getElementById('users-table-body');
+            const badge = document.getElementById('users-count-badge');
+            const displayCount = document.getElementById('users-display-count');
+
+            // Update stats cards
+            const totalCount = allUsers.length;
+            const superAdminCount = allUsers.filter(u => u.role === 'super_admin' || u.role === 'admin').length;
+            const deptLeadCount = allUsers.filter(u => u.role === 'dept_lead' || u.role === 'admin_lead' || u.role === 'tech_member' || u.role === 'agent' || Boolean(u.can_manage_departments)).length;
+            const internalsCount = allUsers.filter(u => {
+                const r = (u.role || '').toLowerCase();
+                return r === 'internal' || r === 'internals' || r === 'dept_agent' || r === 'dept_member' || r === 'employee';
+            }).length;
+            const externalsCount = allUsers.filter(u => {
+                const r = (u.role || '').toLowerCase();
+                return r === 'external' || r === 'externals' || r === 'customer' || r === 'user';
+            }).length;
+
+            const statTotal = document.getElementById('stat-users-total');
+            const statSuper = document.getElementById('stat-users-superadmin');
+            const statLeads = document.getElementById('stat-users-deptleads');
+            const statInternals = document.getElementById('stat-users-internals');
+            const statExternals = document.getElementById('stat-users-externals');
+
+            if (statTotal) statTotal.textContent = totalCount;
+            if (statSuper) statSuper.textContent = superAdminCount;
+            if (statLeads) statLeads.textContent = deptLeadCount;
+            if (statInternals) statInternals.textContent = internalsCount;
+            if (statExternals) statExternals.textContent = externalsCount;
+
+            if (badge) badge.textContent = `${totalCount} user${totalCount === 1 ? '' : 's'}`;
+
+            if (!tbody) return;
+
+            const searchInput = document.getElementById('user-search-input');
+            const roleFilter = document.getElementById('user-role-filter-select');
+            const deptFilter = document.getElementById('user-dept-filter-select');
+
+            const query = searchInput ? searchInput.value.toLowerCase().trim() : '';
+            const selectedRole = roleFilter ? roleFilter.value : '';
+            const selectedDept = deptFilter ? deptFilter.value : '';
+
+            const filteredUsers = allUsers.filter(u => {
+                const matchQuery = !query || 
+                    (u.full_name && u.full_name.toLowerCase().includes(query)) ||
+                    (u.email && u.email.toLowerCase().includes(query)) ||
+                    (u.department && u.department.toLowerCase().includes(query)) ||
+                    (u.position && u.position.toLowerCase().includes(query));
+
+                let matchRole = true;
+                if (selectedRole) {
+                    if (selectedRole === 'super_admin') {
+                        matchRole = u.role === 'super_admin' || u.role === 'admin';
+                    } else if (selectedRole === 'dept_lead') {
+                        matchRole = u.role === 'dept_lead' || u.role === 'admin_lead';
+                    } else if (selectedRole === 'tech_member') {
+                        matchRole = u.role === 'tech_member' || u.role === 'agent';
+                    } else if (selectedRole === 'internal' || selectedRole === 'dept_agent') {
+                        matchRole = u.role === 'internal' || u.role === 'internals' || u.role === 'dept_agent' || u.role === 'dept_member' || u.role === 'employee';
+                    } else if (selectedRole === 'external') {
+                        matchRole = u.role === 'external' || u.role === 'externals' || u.role === 'customer' || u.role === 'user';
+                    } else {
+                        matchRole = u.role === selectedRole;
+                    }
+                }
+
+                const matchDept = !selectedDept || (u.department && u.department === selectedDept);
+
+                return matchQuery && matchRole && matchDept;
+            });
+
+            if (displayCount) displayCount.textContent = filteredUsers.length;
+
+            if (filteredUsers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align: center; padding: 2.5rem; color: var(--text-muted); font-size: 0.9rem;">No matching corporate accounts found.</td></tr>`;
+                return;
+            }
+
+            const callerIsSuperAdmin = currentUser.role === 'super_admin' || currentUser.role === 'admin';
+
+            tbody.innerHTML = filteredUsers.map(u => {
+                const isSuperAdmin = u.role === 'super_admin' || u.role === 'admin';
+                const isDeptLead = u.role === 'dept_lead' || u.role === 'admin_lead' || Boolean(u.can_manage_departments);
+                const isTech = u.role === 'tech_member' || u.role === 'agent';
+                const isExternal = u.role === 'external' || u.role === 'externals' || u.role === 'customer';
+                const isInternal = !isSuperAdmin && !isDeptLead && !isTech && !isExternal;
+
+                let roleOptions = '';
+                if (callerIsSuperAdmin) {
+                    roleOptions = `
+                        <option value="super_admin" ${isSuperAdmin ? 'selected' : ''}>Super Admin (Developer Team Lead)</option>
+                        <option value="tech_member" ${isTech ? 'selected' : ''}>Developer Team Member</option>
+                        <option value="dept_lead" ${isDeptLead && !isSuperAdmin ? 'selected' : ''}>Department Admin Lead</option>
+                        <option value="internal" ${isInternal ? 'selected' : ''}>Internal (Company Maintenance)</option>
+                        <option value="external" ${isExternal ? 'selected' : ''}>External (Clients &amp; Customers)</option>
+                    `;
+                } else {
+                    roleOptions = `
+                        ${isDeptLead ? '<option value="dept_lead" selected>Department Admin Lead</option>' : ''}
+                        <option value="internal" ${isInternal ? 'selected' : ''}>Internal (Company Maintenance)</option>
+                        <option value="external" ${isExternal ? 'selected' : ''}>External (Clients &amp; Customers)</option>
+                    `;
+                }
+
+                return `
+                    <tr>
+                        <td style="color: var(--text-muted); font-size: 0.8rem;">#${u.id}</td>
+                        <td>
+                            <div style="font-weight: 600; color: var(--text-primary);">${escapeHtml(u.full_name)}</div>
+                            <div style="font-size: 0.78rem; color: var(--text-muted);">${escapeHtml(u.email)}</div>
+                        </td>
+                        <td style="font-size: 0.85rem; color: var(--text-secondary);">
+                            ${escapeHtml(u.department || 'General')} • ${escapeHtml(u.position || 'Employee')}
+                        </td>
+                        <td>
+                            <select id="user-role-select-${u.id}" class="form-input" style="background-color: var(--bg-pitch-black); font-size: 0.85rem; padding: 0.4rem 0.6rem;">
+                                ${roleOptions}
+                            </select>
+                        </td>
+                        <td style="text-align: center;">
+                            <input type="checkbox" id="user-dept-perm-${u.id}" ${u.can_manage_departments ? 'checked' : ''} ${callerIsSuperAdmin ? (isSuperAdmin ? 'disabled title="Super Admin always has department management access"' : '') : 'disabled title="Only Super Admin can grant department management permissions"'} style="width: 18px; height: 18px; accent-color: var(--accent-yellow); cursor: pointer;">
+                        </td>
+                        <td>
+                            <button class="btn-primary" style="font-size: 0.75rem; padding: 0.35rem 0.8rem; width: auto;" onclick="saveUserHierarchy(${u.id})">
+                                Save
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        const userSearchInput = document.getElementById('user-search-input');
+        const userRoleFilter = document.getElementById('user-role-filter-select');
+        const userDeptFilter = document.getElementById('user-dept-filter-select');
+
+        if (userSearchInput) userSearchInput.addEventListener('input', renderUsersTable);
+        if (userRoleFilter) userRoleFilter.addEventListener('change', renderUsersTable);
+        if (userDeptFilter) userDeptFilter.addEventListener('change', renderUsersTable);
+
+        window.saveUserHierarchy = async function(userId) {
+            const roleSelect = document.getElementById(`user-role-select-${userId}`);
+            const permCheckbox = document.getElementById(`user-dept-perm-${userId}`);
+            if (!roleSelect) return;
+
+            const role = roleSelect.value;
+            const can_manage_departments = permCheckbox ? permCheckbox.checked : false;
+
+            try {
+                const res = await fetch(`${API_URL}/api/users/${userId}/role`, {
+                    method: 'PATCH',
+                    headers: authHeaders(),
+                    body: JSON.stringify({ role, can_manage_departments })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.detail || 'Failed to update hierarchy');
+                }
+
+                showToast('User hierarchy access updated successfully!', 'success');
+                await loadUsersDirectory();
+                await fetchTeamMembers();
+
+            } catch (err) {
+                showToast(err.message, 'error');
+            }
+        };
+
+        // --- Sidebar View Switching ---
+        const menuOverview = document.getElementById('menu-overview');
+        const menuPerformance = document.getElementById('menu-performance');
+        const menuDepartments = document.getElementById('menu-departments');
+        const menuUsers = document.getElementById('menu-users');
+
+        const viewOverview = document.getElementById('view-overview');
+        const viewPerformance = document.getElementById('view-performance');
+        const viewDepartments = document.getElementById('view-departments');
+        const viewUsers = document.getElementById('view-users');
+
+        function switchSection(target) {
+            activeSection = target;
+            [menuOverview, menuPerformance, menuDepartments, menuUsers].forEach(m => {
+                if (m) m.classList.remove('active');
+            });
+            [viewOverview, viewPerformance, viewDepartments, viewUsers].forEach(v => {
+                if (v) v.style.display = 'none';
+            });
+
+            if (target === 'overview') {
+                menuOverview.classList.add('active');
+                viewOverview.style.display = 'flex';
+                loadTickets();
+            } else if (target === 'performance') {
+                if (menuPerformance) menuPerformance.classList.add('active');
+                if (viewPerformance) viewPerformance.style.display = 'flex';
+                loadStaffPerformance();
+            } else if (target === 'departments') {
+                menuDepartments.classList.add('active');
+                viewDepartments.style.display = 'flex';
+                fetchDepartments();
+                loadUsersDirectory();
+                if (panelDeptRestrictions && panelDeptRestrictions.style.display !== 'none') {
+                    loadDepartmentAccessRestrictionsView();
+                }
+            } else if (target === 'users') {
+                menuUsers.classList.add('active');
+                viewUsers.style.display = 'flex';
+                loadUsersDirectory();
+            }
+        }
+
+        menuOverview.addEventListener('click', (e) => { e.preventDefault(); switchSection('overview'); });
+        if (menuPerformance) menuPerformance.addEventListener('click', (e) => { e.preventDefault(); switchSection('performance'); });
+        if (menuDepartments) menuDepartments.addEventListener('click', (e) => { e.preventDefault(); switchSection('departments'); });
+        if (menuUsers) menuUsers.addEventListener('click', (e) => { e.preventDefault(); switchSection('users'); });
+
+        // ========================================================
+        // --- SECTION: SUPPORT HISTORY & PERFORMANCE LOGIC       ---
+        // ========================================================
+        let perfData = null;
+        let activePerfSubTab = 'handled'; // 'handled' | 'raised'
+        let perfSearchTerm = '';
+        let perfStatusFilter = '';
+
+        async function loadStaffPerformance() {
+            const tableBody = document.getElementById('perf-tickets-table-body');
+            if (!perfData && tableBody) {
+                tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">Loading support history...</td></tr>';
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/staff/performance`, {
+                    headers: authHeaders()
+                });
+                if (!res.ok) {
+                    const errData = await res.json().catch(() => ({}));
+                    throw new Error(errData.detail || 'Failed to load support performance.');
+                }
+                perfData = await res.json();
+                renderStaffPerformance();
+            } catch (err) {
+                console.error('Error loading staff performance:', err);
+                showToast(err.message || 'Error loading performance metrics', 'error');
+                if (tableBody) {
+                    tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: #f87171; padding: 2.5rem;">Failed to load data: ${escapeHtml(err.message)}</td></tr>`;
+                }
+            }
+        }
+
+        function renderStaffPerformance() {
+            if (!perfData) return;
+            const stats = perfData.stats || {};
+
+            // 1. KPI Metric Numbers
+            const elHandled = document.getElementById('stat-perf-handled');
+            if (elHandled) elHandled.textContent = stats.total_handled ?? 0;
+
+            const elResolved = document.getElementById('stat-perf-resolved');
+            if (elResolved) elResolved.textContent = stats.resolved_count ?? 0;
+
+            const elRate = document.getElementById('stat-perf-rate');
+            if (elRate) elRate.textContent = `${stats.resolution_rate ?? 0}% Resolution Rate`;
+
+            const elActive = document.getElementById('stat-perf-active');
+            if (elActive) elActive.textContent = (stats.in_progress_count ?? 0) + (stats.open_count ?? 0);
+
+            const elSpeed = document.getElementById('stat-perf-speed');
+            if (elSpeed) {
+                if (stats.avg_resolution_hours !== null && stats.avg_resolution_hours !== undefined) {
+                    elSpeed.textContent = `${stats.avg_resolution_hours}h`;
+                } else {
+                    elSpeed.textContent = '—';
+                }
+            }
+
+            const elRaised = document.getElementById('stat-perf-raised');
+            if (elRaised) elRaised.textContent = stats.raised_count ?? 0;
+
+            const badgeHandled = document.getElementById('badge-handled-count');
+            if (badgeHandled) badgeHandled.textContent = stats.total_handled ?? (perfData.handled_tickets || []).length;
+
+            const badgeRaised = document.getElementById('badge-raised-count');
+            if (badgeRaised) badgeRaised.textContent = stats.raised_count ?? (perfData.raised_tickets || []).length;
+
+            // 2. 7-Day Trend Chart
+            renderPerfTrendChart(perfData.daily_activity || []);
+
+            // 3. Priority Breakdown Progress Meters
+            renderPerfPriorityMeters(perfData.priority_counts || {}, stats.total_handled || 0);
+
+            // 4. Dual-Tab Tickets History Table
+            renderPerfTicketsTable();
+        }
+
+        function renderPerfTrendChart(dailyActivity) {
+            const container = document.getElementById('perf-trend-chart-container');
+            if (!container) return;
+
+            if (!dailyActivity || dailyActivity.length === 0) {
+                container.innerHTML = '<div style="width: 100%; text-align: center; color: var(--text-muted); font-size: 0.8rem; padding: 2rem 0;">No activity data recorded in last 7 days.</div>';
+                return;
+            }
+
+            const maxVal = Math.max(1, ...dailyActivity.map(d => Math.max(d.created || 0, d.resolved || 0)));
+            const maxBarPx = 110;
+
+            container.innerHTML = dailyActivity.map(d => {
+                const handledHeight = d.created > 0 ? Math.max(6, Math.round((d.created / maxVal) * maxBarPx)) : 3;
+                const resolvedHeight = d.resolved > 0 ? Math.max(6, Math.round((d.resolved / maxVal) * maxBarPx)) : 3;
+
+                return `
+                    <div class="perf-trend-day" title="${d.date} (${d.label}): ${d.created} handled, ${d.resolved} resolved">
+                        <div class="perf-trend-bars-wrapper">
+                            <div class="perf-bar handled" style="height: ${handledHeight}px; opacity: ${d.created > 0 ? '1' : '0.2'};" title="Handled: ${d.created}"></div>
+                            <div class="perf-bar resolved" style="height: ${resolvedHeight}px; opacity: ${d.resolved > 0 ? '1' : '0.2'};" title="Resolved: ${d.resolved}"></div>
+                        </div>
+                        <span class="perf-trend-label">${escapeHtml(d.label)}</span>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPerfPriorityMeters(priorityCounts, totalHandled) {
+            const container = document.getElementById('perf-priority-bars-container');
+            if (!container) return;
+
+            const priorities = [
+                { key: 'urgent', label: 'Urgent', color: '#ef4444' },
+                { key: 'high', label: 'High', color: '#f97316' },
+                { key: 'medium', label: 'Medium', color: '#eab308' },
+                { key: 'low', label: 'Low', color: '#10b981' }
+            ];
+
+            const total = totalHandled > 0 ? totalHandled : 1;
+
+            container.innerHTML = priorities.map(p => {
+                const count = priorityCounts[p.key] || 0;
+                const pct = totalHandled > 0 ? Math.round((count / total) * 100) : 0;
+
+                return `
+                    <div class="priority-meter-row">
+                        <div class="priority-meter-header">
+                            <span style="display: flex; align-items: center; gap: 0.35rem; color: var(--text-secondary); text-transform: capitalize;">
+                                <span style="width: 8px; height: 8px; border-radius: 50%; background: ${p.color};"></span>
+                                ${p.label}
+                            </span>
+                            <span style="color: var(--text-primary); font-weight: 600; font-size: 0.78rem;">
+                                ${count} <span style="font-weight: 400; font-size: 0.7rem; color: var(--text-muted);">(${pct}%)</span>
+                            </span>
+                        </div>
+                        <div class="priority-meter-track">
+                            <div class="priority-meter-fill" style="width: ${pct}%; background-color: ${p.color};"></div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderPerfTicketsTable() {
+            if (!perfData) return;
+
+            const tableBody = document.getElementById('perf-tickets-table-body');
+            const colPerson = document.getElementById('col-perf-person');
+            if (!tableBody) return;
+
+            const rawList = activePerfSubTab === 'handled' 
+                ? (perfData.handled_tickets || []) 
+                : (perfData.raised_tickets || []);
+
+            if (colPerson) {
+                colPerson.textContent = activePerfSubTab === 'handled' ? 'Requester' : 'Assigned Tech';
+            }
+
+            // Filter tickets
+            const filtered = rawList.filter(t => {
+                if (perfStatusFilter) {
+                    const norm = normalizeTicketStatus(t.status);
+                    if (norm !== perfStatusFilter && (t.status || '').toLowerCase() !== perfStatusFilter.toLowerCase()) {
+                        return false;
+                    }
+                }
+
+                if (perfSearchTerm) {
+                    const haystack = [
+                        t.ticket_code,
+                        t.title,
+                        t.description,
+                        t.department_name,
+                        t.requester_name,
+                        t.requester_email,
+                        t.assignee_name
+                    ].filter(Boolean).join(' ').toLowerCase();
+
+                    if (!haystack.includes(perfSearchTerm)) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+
+            if (filtered.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2.5rem;">
+                            ${perfSearchTerm || perfStatusFilter 
+                                ? 'No tickets match the selected filters.' 
+                                : (activePerfSubTab === 'handled' ? 'No tickets assigned to you yet.' : 'You have not submitted any support requests yet.')}
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = filtered.map(t => {
+                const normStatus = normalizeTicketStatus(t.status);
+                const statusLabel = formatStatusLabel(t.status);
+                const prio = (t.priority || 'medium').toLowerCase();
+                const dateStr = t.created_at 
+                    ? new Date(t.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+                    : '—';
+
+                const personCellHtml = activePerfSubTab === 'handled'
+                    ? `
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(t.requester_name || t.requester_email || 'Anonymous')}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">${escapeHtml(t.requester_email || '')}</div>
+                        </div>
+                      `
+                    : `
+                        <div>
+                            <div style="font-size: 0.8rem; color: var(--text-primary); font-weight: 500;">${escapeHtml(t.assignee_name || 'Unassigned')}</div>
+                            <div style="font-size: 0.72rem; color: var(--text-muted);">${t.assignee_name ? 'Support Specialist' : 'Pending Assignment'}</div>
+                        </div>
+                      `;
+
+                return `
+                    <tr onclick="viewTicketDetails(${t.id})" style="cursor: pointer;" title="Click to view ticket details">
+                        <td><span class="ticket-code-tag">${escapeHtml(t.ticket_code || ('#' + t.id))}</span></td>
+                        <td>
+                            <div class="ticket-title-link" title="${escapeHtml(t.title)}">${escapeHtml(t.title)}</div>
+                            <div class="ticket-requester-info" style="font-size: 0.72rem; color: var(--text-muted); max-width: 320px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                                ${escapeHtml((t.description || '').replace(/\s+/g, ' ').slice(0, 65))}
+                            </div>
+                        </td>
+                        <td>${personCellHtml}</td>
+                        <td>
+                            <span class="badge" style="background: rgba(255,255,255,0.06); font-size: 0.72rem; color: var(--text-primary); border: 1px solid var(--border-color);">
+                                ${escapeHtml(t.department_name || 'General')}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="priority-tag priority-${prio}">
+                                <span class="priority-dot"></span>${escapeHtml(t.priority || 'medium')}
+                            </span>
+                        </td>
+                        <td><span class="badge badge-${normStatus}">${statusLabel}</span></td>
+                        <td style="color: var(--text-muted); font-size: 0.76rem;">${dateStr}</td>
+                        <td style="text-align: center;">
+                            <button type="button" class="btn-secondary" style="padding: 0.25rem 0.65rem; font-size: 0.74rem;" onclick="event.stopPropagation(); viewTicketDetails(${t.id});">
+                                View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        const btnTabHandledTickets = document.getElementById('btn-tab-handled-tickets');
+        const btnTabRaisedTickets = document.getElementById('btn-tab-raised-tickets');
+        const perfSearchInput = document.getElementById('perf-search-input');
+        const perfStatusFilterSelect = document.getElementById('perf-status-filter');
+        const btnRefreshPerformance = document.getElementById('btn-refresh-performance');
+
+        function setPerfSubTab(tab) {
+            activePerfSubTab = tab;
+            if (btnTabHandledTickets) btnTabHandledTickets.classList.toggle('active', tab === 'handled');
+            if (btnTabRaisedTickets) btnTabRaisedTickets.classList.toggle('active', tab === 'raised');
+            renderPerfTicketsTable();
+        }
+
+        if (btnTabHandledTickets) {
+            btnTabHandledTickets.addEventListener('click', (e) => {
+                e.preventDefault();
+                setPerfSubTab('handled');
+            });
+        }
+
+        if (btnTabRaisedTickets) {
+            btnTabRaisedTickets.addEventListener('click', (e) => {
+                e.preventDefault();
+                setPerfSubTab('raised');
+            });
+        }
+
+        if (perfSearchInput) {
+            perfSearchInput.addEventListener('input', (e) => {
+                perfSearchTerm = e.target.value.toLowerCase().trim();
+                renderPerfTicketsTable();
+            });
+        }
+
+        if (perfStatusFilterSelect) {
+            perfStatusFilterSelect.addEventListener('change', (e) => {
+                perfStatusFilter = e.target.value;
+                renderPerfTicketsTable();
+            });
+        }
+
+        if (btnRefreshPerformance) {
+            btnRefreshPerformance.addEventListener('click', (e) => {
+                e.preventDefault();
+                loadStaffPerformance();
+                showToast('Performance metrics refreshed', 'info');
+            });
+        }
+
+        // --- Performance View Main Tabs (Graphical Visuals vs Support Tickets) ---
+        const tabBtnPerfVisuals = document.getElementById('tab-btn-perf-visuals');
+        const tabBtnPerfTickets = document.getElementById('tab-btn-perf-tickets');
+        const panelPerfVisuals = document.getElementById('panel-perf-visuals');
+        const panelPerfTickets = document.getElementById('panel-perf-tickets');
+
+        function switchPerfMainTab(tab) {
+            if (tab === 'visuals') {
+                if (tabBtnPerfVisuals) tabBtnPerfVisuals.classList.add('active');
+                if (tabBtnPerfTickets) tabBtnPerfTickets.classList.remove('active');
+                if (panelPerfVisuals) panelPerfVisuals.style.display = 'flex';
+                if (panelPerfTickets) panelPerfTickets.style.display = 'none';
+                if (perfData) {
+                    renderPerfTrendChart(perfData.daily_activity || []);
+                }
+            } else if (tab === 'tickets') {
+                if (tabBtnPerfTickets) tabBtnPerfTickets.classList.add('active');
+                if (tabBtnPerfVisuals) tabBtnPerfVisuals.classList.remove('active');
+                if (panelPerfTickets) panelPerfTickets.style.display = 'flex';
+                if (panelPerfVisuals) panelPerfVisuals.style.display = 'none';
+                renderPerfTicketsTable();
+            }
+        }
+
+        if (tabBtnPerfVisuals) {
+            tabBtnPerfVisuals.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPerfMainTab('visuals');
+            });
+        }
+
+        if (tabBtnPerfTickets) {
+            tabBtnPerfTickets.addEventListener('click', (e) => {
+                e.preventDefault();
+                switchPerfMainTab('tickets');
+            });
+        }
+
+        // --- Sidebar Collapse/Expand Toggle ---
+        const btnSidebarToggle = document.getElementById('btn-sidebar-toggle');
+        const dashboardSidebar = document.getElementById('dashboard-sidebar');
+
+        function updateSidebarToggleBtn(isCollapsed) {
+            if (btnSidebarToggle) {
+                btnSidebarToggle.classList.toggle('collapsed', isCollapsed);
+                btnSidebarToggle.setAttribute('title', isCollapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            }
+        }
+
+        if (btnSidebarToggle && dashboardSidebar) {
+            btnSidebarToggle.addEventListener('click', () => {
+                const isCollapsed = dashboardSidebar.classList.toggle('collapsed');
+                localStorage.setItem('khin_sidebar_collapsed', isCollapsed ? 'true' : 'false');
+                updateSidebarToggleBtn(isCollapsed);
+            });
+
+            // Initialize button state from current sidebar class
+            updateSidebarToggleBtn(dashboardSidebar.classList.contains('collapsed'));
+        }
+
+        // --- Search Input Filter ---
+        const ticketSearchInput = document.getElementById('ticket-search');
+        if (ticketSearchInput) {
+            ticketSearchInput.addEventListener('input', () => {
+                renderTickets();
+            });
+        }
+
+        // --- View Mode Toggle Listeners ---
+        const btnViewKanban = document.getElementById('btn-view-kanban');
+        const btnViewList = document.getElementById('btn-view-list');
+        const btnViewSplit = document.getElementById('btn-view-split');
+
+        if (btnViewKanban) {
+            btnViewKanban.addEventListener('click', (e) => {
+                e.preventDefault();
+                setViewMode('kanban');
+            });
+        }
+        if (btnViewList) {
+            btnViewList.addEventListener('click', (e) => {
+                e.preventDefault();
+                setViewMode('list');
+            });
+        }
+        if (btnViewSplit) {
+            btnViewSplit.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (activeTicket) {
+                    setViewMode('split');
+                } else if (allTickets.length > 0) {
+                    viewTicketDetails(allTickets[0].id);
+                } else {
+                    setViewMode('split');
+                }
+            });
+        }
+
+
+
+        const splitFilterSelect = document.getElementById('split-column-filter');
+        if (splitFilterSelect) {
+            splitFilterSelect.addEventListener('change', (e) => {
+                splitColumnFilter = e.target.value;
+                renderSplitTicketsColumn();
+                const tickets = getSplitColumnTickets();
+                if (tickets.length > 0 && (!activeTicket || !tickets.some(t => String(t.id) === String(activeTicket.id)))) {
+                    viewTicketDetails(tickets[0].id);
+                }
+            });
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && currentViewMode === 'split') {
+                closeSplitView();
+            }
+        });
+
+        // Apply view preference & initialize dropzones
+        applyViewMode();
+        setupKanbanColumnDropzones();
+
+        // --- Automated Gmail Sync & Continuous Ticket Polling ---
+        let autoSyncTimer = null;
+        let isSyncingEmails = false;
+
+        async function performAutoSync(isManual = false) {
+            if (isSyncingEmails) return;
+            const syncIconBtn = document.getElementById('btn-sync-emails');
+
+            isSyncingEmails = true;
+            if (syncIconBtn) syncIconBtn.classList.add('is-syncing');
+
+            try {
+                const res = await fetch(`${API_URL}/api/tickets/sync-emails`, {
+                    method: 'POST',
+                    headers: authHeaders()
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.synced_count > 0) {
+                        showToast(`Auto-ingested ${data.synced_count} new email ticket(s)!`, 'success');
+                        await fetchDashboardStats();
+                        await loadTickets();
+                    } else if (isManual) {
+                        showToast(data.message || 'Gmail checked: no new unread support emails.', 'info');
+                    }
+                }
+            } catch (err) {
+                // Silently ignore if not authorized or network blip
+            } finally {
+                // Refresh tickets to catch any new tickets created by backend worker
+                try {
+                    const prevCount = allTickets.length;
+                    await loadTickets();
+                    if (allTickets.length > prevCount && prevCount > 0 && !isManual) {
+                        showToast('New ticket arrived automatically!', 'info');
+                        await fetchDashboardStats();
+                    }
+                } catch (e) {
+                    // ignore
+                }
+
+                if (syncIconBtn) syncIconBtn.classList.remove('is-syncing');
+                isSyncingEmails = false;
+            }
+        }
+
+        const btnSyncEmails = document.getElementById('btn-sync-emails');
+        if (btnSyncEmails) {
+            btnSyncEmails.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                performAutoSync(true);
+            });
+        }
+
+        const autoSyncBadge = document.getElementById('auto-sync-status');
+        if (autoSyncBadge) {
+            autoSyncBadge.addEventListener('click', () => {
+                performAutoSync(true);
+            });
+        }
+
+        // Run automated sync and polling every 15 seconds continuously
+        if (autoSyncTimer) clearInterval(autoSyncTimer);
+        autoSyncTimer = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                performAutoSync(false);
+            }
+        }, 15000);
+
+        const btnCloseDetailsModal = document.getElementById('btn-close-details-modal');
+        if (btnCloseDetailsModal) {
+            btnCloseDetailsModal.addEventListener('click', () => {
+                closeSplitView();
+            });
+        }
+
+        // --- Logout ---
+        document.getElementById('btn-logout').addEventListener('click', () => {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_name');
+            localStorage.removeItem('user_email');
+            window.location.href = 'index.html';
+        });
+
+        // Periodic auto-refresh every 60 seconds
+        setInterval(() => {
+            if (currentUser && activeSection === 'overview') {
+                fetchDashboardStats();
+                loadTickets();
+            } else if (currentUser && activeSection === 'performance') {
+                loadStaffPerformance();
+            }
+        }, 60000);
+
+        // Initialize dashboard on page ready
+        window.addEventListener('DOMContentLoaded', fetchUserProfile);
+    </script>
+</body>
+</html>

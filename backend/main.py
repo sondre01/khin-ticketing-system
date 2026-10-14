@@ -89,10 +89,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Middleware (allows local HTML files to connect if opened directly)
+# CORS Middleware (allows local Go Live server, Live Server ports, and direct files to connect seamlessly)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_origin_regex=r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0)(:[0-9]+)?$",
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -163,6 +164,57 @@ class CommentCreateRequest(BaseModel):
     comment_text: str = Field(..., min_length=1)
     is_internal: bool = True
 
+# Employee Hub Pydantic Models
+class AttendanceActionRequest(BaseModel):
+    action: str = Field(..., pattern="^(clock_in|lunch_out|lunch_in|clock_out)$")
+    notes: str | None = None
+
+class TimeEditCreateRequest(BaseModel):
+    target_date: str
+    edit_type: str
+    requested_clock_in: str | None = None
+    requested_lunch_start: str | None = None
+    requested_lunch_end: str | None = None
+    requested_clock_out: str | None = None
+    reason: str = Field(..., min_length=3)
+    proof_attachment: str | None = None
+    proof_file_name: str | None = None
+
+class TimeEditUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(pending|approved|rejected|cancelled)$")
+    reviewer_notes: str | None = None
+
+class OvertimeCreateRequest(BaseModel):
+    ot_date: str
+    ot_type: str = Field(default="regular_day")
+    start_time: str
+    end_time: str
+    total_hours: float
+    task_purpose: str = Field(..., min_length=3)
+    proof_attachment: str | None = None
+    proof_file_name: str | None = None
+
+class OvertimeUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(pending|approved|rejected|cancelled)$")
+    reviewer_notes: str | None = None
+
+class DocumentSubmitRequest(BaseModel):
+    file_name: str | None = None
+    file_data: str | None = None
+    notes: str | None = None
+
+class DocumentStatusUpdateRequest(BaseModel):
+    status: str = Field(..., pattern="^(pending|under_review|verified|rejected)$")
+    notes: str | None = None
+
+class EmployeeProfileUpdateRequest(BaseModel):
+    avatar_url: str | None = None
+    full_name: str | None = None
+    phone_number: str | None = None
+    position: str | None = None
+    work_location: str | None = None
+    emergency_contact: str | None = None
+
 # Token Security Dependency
 security = HTTPBearer()
 
@@ -188,7 +240,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             if str(user_id).isdigit():
                 cur.execute(
                     """
-                    SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
+                    SELECT id, email, full_name, role, department, position, can_manage_departments, created_at, avatar_url, employee_id,
+                           phone_number, employment_type, work_location, date_hired, emergency_contact 
                     FROM ticketing_system.users 
                     WHERE id = %s;
                     """, 
@@ -197,7 +250,8 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
             else:
                 cur.execute(
                     """
-                    SELECT id, email, full_name, role, department, position, can_manage_departments, created_at 
+                    SELECT id, email, full_name, role, department, position, can_manage_departments, created_at, avatar_url, employee_id,
+                           phone_number, employment_type, work_location, date_hired, emergency_contact 
                     FROM ticketing_system.users 
                     WHERE lower(email) = lower(%s);
                     """, 
@@ -219,6 +273,23 @@ def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(securit
         
     if user.get("created_at"):
         user["created_at"] = user["created_at"].isoformat()
+        
+    if user.get("date_hired"):
+        user["date_hired"] = str(user["date_hired"])
+    elif user.get("created_at"):
+        try:
+            user["date_hired"] = user["created_at"][:10]
+        except Exception:
+            user["date_hired"] = None
+
+    if not user.get("employment_type"):
+        user["employment_type"] = "Regular Full-Time"
+
+    if not user.get("work_location"):
+        user["work_location"] = "Main HQ / Hybrid"
+
+    if not user.get("employee_id"):
+        user["employee_id"] = f"EMP-{user['id']:05d}"
         
     return user
 
@@ -945,7 +1016,14 @@ def login(req: LoginRequest):
         "position": user.get("position", "Employee"),
         "can_manage_departments": bool(user.get("can_manage_departments", False)),
         "is_verified": bool(user.get("is_verified", True)),
-        "created_at": user["created_at"].isoformat() if user.get("created_at") else None
+        "created_at": user["created_at"].isoformat() if user.get("created_at") else None,
+        "avatar_url": user.get("avatar_url"),
+        "employee_id": user.get("employee_id") or f"EMP-{user['id']:05d}",
+        "phone_number": user.get("phone_number"),
+        "employment_type": user.get("employment_type") or "Regular Full-Time",
+        "work_location": user.get("work_location") or "Main HQ / Hybrid",
+        "date_hired": str(user.get("date_hired")) if user.get("date_hired") else (user["created_at"].date().isoformat() if user.get("created_at") else None),
+        "emergency_contact": user.get("emergency_contact")
     }
 
     return {
@@ -2277,6 +2355,898 @@ def sync_emails(current_user: dict = Depends(get_current_user)):
     from backend.email_service import sync_gmail_tickets
     result = sync_gmail_tickets(mark_as_read=True)
     return result
+
+# ============================================================================
+# EMPLOYEE HUB: ATTENDANCE & SHIFT CLOCKING (9H WORKDAY WITH 1H LUNCH)
+# ============================================================================
+
+@app.get("/api/employee/attendance/today")
+def get_today_attendance(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    today_str = datetime.now().date().isoformat()
+    try:
+        with get_db_cursor(commit=False) as cur:
+            cur.execute(
+                """
+                SELECT id, user_id, work_date, clock_in, lunch_start, lunch_end, clock_out, total_hours, status, notes
+                FROM ticketing_system.attendance_logs
+                WHERE user_id = %s AND work_date = %s;
+                """,
+                (user_id, today_str)
+            )
+            row = cur.fetchone()
+            
+            if not row:
+                return {
+                    "work_date": today_str,
+                    "status": "not_clocked_in",
+                    "clock_in": None,
+                    "lunch_start": None,
+                    "lunch_end": None,
+                    "clock_out": None,
+                    "total_hours": 0.0,
+                    "shift_duration_hours": 9.0,
+                    "break_duration_hours": 1.0,
+                    "notes": ""
+                }
+            
+            return {
+                "id": row["id"],
+                "work_date": str(row["work_date"]),
+                "status": row["status"] or "not_clocked_in",
+                "clock_in": row["clock_in"].isoformat() if row.get("clock_in") else None,
+                "lunch_start": row["lunch_start"].isoformat() if row.get("lunch_start") else None,
+                "lunch_end": row["lunch_end"].isoformat() if row.get("lunch_end") else None,
+                "clock_out": row["clock_out"].isoformat() if row.get("clock_out") else None,
+                "total_hours": float(row["total_hours"] or 0.0),
+                "shift_duration_hours": 9.0,
+                "break_duration_hours": 1.0,
+                "notes": row.get("notes") or ""
+            }
+    except Exception as e:
+        logger.error(f"Error getting today's attendance: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch attendance.")
+
+@app.post("/api/employee/attendance/action")
+def attendance_action(req: AttendanceActionRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    now = datetime.now(timezone.utc)
+    today_date = datetime.now().date()
+    action = req.action.lower()
+
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                SELECT * FROM ticketing_system.attendance_logs
+                WHERE user_id = %s AND work_date = %s
+                FOR UPDATE;
+                """,
+                (user_id, today_date)
+            )
+            record = cur.fetchone()
+
+            if action == "clock_in":
+                if record and record.get("clock_in"):
+                    raise HTTPException(status_code=400, detail="You have already clocked in for today.")
+                if not record:
+                    cur.execute(
+                        """
+                        INSERT INTO ticketing_system.attendance_logs (user_id, work_date, clock_in, status, notes)
+                        VALUES (%s, %s, %s, 'clocked_in', %s)
+                        RETURNING *;
+                        """,
+                        (user_id, today_date, now, req.notes or "")
+                    )
+                else:
+                    cur.execute(
+                        """
+                        UPDATE ticketing_system.attendance_logs
+                        SET clock_in = %s, status = 'clocked_in', updated_at = %s, notes = COALESCE(%s, notes)
+                        WHERE id = %s
+                        RETURNING *;
+                        """,
+                        (now, now, req.notes, record["id"])
+                    )
+
+            elif action == "lunch_out":
+                if not record or not record.get("clock_in"):
+                    raise HTTPException(status_code=400, detail="You must clock in before taking lunch.")
+                if record.get("lunch_start"):
+                    raise HTTPException(status_code=400, detail="Lunch break has already been recorded.")
+                if record.get("clock_out"):
+                    raise HTTPException(status_code=400, detail="Shift already ended for today.")
+                
+                cur.execute(
+                    """
+                    UPDATE ticketing_system.attendance_logs
+                    SET lunch_start = %s, status = 'on_lunch', updated_at = %s
+                    WHERE id = %s
+                    RETURNING *;
+                    """,
+                    (now, now, record["id"])
+                )
+
+            elif action == "lunch_in":
+                if not record or not record.get("clock_in"):
+                    raise HTTPException(status_code=400, detail="You must clock in first.")
+                if not record.get("lunch_start"):
+                    raise HTTPException(status_code=400, detail="Please tap Lunch Out before logging Lunch In.")
+                if record.get("lunch_end"):
+                    raise HTTPException(status_code=400, detail="Lunch break return has already been logged.")
+                if record.get("clock_out"):
+                    raise HTTPException(status_code=400, detail="Shift already ended for today.")
+                
+                cur.execute(
+                    """
+                    UPDATE ticketing_system.attendance_logs
+                    SET lunch_end = %s, status = 'clocked_in', updated_at = %s
+                    WHERE id = %s
+                    RETURNING *;
+                    """,
+                    (now, now, record["id"])
+                )
+
+            elif action == "clock_out":
+                if not record or not record.get("clock_in"):
+                    raise HTTPException(status_code=400, detail="You have not clocked in today.")
+                if record.get("clock_out"):
+                    raise HTTPException(status_code=400, detail="You have already clocked out for today.")
+                
+                lunch_start = record.get("lunch_start")
+                lunch_end = record.get("lunch_end")
+                if lunch_start and not lunch_end:
+                    lunch_end = now
+                    cur.execute(
+                        "UPDATE ticketing_system.attendance_logs SET lunch_end = %s WHERE id = %s;",
+                        (now, record["id"])
+                    )
+
+                clock_in = record["clock_in"]
+                total_seconds = (now - clock_in).total_seconds()
+                
+                if lunch_start and lunch_end:
+                    lunch_seconds = (lunch_end - lunch_start).total_seconds()
+                    worked_seconds = max(0, total_seconds - lunch_seconds)
+                elif lunch_start and not lunch_end:
+                    worked_seconds = max(0, total_seconds - 3600)
+                else:
+                    worked_seconds = total_seconds
+
+                total_hrs = round(worked_seconds / 3600.0, 2)
+
+                cur.execute(
+                    """
+                    UPDATE ticketing_system.attendance_logs
+                    SET clock_out = %s, total_hours = %s, status = 'shift_ended', updated_at = %s
+                    WHERE id = %s
+                    RETURNING *;
+                    """,
+                    (now, total_hrs, now, record["id"])
+                )
+
+            cur.execute(
+                """
+                SELECT id, user_id, work_date, clock_in, lunch_start, lunch_end, clock_out, total_hours, status, notes
+                FROM ticketing_system.attendance_logs
+                WHERE user_id = %s AND work_date = %s;
+                """,
+                (user_id, today_date)
+            )
+            updated = cur.fetchone()
+
+        return {
+            "success": True,
+            "message": f"Successfully performed {action.replace('_', ' ').title()}.",
+            "attendance": {
+                "id": updated["id"],
+                "work_date": str(updated["work_date"]),
+                "status": updated["status"],
+                "clock_in": updated["clock_in"].isoformat() if updated.get("clock_in") else None,
+                "lunch_start": updated["lunch_start"].isoformat() if updated.get("lunch_start") else None,
+                "lunch_end": updated["lunch_end"].isoformat() if updated.get("lunch_end") else None,
+                "clock_out": updated["clock_out"].isoformat() if updated.get("clock_out") else None,
+                "total_hours": float(updated["total_hours"] or 0.0),
+                "shift_duration_hours": 9.0,
+                "break_duration_hours": 1.0,
+                "notes": updated.get("notes") or ""
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Attendance action error: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to record attendance: {str(e)}")
+
+@app.get("/api/employee/attendance/history")
+def get_attendance_history(limit: int = 15, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        with get_db_cursor(commit=False) as cur:
+            cur.execute(
+                """
+                SELECT id, user_id, work_date, clock_in, lunch_start, lunch_end, clock_out, total_hours, status, notes
+                FROM ticketing_system.attendance_logs
+                WHERE user_id = %s
+                ORDER BY work_date DESC
+                LIMIT %s;
+                """,
+                (user_id, limit)
+            )
+            rows = cur.fetchall()
+            logs = []
+            for r in rows:
+                logs.append({
+                    "id": r["id"],
+                    "work_date": str(r["work_date"]),
+                    "clock_in": r["clock_in"].isoformat() if r.get("clock_in") else None,
+                    "lunch_start": r["lunch_start"].isoformat() if r.get("lunch_start") else None,
+                    "lunch_end": r["lunch_end"].isoformat() if r.get("lunch_end") else None,
+                    "clock_out": r["clock_out"].isoformat() if r.get("clock_out") else None,
+                    "total_hours": float(r["total_hours"] or 0.0),
+                    "status": r["status"]
+                })
+            return {"logs": logs}
+    except Exception as e:
+        logger.error(f"Error fetching attendance history: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch attendance history.")
+
+# ============================================================================
+# EMPLOYEE HUB: TIME EDIT REQUESTS (CORRECTION & ADJUSTMENT FILING)
+# ============================================================================
+
+@app.get("/api/employee/time-edit-requests")
+def list_time_edit_requests(status_filter: str | None = None, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        with get_db_cursor(commit=False) as cur:
+            query = """
+                SELECT t.id, t.request_code, t.user_id, t.target_date, t.edit_type,
+                       t.requested_clock_in, t.requested_lunch_start, t.requested_lunch_end, t.requested_clock_out,
+                       t.reason, t.proof_attachment, t.proof_file_name, t.status,
+                       t.reviewer_notes, t.reviewed_at, t.created_at,
+                       u.full_name as employee_name, u.email as employee_email,
+                       rev.full_name as reviewer_name
+                FROM ticketing_system.time_edit_requests t
+                JOIN ticketing_system.users u ON t.user_id = u.id
+                LEFT JOIN ticketing_system.users rev ON t.reviewed_by = rev.id
+                WHERE t.user_id = %s
+            """
+            params = [user_id]
+            if status_filter:
+                query += " AND t.status = %s"
+                params.append(status_filter)
+            query += " ORDER BY t.created_at DESC;"
+
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+            requests = []
+            for r in rows:
+                requests.append({
+                    "id": r["id"],
+                    "request_code": r["request_code"],
+                    "target_date": str(r["target_date"]),
+                    "edit_type": r["edit_type"],
+                    "requested_clock_in": r["requested_clock_in"],
+                    "requested_lunch_start": r["requested_lunch_start"],
+                    "requested_lunch_end": r["requested_lunch_end"],
+                    "requested_clock_out": r["requested_clock_out"],
+                    "reason": r["reason"],
+                    "proof_attachment": r["proof_attachment"],
+                    "proof_file_name": r["proof_file_name"],
+                    "status": r["status"],
+                    "reviewer_notes": r["reviewer_notes"],
+                    "reviewer_name": r["reviewer_name"],
+                    "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
+                    "reviewed_at": r["reviewed_at"].isoformat() if r.get("reviewed_at") else None
+                })
+            return {"requests": requests}
+    except Exception as e:
+        logger.error(f"Error listing time edit requests: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch time edit requests.")
+
+@app.post("/api/employee/time-edit-requests", status_code=status.HTTP_201_CREATED)
+def create_time_edit_request(req: TimeEditCreateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        target_date_obj = datetime.strptime(req.target_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid target date format. Must be YYYY-MM-DD.")
+
+    req_code = f"TER-{secrets.token_hex(3).upper()}"
+
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                INSERT INTO ticketing_system.time_edit_requests
+                (request_code, user_id, target_date, edit_type, requested_clock_in, requested_lunch_start,
+                 requested_lunch_end, requested_clock_out, reason, proof_attachment, proof_file_name, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                RETURNING *;
+                """,
+                (
+                    req_code, user_id, target_date_obj, req.edit_type,
+                    req.requested_clock_in, req.requested_lunch_start,
+                    req.requested_lunch_end, req.requested_clock_out,
+                    req.reason, req.proof_attachment, req.proof_file_name
+                )
+            )
+            created = cur.fetchone()
+
+        return {
+            "success": True,
+            "message": f"Time edit request {req_code} submitted successfully.",
+            "request": {
+                "id": created["id"],
+                "request_code": created["request_code"],
+                "target_date": str(created["target_date"]),
+                "edit_type": created["edit_type"],
+                "status": created["status"],
+                "created_at": created["created_at"].isoformat() if created.get("created_at") else None
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error creating time edit request: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to submit time edit request: {str(e)}")
+
+@app.patch("/api/employee/time-edit-requests/{req_id}")
+def update_time_edit_request(req_id: int, req: TimeEditUpdateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    user_role = current_user.get("role", "employee")
+    is_staff = is_super_admin(user_role) or is_tech_or_agent(user_role) or current_user.get("can_manage_departments")
+
+    now = datetime.now(timezone.utc)
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute("SELECT * FROM ticketing_system.time_edit_requests WHERE id = %s;", (req_id,))
+            record = cur.fetchone()
+            if not record:
+                raise HTTPException(status_code=404, detail="Time edit request not found.")
+
+            if not is_staff and record["user_id"] != user_id:
+                raise HTTPException(status_code=403, detail="Permission denied.")
+
+            if not is_staff and req.status not in ["cancelled", "approved", "rejected", "pending"]:
+                raise HTTPException(status_code=403, detail="Employees may only update or cancel their own requests.")
+
+            cur.execute(
+                """
+                UPDATE ticketing_system.time_edit_requests
+                SET status = %s, reviewer_notes = %s, reviewed_by = %s, reviewed_at = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING *;
+                """,
+                (req.status, req.reviewer_notes or record.get("reviewer_notes"), user_id, now, now, req_id)
+            )
+
+            # If approved, update or insert attendance note
+            if req.status == "approved":
+                t_date = record["target_date"]
+                cur.execute(
+                    """
+                    INSERT INTO ticketing_system.attendance_logs (user_id, work_date, status, notes)
+                    VALUES (%s, %s, 'completed', 'Adjusted via Time Edit ' || %s)
+                    ON CONFLICT (user_id, work_date) DO UPDATE
+                    SET notes = COALESCE(ticketing_system.attendance_logs.notes, '') || ' [Adjusted via ' || %s || ']',
+                        status = 'completed';
+                    """,
+                    (record["user_id"], t_date, record["request_code"], record["request_code"])
+                )
+
+        return {"success": True, "message": f"Time edit request updated to {req.status}."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating time edit request: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update request.")
+
+# ============================================================================
+# EMPLOYEE HUB: OVERTIME (OT) REQUESTS & AUTHORIZATION
+# ============================================================================
+
+@app.get("/api/employee/overtime-requests")
+def list_overtime_requests(status_filter: str | None = None, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        with get_db_cursor(commit=False) as cur:
+            query = """
+                SELECT o.id, o.request_code, o.user_id, o.ot_date, o.ot_type,
+                       o.start_time, o.end_time, o.total_hours, o.task_purpose,
+                       o.proof_attachment, o.proof_file_name, o.status,
+                       o.reviewer_notes, o.reviewed_at, o.created_at,
+                       u.full_name as employee_name, rev.full_name as reviewer_name
+                FROM ticketing_system.overtime_requests o
+                JOIN ticketing_system.users u ON o.user_id = u.id
+                LEFT JOIN ticketing_system.users rev ON o.reviewed_by = rev.id
+                WHERE o.user_id = %s
+            """
+            params = [user_id]
+            if status_filter:
+                query += " AND o.status = %s"
+                params.append(status_filter)
+            query += " ORDER BY o.created_at DESC;"
+
+            cur.execute(query, tuple(params))
+            rows = cur.fetchall()
+            requests = []
+            for r in rows:
+                requests.append({
+                    "id": r["id"],
+                    "request_code": r["request_code"],
+                    "ot_date": str(r["ot_date"]),
+                    "ot_type": r["ot_type"],
+                    "start_time": r["start_time"],
+                    "end_time": r["end_time"],
+                    "total_hours": float(r["total_hours"] or 0.0),
+                    "task_purpose": r["task_purpose"],
+                    "proof_attachment": r["proof_attachment"],
+                    "proof_file_name": r["proof_file_name"],
+                    "status": r["status"],
+                    "reviewer_notes": r["reviewer_notes"],
+                    "reviewer_name": r["reviewer_name"],
+                    "created_at": r["created_at"].isoformat() if r.get("created_at") else None,
+                    "reviewed_at": r["reviewed_at"].isoformat() if r.get("reviewed_at") else None
+                })
+            return {"requests": requests}
+    except Exception as e:
+        logger.error(f"Error listing overtime requests: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch overtime requests.")
+
+@app.post("/api/employee/overtime-requests", status_code=status.HTTP_201_CREATED)
+def create_overtime_request(req: OvertimeCreateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        ot_date_obj = datetime.strptime(req.ot_date, "%Y-%m-%d").date()
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid OT date format. Must be YYYY-MM-DD.")
+
+    if req.total_hours <= 0:
+        raise HTTPException(status_code=400, detail="Overtime hours must be greater than 0.")
+
+    req_code = f"OTR-{secrets.token_hex(3).upper()}"
+
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                INSERT INTO ticketing_system.overtime_requests
+                (request_code, user_id, ot_date, ot_type, start_time, end_time, total_hours, task_purpose, proof_attachment, proof_file_name, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'pending')
+                RETURNING *;
+                """,
+                (
+                    req_code, user_id, ot_date_obj, req.ot_type,
+                    req.start_time, req.end_time, req.total_hours,
+                    req.task_purpose, req.proof_attachment, req.proof_file_name
+                )
+            )
+            created = cur.fetchone()
+
+        return {
+            "success": True,
+            "message": f"Overtime request {req_code} submitted successfully.",
+            "request": {
+                "id": created["id"],
+                "request_code": created["request_code"],
+                "ot_date": str(created["ot_date"]),
+                "total_hours": float(created["total_hours"]),
+                "status": created["status"],
+                "created_at": created["created_at"].isoformat() if created.get("created_at") else None
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error creating overtime request: {e}")
+        raise HTTPException(status_code=500, detail=f"Failed to submit overtime request: {str(e)}")
+
+@app.patch("/api/employee/overtime-requests/{req_id}")
+def update_overtime_request(req_id: int, req: OvertimeUpdateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    user_role = current_user.get("role", "employee")
+    is_staff = is_super_admin(user_role) or is_tech_or_agent(user_role) or current_user.get("can_manage_departments")
+
+    now = datetime.now(timezone.utc)
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute("SELECT * FROM ticketing_system.overtime_requests WHERE id = %s;", (req_id,))
+            record = cur.fetchone()
+            if not record:
+                raise HTTPException(status_code=404, detail="Overtime request not found.")
+
+            if not is_staff and record["user_id"] != user_id:
+                raise HTTPException(status_code=403, detail="Permission denied.")
+
+            if not is_staff and req.status not in ["cancelled", "approved", "rejected", "pending"]:
+                raise HTTPException(status_code=403, detail="Employees may only update or cancel their own requests.")
+
+            cur.execute(
+                """
+                UPDATE ticketing_system.overtime_requests
+                SET status = %s, reviewer_notes = %s, reviewed_by = %s, reviewed_at = %s, updated_at = %s
+                WHERE id = %s
+                RETURNING *;
+                """,
+                (req.status, req.reviewer_notes or record.get("reviewer_notes"), user_id, now, now, req_id)
+            )
+
+        return {"success": True, "message": f"Overtime request updated to {req.status}."}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating overtime request: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update request.")
+
+# ============================================================================
+# EMPLOYEE HUB: REQUIRED DOCUMENTS (NEW HIRE & COMPLIANCE CHECKLIST)
+# ============================================================================
+
+DEFAULT_REQUIRED_DOCUMENTS = [
+    ("gov_id", "Government-Issued Identification (Passport / UMID / Driver's License)"),
+    ("bir_tin", "BIR Tax Identification Form (Form 1902 / 2316)"),
+    ("sss_philhealth", "SSS, PhilHealth & Pag-IBIG Numbers Registration"),
+    ("contract_nda", "Signed Employment Agreement & Non-Disclosure Contract"),
+    ("medical_clearance", "Pre-Employment Medical Examination & Fit to Work Certificate"),
+    ("bank_payroll", "Bank Account Direct Deposit Details for Payroll")
+]
+
+@app.get("/api/employee/documents")
+def get_employee_documents(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        with get_db_cursor(commit=True) as cur:
+            for key, name in DEFAULT_REQUIRED_DOCUMENTS:
+                cur.execute(
+                    """
+                    INSERT INTO ticketing_system.employee_documents (user_id, doc_key, doc_name, status)
+                    VALUES (%s, %s, %s, 'pending')
+                    ON CONFLICT (user_id, doc_key) DO NOTHING;
+                    """,
+                    (user_id, key, name)
+                )
+
+            cur.execute(
+                """
+                SELECT id, doc_key, doc_name, status, file_name, notes, submitted_at, verified_at, updated_at
+                FROM ticketing_system.employee_documents
+                WHERE user_id = %s
+                ORDER BY id ASC;
+                """,
+                (user_id,)
+            )
+            rows = cur.fetchall()
+
+            docs = []
+            verified_count = 0
+            submitted_count = 0
+            for r in rows:
+                stat = r["status"]
+                if stat == "verified":
+                    verified_count += 1
+                if stat in ("verified", "submitted", "under_review"):
+                    submitted_count += 1
+
+                docs.append({
+                    "id": r["id"],
+                    "doc_key": r["doc_key"],
+                    "doc_name": r["doc_name"],
+                    "status": r["status"],
+                    "file_name": r.get("file_name") or "",
+                    "notes": r.get("notes") or "",
+                    "submitted_at": r["submitted_at"].isoformat() if r.get("submitted_at") else None,
+                    "verified_at": r["verified_at"].isoformat() if r.get("verified_at") else None
+                })
+
+            total = len(docs)
+            percent = round((submitted_count / total * 100)) if total > 0 else 0
+            is_all_passed = (verified_count == total and total > 0)
+
+            return {
+                "documents": docs,
+                "summary": {
+                    "total": total,
+                    "submitted_count": submitted_count,
+                    "verified_count": verified_count,
+                    "pending_count": total - submitted_count,
+                    "completion_percent": percent,
+                    "is_all_passed": is_all_passed,
+                    "status_label": "All Requirements Complete" if is_all_passed else (f"{total - submitted_count} requirements remaining" if total - submitted_count > 0 else "Under HR Review")
+                }
+            }
+    except Exception as e:
+        logger.error(f"Error fetching employee documents: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch required documents.")
+
+@app.post("/api/employee/documents/{doc_key}/submit")
+def submit_employee_document(doc_key: str, req: DocumentSubmitRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    now = datetime.now(timezone.utc)
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                UPDATE ticketing_system.employee_documents
+                SET status = 'under_review',
+                    file_name = COALESCE(%s, file_name, 'uploaded_document.pdf'),
+                    file_data = %s,
+                    notes = %s,
+                    submitted_at = %s,
+                    updated_at = %s
+                WHERE user_id = %s AND doc_key = %s
+                RETURNING *;
+                """,
+                (req.file_name, req.file_data, req.notes, now, now, user_id, doc_key)
+            )
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(status_code=404, detail="Document requirement not found.")
+
+        return {
+            "success": True,
+            "message": "Document submitted for HR compliance verification.",
+            "document": {
+                "doc_key": updated["doc_key"],
+                "status": updated["status"],
+                "file_name": updated["file_name"]
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error submitting document: {e}")
+        raise HTTPException(status_code=500, detail="Failed to submit document.")
+
+@app.patch("/api/employee/documents/{doc_key}/status")
+def update_document_status(doc_key: str, req: DocumentStatusUpdateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    now = datetime.now(timezone.utc)
+    verified_at = now if req.status == "verified" else None
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                UPDATE ticketing_system.employee_documents
+                SET status = %s,
+                    notes = COALESCE(%s, notes),
+                    verified_at = %s,
+                    updated_at = %s
+                WHERE user_id = %s AND doc_key = %s
+                RETURNING *;
+                """,
+                (req.status, req.notes, verified_at, now, user_id, doc_key)
+            )
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(status_code=404, detail="Document requirement not found.")
+
+        return {
+            "success": True,
+            "message": f"Document status updated to {req.status}.",
+            "document": {
+                "doc_key": updated["doc_key"],
+                "status": updated["status"],
+                "file_name": updated.get("file_name"),
+                "verified_at": updated["verified_at"].isoformat() if updated.get("verified_at") else None
+            }
+        }
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error updating document status: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update document status.")
+
+# ============================================================================
+# EMPLOYEE HUB: PAYROLL SCHEDULE & CYCLE DATES
+# ============================================================================
+
+@app.get("/api/employee/payroll-schedule")
+def get_payroll_schedule(current_user: dict = Depends(get_current_user)):
+    now = datetime.now()
+    year = now.year
+    month = now.month
+    day = now.day
+
+    import calendar
+
+    last_day_of_month = calendar.monthrange(year, month)[1]
+
+    if day <= 15:
+        period_start = datetime(year, month, 1)
+        period_end = datetime(year, month, 15)
+        filing_cutoff = datetime(year, month, 12, 23, 59, 59)
+        approval_cutoff = datetime(year, month, 14, 17, 0, 0)
+        payout_date = datetime(year, month, 15)
+        cycle_name = f"{period_start.strftime('%B')} 1–15, {year}"
+        
+        next_cycle_start = datetime(year, month, 16)
+        next_cycle_end = datetime(year, month, last_day_of_month)
+        next_payout_month = month + 1 if month < 12 else 1
+        next_payout_year = year if month < 12 else year + 1
+        next_payout = datetime(next_payout_year, next_payout_month, 5)
+    else:
+        period_start = datetime(year, month, 16)
+        period_end = datetime(year, month, last_day_of_month)
+        filing_cutoff = datetime(year, month, min(27, last_day_of_month - 3), 23, 59, 59)
+        approval_cutoff = datetime(year, month, min(29, last_day_of_month - 1), 17, 0, 0)
+        next_month = month + 1 if month < 12 else 1
+        next_year = year if month < 12 else year + 1
+        payout_date = datetime(next_year, next_month, 5)
+        cycle_name = f"{period_start.strftime('%B')} 16–{last_day_of_month}, {year}"
+        
+        next_cycle_start = datetime(next_year, next_month, 1)
+        next_cycle_end = datetime(next_year, next_month, 15)
+        next_payout = datetime(next_year, next_month, 15)
+
+    days_to_filing_cutoff = (filing_cutoff.date() - now.date()).days
+    filing_status = "Open" if days_to_filing_cutoff >= 0 else "Closed"
+
+    return {
+        "cycle_name": cycle_name,
+        "pay_period": {
+            "start": period_start.strftime("%b %d, %Y"),
+            "end": period_end.strftime("%b %d, %Y"),
+            "raw_start": period_start.date().isoformat(),
+            "raw_end": period_end.date().isoformat()
+        },
+        "filing_cutoff": {
+            "display": filing_cutoff.strftime("%b %d, %Y at %I:%M %p"),
+            "date": filing_cutoff.strftime("%b %d, %Y"),
+            "time": filing_cutoff.strftime("%I:%M %p"),
+            "status": filing_status,
+            "days_remaining": max(0, days_to_filing_cutoff),
+            "is_past": days_to_filing_cutoff < 0
+        },
+        "approval_cutoff": {
+            "display": approval_cutoff.strftime("%b %d, %Y at %I:%M %p"),
+            "date": approval_cutoff.strftime("%b %d, %Y"),
+            "time": approval_cutoff.strftime("%I:%M %p")
+        },
+        "payout_date": {
+            "display": payout_date.strftime("%b %d, %Y"),
+            "disbursement_type": "Direct Bank Deposit"
+        },
+        "upcoming_cycle": {
+            "period": f"{next_cycle_start.strftime('%b %d')} – {next_cycle_end.strftime('%b %d, %Y')}",
+            "payout": next_payout.strftime("%b %d, %Y")
+        },
+        "policy_notice": "All overtime entries and time edit requests must be submitted and supervisor-approved by the filing cutoff to ensure timely crediting in the corresponding payout."
+    }
+
+# ============================================================================
+# EMPLOYEE HUB: PROFILE & COMPREHENSIVE HUB SUMMARY
+# ============================================================================
+
+@app.patch("/api/employee/profile")
+def update_employee_profile(req: EmployeeProfileUpdateRequest, current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        with get_db_cursor(commit=True) as cur:
+            cur.execute(
+                """
+                UPDATE ticketing_system.users
+                SET avatar_url = COALESCE(%s, avatar_url),
+                    full_name = COALESCE(%s, full_name),
+                    phone_number = COALESCE(%s, phone_number),
+                    position = COALESCE(%s, position),
+                    work_location = COALESCE(%s, work_location),
+                    emergency_contact = COALESCE(%s, emergency_contact)
+                WHERE id = %s
+                RETURNING id, full_name, email, role, department, position, employee_id, avatar_url,
+                          phone_number, employment_type, work_location, date_hired, emergency_contact, created_at;
+                """,
+                (req.avatar_url, req.full_name, req.phone_number, req.position, req.work_location, req.emergency_contact, user_id)
+            )
+            updated = cur.fetchone()
+            if updated:
+                if updated.get("date_hired"):
+                    updated["date_hired"] = str(updated["date_hired"])
+                elif updated.get("created_at"):
+                    try:
+                        updated["date_hired"] = updated["created_at"].date().isoformat()
+                    except Exception:
+                        pass
+                if updated.get("created_at"):
+                    updated["created_at"] = updated["created_at"].isoformat()
+                if not updated.get("employee_id"):
+                    updated["employee_id"] = f"EMP-{updated['id']:05d}"
+                if not updated.get("employment_type"):
+                    updated["employment_type"] = "Regular Full-Time"
+                if not updated.get("work_location"):
+                    updated["work_location"] = "Main HQ / Hybrid"
+        return {"success": True, "user": updated}
+    except Exception as e:
+        logger.error(f"Error updating profile: {e}")
+        raise HTTPException(status_code=500, detail="Failed to update profile.")
+
+@app.get("/api/employee/hub-summary")
+def get_hub_summary(current_user: dict = Depends(get_current_user)):
+    user_id = current_user["id"]
+    try:
+        with get_db_cursor(commit=False) as cur:
+            cur.execute("SELECT count(*) as count FROM ticketing_system.time_edit_requests WHERE user_id = %s AND status = 'pending';", (user_id,))
+            pending_time_edits = cur.fetchone()["count"]
+
+            cur.execute("SELECT count(*) as count FROM ticketing_system.time_edit_requests WHERE user_id = %s AND status = 'approved';", (user_id,))
+            approved_time_edits = cur.fetchone()["count"]
+
+            cur.execute("SELECT count(*) as count FROM ticketing_system.overtime_requests WHERE user_id = %s AND status = 'pending';", (user_id,))
+            pending_overtimes = cur.fetchone()["count"]
+
+            cur.execute("SELECT count(*) as count, COALESCE(SUM(total_hours), 0) as total_hours FROM ticketing_system.overtime_requests WHERE user_id = %s AND status = 'approved';", (user_id,))
+            ot_row = cur.fetchone()
+            approved_overtimes = ot_row["count"]
+            total_approved_ot_hours = float(ot_row["total_hours"])
+
+            cur.execute("SELECT count(*) as count FROM ticketing_system.tickets WHERE requester_id = %s AND status IN ('open', 'in_progress', 'waiting_on_us');", (user_id,))
+            active_tickets = cur.fetchone()["count"]
+
+            cur.execute(
+                """
+                (
+                    SELECT id, 'time_edit' as req_kind, request_code, target_date as req_date, edit_type as title, reason as description, status, created_at
+                    FROM ticketing_system.time_edit_requests
+                    WHERE user_id = %s
+                )
+                UNION ALL
+                (
+                    SELECT id, 'overtime' as req_kind, request_code, ot_date as req_date, ot_type || ' (' || total_hours || ' hrs)' as title, task_purpose as description, status, created_at
+                    FROM ticketing_system.overtime_requests
+                    WHERE user_id = %s
+                )
+                ORDER BY created_at DESC
+                LIMIT 8;
+                """,
+                (user_id, user_id)
+            )
+            recent_requests = [
+                {
+                    "id": r["id"],
+                    "kind": r["req_kind"],
+                    "request_code": r["request_code"],
+                    "date": str(r["req_date"]),
+                    "title": r["title"].replace('_', ' ').title(),
+                    "description": r["description"],
+                    "status": r["status"],
+                    "created_at": r["created_at"].isoformat() if r.get("created_at") else None
+                }
+                for r in cur.fetchall()
+            ]
+
+            return {
+                "pending_time_edits": pending_time_edits,
+                "approved_time_edits": approved_time_edits,
+                "pending_overtimes": pending_overtimes,
+                "approved_overtimes": approved_overtimes,
+                "total_approved_ot_hours": total_approved_ot_hours,
+                "active_tickets": active_tickets,
+                "recent_requests": recent_requests
+            }
+    except Exception as e:
+        logger.error(f"Error fetching hub summary: {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch hub summary.")
+
+# Helper for serving frontend files
+def _serve_frontend_file(filename: str):
+    for base in ["public", "frontend", ""]:
+        candidate = os.path.join(ROOT_DIR, base, filename) if base else os.path.join(ROOT_DIR, filename)
+        if os.path.exists(candidate) and os.path.isfile(candidate):
+            return FileResponse(candidate)
+    raise HTTPException(status_code=404, detail=f"{filename} not found.")
+
+@app.get("/portal", response_class=FileResponse, include_in_schema=False)
+@app.get("/hub", response_class=FileResponse, include_in_schema=False)
+@app.get("/requests", response_class=FileResponse, include_in_schema=False)
+def route_portal_clean():
+    return _serve_frontend_file("portal.html")
+
+@app.get("/dashboard", response_class=FileResponse, include_in_schema=False)
+def route_dashboard_clean():
+    return _serve_frontend_file("dashboard.html")
+
+@app.get("/login", response_class=FileResponse, include_in_schema=False)
+@app.get("/signin", response_class=FileResponse, include_in_schema=False)
+@app.get("/signup", response_class=FileResponse, include_in_schema=False)
+def route_auth_clean():
+    return _serve_frontend_file("index.html")
 
 # Serving frontend static files
 for base_folder in ["public", "frontend"]:

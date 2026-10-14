@@ -1,20 +1,47 @@
 // Frontend Authentication Handler for Khin Ticket
 
-const isLocalDev = (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost') && window.location.port !== '5000';
-const API_URL = isLocalDev 
-    ? `${window.location.protocol}//${window.location.hostname}:5000` 
+// Target Python backend (port 5000) when running under VS Code Go Live Server (e.g. port 5500/5502) or file:// protocol
+const isFileProtocol = !window.location.protocol || window.location.protocol === 'file:' || !window.location.hostname;
+const isGoLiveServer = isFileProtocol || (window.location.port && window.location.port !== '5000');
+const API_URL = isGoLiveServer 
+    ? `http://${window.location.hostname || '127.0.0.1'}:5000` 
     : window.location.origin;
 
 function formatApiError(error) {
     if (error && (error.message === 'Failed to fetch' || error.name === 'TypeError')) {
-        return isLocalDev
-            ? 'Cannot connect to backend server. Please make sure the Python server is running on port 5000 (run: python run.py).'
+        return isGoLiveServer
+            ? 'Cannot connect to backend server. Please make sure the Python server is running on port 5000 (run: python run.py) so Go Live can connect.'
             : 'Cannot connect to backend server. Please verify your connection or service status.';
     }
     return error.message || 'An unexpected error occurred.';
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const isExpired = urlParams.get('expired') === 'true';
+    const isLogout = urlParams.get('logout') === 'true';
+
+    // Clear session if redirected because of expiration
+    if (isExpired) {
+        localStorage.removeItem('access_token');
+        showToast('Your session has expired. Please sign in again.', 'info');
+    }
+
+    // Auto-route to portal/dashboard if already authenticated and not explicitly logging out
+    const existingToken = localStorage.getItem('access_token');
+    if (existingToken && !isExpired && !isLogout) {
+        const role = localStorage.getItem('user_role') || 'employee';
+        const canManage = localStorage.getItem('can_manage_departments') === 'true';
+        const staffRoles = ['super_admin', 'admin', 'tech_member', 'agent', 'dept_lead', 'admin_lead', 'dept_agent', 'dept_member'];
+        if (staffRoles.includes(role) || canManage) {
+            window.location.replace('dashboard.html');
+            return;
+        } else {
+            window.location.replace('portal.html');
+            return;
+        }
+    }
+
     // --- Intro Splash Screen (Click/Tap to Lift Up) ---
     const introSplashScreen = document.getElementById('intro-splash-screen');
 
@@ -22,7 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!introSplashScreen || introSplashScreen.classList.contains('lift-up')) return;
         introSplashScreen.classList.add('lift-up');
         setTimeout(() => {
-            introSplashScreen.style.display = 'none';
+            if (introSplashScreen.parentNode) {
+                introSplashScreen.remove();
+            }
         }, 900);
     }
 
@@ -41,8 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Lift immediately if user arrived with verification status or redirect
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.get('verify_status') || urlParams.get('email') || urlParams.get('expired') || urlParams.get('action')) {
+        if (urlParams.get('verify_status') || urlParams.get('email') || isExpired || urlParams.get('action')) {
             triggerIntroLift();
         }
     }
@@ -682,7 +710,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // ==========================================
     // 5. QUERY PARAMS VERIFICATION HANDLING
     // ==========================================
-    const urlParams = new URLSearchParams(window.location.search);
     const verifyStatus = urlParams.get('verify_status');
     const verifyEmail = urlParams.get('email');
 

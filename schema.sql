@@ -23,6 +23,13 @@ ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS department VARCHAR(1
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS position VARCHAR(100) DEFAULT 'Employee';
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS can_manage_departments BOOLEAN DEFAULT FALSE;
 ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE;
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS avatar_url TEXT;
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS employee_id VARCHAR(50);
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS phone_number VARCHAR(50);
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS employment_type VARCHAR(50) DEFAULT 'Regular Full-Time';
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS work_location VARCHAR(100) DEFAULT 'Main HQ / Hybrid';
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS date_hired DATE DEFAULT CURRENT_DATE;
+ALTER TABLE ticketing_system.users ADD COLUMN IF NOT EXISTS emergency_contact VARCHAR(150);
 
 -- Email Verifications table for registration verification
 CREATE TABLE IF NOT EXISTS ticketing_system.email_verifications (
@@ -146,4 +153,95 @@ CREATE TABLE IF NOT EXISTS ticketing_system.department_restrictions (
 
 CREATE INDEX IF NOT EXISTS idx_dept_restrictions_user_id ON ticketing_system.department_restrictions(user_id);
 CREATE INDEX IF NOT EXISTS idx_dept_restrictions_dept_id ON ticketing_system.department_restrictions(department_id);
+
+-- Employee Attendance Logs table (Clock In, Lunch Out/In, Clock Out)
+CREATE TABLE IF NOT EXISTS ticketing_system.attendance_logs (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES ticketing_system.users(id) ON DELETE CASCADE,
+    work_date DATE NOT NULL,
+    clock_in TIMESTAMP WITH TIME ZONE,
+    lunch_start TIMESTAMP WITH TIME ZONE,
+    lunch_end TIMESTAMP WITH TIME ZONE,
+    clock_out TIMESTAMP WITH TIME ZONE,
+    total_hours NUMERIC(5, 2) DEFAULT 0,
+    status VARCHAR(30) DEFAULT 'clocked_in', -- 'clocked_in', 'on_lunch', 'shift_ended'
+    notes TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, work_date)
+);
+
+CREATE INDEX IF NOT EXISTS idx_attendance_user_date ON ticketing_system.attendance_logs(user_id, work_date);
+CREATE INDEX IF NOT EXISTS idx_attendance_work_date ON ticketing_system.attendance_logs(work_date);
+
+-- Time Edit Requests table (Attendance correction filing & history)
+CREATE TABLE IF NOT EXISTS ticketing_system.time_edit_requests (
+    id SERIAL PRIMARY KEY,
+    request_code VARCHAR(30) UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES ticketing_system.users(id) ON DELETE CASCADE,
+    target_date DATE NOT NULL,
+    edit_type VARCHAR(50) NOT NULL, -- 'missed_clock_in', 'missed_clock_out', 'missed_lunch', 'system_glitch', 'other'
+    requested_clock_in VARCHAR(20),
+    requested_lunch_start VARCHAR(20),
+    requested_lunch_end VARCHAR(20),
+    requested_clock_out VARCHAR(20),
+    reason TEXT NOT NULL,
+    proof_attachment TEXT,
+    proof_file_name VARCHAR(255),
+    status VARCHAR(30) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+    reviewed_by INTEGER REFERENCES ticketing_system.users(id) ON DELETE SET NULL,
+    reviewer_notes TEXT,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_time_edit_user_id ON ticketing_system.time_edit_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_time_edit_status ON ticketing_system.time_edit_requests(status);
+CREATE INDEX IF NOT EXISTS idx_time_edit_target_date ON ticketing_system.time_edit_requests(target_date);
+
+-- Overtime Requests table (OT filing & history)
+CREATE TABLE IF NOT EXISTS ticketing_system.overtime_requests (
+    id SERIAL PRIMARY KEY,
+    request_code VARCHAR(30) UNIQUE NOT NULL,
+    user_id INTEGER NOT NULL REFERENCES ticketing_system.users(id) ON DELETE CASCADE,
+    ot_date DATE NOT NULL,
+    ot_type VARCHAR(50) DEFAULT 'regular_day', -- 'regular_day', 'rest_day', 'special_holiday', 'regular_holiday'
+    start_time VARCHAR(20) NOT NULL,
+    end_time VARCHAR(20) NOT NULL,
+    total_hours NUMERIC(4, 2) NOT NULL,
+    task_purpose TEXT NOT NULL,
+    proof_attachment TEXT,
+    proof_file_name VARCHAR(255),
+    status VARCHAR(30) DEFAULT 'pending', -- 'pending', 'approved', 'rejected'
+    reviewed_by INTEGER REFERENCES ticketing_system.users(id) ON DELETE SET NULL,
+    reviewer_notes TEXT,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_overtime_user_id ON ticketing_system.overtime_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_overtime_status ON ticketing_system.overtime_requests(status);
+CREATE INDEX IF NOT EXISTS idx_overtime_ot_date ON ticketing_system.overtime_requests(ot_date);
+
+-- Employee Required Documents Checklist & Submissions table
+CREATE TABLE IF NOT EXISTS ticketing_system.employee_documents (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES ticketing_system.users(id) ON DELETE CASCADE,
+    doc_key VARCHAR(100) NOT NULL,
+    doc_name VARCHAR(150) NOT NULL,
+    status VARCHAR(30) DEFAULT 'pending', -- 'pending', 'submitted', 'verified', 'rejected'
+    file_name VARCHAR(255),
+    file_data TEXT,
+    notes TEXT,
+    submitted_at TIMESTAMP WITH TIME ZONE,
+    verified_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(user_id, doc_key)
+);
+
+CREATE INDEX IF NOT EXISTS idx_emp_docs_user_id ON ticketing_system.employee_documents(user_id);
+
 

@@ -1,0 +1,17 @@
+{
+  "name": "khin-ticketing-system",
+  "version": "1.0.0",
+  "description": "Khin Ticketing System & Employee Hub Portal",
+  "scripts": {
+    "dev": "python run.py",
+    "start": "python run.py",
+    "serve": "python run.py"
+  },
+  "keywords": [
+    "ticketing-system",
+    "employee-hub",
+    "fastapi"
+  ],
+  "author": "Khin Andrei Gamboa",
+  "license": "ISC"
+}
